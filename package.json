@@ -2,12 +2,13 @@
   "name": "proyecto-floreria",
   "version": "0.1.0",
   "private": true,
-  "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
-    "lint": "eslint"
-  },
+ "scripts": {
+  "dev": "next dev",
+  "build": "next build",
+  "start": "next start",
+  "lint": "eslint",
+  "test": "vitest run"
+},
   "dependencies": {
     "@supabase/ssr": "^0.12.6",
     "@supabase/supabase-js": "^2.116.0",
@@ -30,6 +31,8 @@
     "eslint": "^9",
     "eslint-config-next": "16.3.4",
     "tailwindcss": "^4",
-    "typescript": "^5"
+    "typescript": "^5",
+    "vitest": "^2.1.9"
   }
+  
 }
