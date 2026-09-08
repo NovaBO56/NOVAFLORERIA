@@ -2,10 +2,10 @@
 
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-
+import { useRouter } from "next/navigation";
 export default function LoginPage() {
   const supabase = createClient();
-
+const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -27,7 +27,7 @@ export default function LoginPage() {
       return;
     }
 
-    window.location.href = "/";
+    router.push("/");
   }
 
   return (

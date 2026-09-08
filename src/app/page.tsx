@@ -1,13 +1,22 @@
 "use client";
 
 import { createClient } from "@/lib/supabase/client";
-
+import { useRouter } from "next/navigation";
 export default function Home() {
   const supabase = createClient();
-
+  const router = useRouter();
   async function handleLogout() {
     await supabase.auth.signOut();
-    window.location.href = "/login";
+
+const {
+  data: { user },
+} = await supabase.auth.getUser();
+
+console.log("Usuario después de logout:", user);
+
+
+
+ router.push("/login");
   }
 
   return (

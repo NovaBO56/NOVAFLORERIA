@@ -3,7 +3,9 @@ import { NextResponse, type NextRequest } from "next/server";
 
 export async function middleware(request: NextRequest) {
   let response = NextResponse.next({
-    request,
+    request: {
+      headers: request.headers,
+    },
   });
 
   const supabase = createServerClient(
@@ -15,13 +17,18 @@ export async function middleware(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            request.cookies.set(name, value);
-            response.cookies.set(name, value, options);
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          response = NextResponse.next({
+            request,
           });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            response.cookies.set(name, value, options)
+          );
         },
       },
-    },
+    }
   );
 
   const {
@@ -30,10 +37,12 @@ export async function middleware(request: NextRequest) {
 
   const isLoginPage = request.nextUrl.pathname === "/login";
 
+  // Si no está autenticado y no está en /login -> enviar a /login
   if (!user && !isLoginPage) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // Si está autenticado e intenta entrar a /login -> enviar a la raíz /
   if (user && isLoginPage) {
     return NextResponse.redirect(new URL("/", request.url));
   }
