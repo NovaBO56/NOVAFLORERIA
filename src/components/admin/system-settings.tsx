@@ -40,9 +40,13 @@ export default function SystemSettings() {
     }
   }
 
-  useEffect(() => {
-    loadSettings();
-  }, []);
+ useEffect(() => {
+  const timeoutId = setTimeout(() => {
+    void loadSettings();
+  }, 0);
+
+  return () => clearTimeout(timeoutId);
+}, []);
 
   async function updateSetting(setting: SystemSetting) {
     const value = window.prompt(

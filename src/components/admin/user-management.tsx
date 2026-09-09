@@ -45,9 +45,13 @@ export default function UserManagement() {
     }
   }
 
-  useEffect(() => {
-    loadUsers();
-  }, []);
+ useEffect(() => {
+  const timeoutId = setTimeout(() => {
+    void loadUsers();
+  }, 0);
+
+  return () => clearTimeout(timeoutId);
+}, []);
 
   async function updateStatus(user: User) {
     const response = await fetch(`/api/admin/users/${user.id}/status`, {
