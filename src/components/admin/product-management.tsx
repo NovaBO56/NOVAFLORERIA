@@ -2,7 +2,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
+import ProductImageManagement from "@/components/admin/product-image-management";
 type Category = {
   id: string;
   name: string;
@@ -663,6 +663,10 @@ useEffect(() => {
                     </button>
                   </div>
                 </div>
+                <ProductImageManagement
+  productId={product.id}
+  productName={product.name}
+/>
               </article>
             ))}
           </div>
