@@ -1,8 +1,7 @@
-
 "use client";
 
 import Image from "next/image";
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 
 type ProductImageManagementProps = {
   productId: string;
@@ -25,8 +24,50 @@ export default function ProductImageManagement({
   const inputRef = useRef<HTMLInputElement>(null);
 
   const [uploading, setUploading] = useState(false);
+  const [loadingImages, setLoadingImages] = useState(true);
+  const [deletingImageId, setDeletingImageId] = useState<string | null>(
+    null,
+  );
   const [message, setMessage] = useState("");
-  const [image, setImage] = useState<UploadedImage | null>(null);
+  const [images, setImages] = useState<UploadedImage[]>([]);
+
+  const loadImages = useCallback(async () => {
+    setLoadingImages(true);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products/${productId}/images`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ??
+            data.error ??
+            "No se pudieron cargar las imágenes.",
+        );
+      }
+
+      setImages(data.images ?? []);
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudieron cargar las imágenes.",
+      );
+    } finally {
+      setLoadingImages(false);
+    }
+  }, [productId]);
+
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void loadImages();
+    }, 0);
+
+    return () => clearTimeout(timeoutId);
+  }, [loadImages]);
 
   async function handleUpload(
     event: React.ChangeEvent<HTMLInputElement>,
@@ -65,8 +106,8 @@ export default function ProductImageManagement({
         );
       }
 
-      setImage(data.image ?? null);
       setMessage("Imagen subida correctamente.");
+      await loadImages();
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -75,6 +116,49 @@ export default function ProductImageManagement({
       );
     } finally {
       setUploading(false);
+    }
+  }
+
+  async function handleDelete(image: UploadedImage) {
+    const confirmed = window.confirm(
+      `¿Seguro que deseas eliminar esta imagen de "${productName}"?`,
+    );
+
+    if (!confirmed) {
+      return;
+    }
+
+    setMessage("");
+    setDeletingImageId(image.id);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products/${productId}/images/${image.id}`,
+        {
+          method: "DELETE",
+        },
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ??
+            data.error ??
+            "No se pudo eliminar la imagen.",
+        );
+      }
+
+      setMessage("Imagen eliminada correctamente.");
+      await loadImages();
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "No se pudo eliminar la imagen.",
+      );
+    } finally {
+      setDeletingImageId(null);
     }
   }
 
@@ -96,10 +180,14 @@ export default function ProductImageManagement({
         <button
           type="button"
           onClick={openFileSelector}
-          disabled={uploading}
+          disabled={uploading || images.length >= 10}
           className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
         >
-          {uploading ? "Procesando..." : "Subir imagen"}
+          {uploading
+            ? "Procesando..."
+            : images.length >= 10
+              ? "Límite alcanzado"
+              : "Subir imagen"}
         </button>
       </div>
 
@@ -115,23 +203,51 @@ export default function ProductImageManagement({
         <p className="mt-3 text-sm">{message}</p>
       )}
 
-      {image?.public_url && (
-        <div className="mt-4">
-          <Image
-  src={image.public_url}
-  alt={productName}
-  width={160}
-  height={160}
-  className="h-40 w-40 rounded-md border object-cover"
-/>
+      {loadingImages ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Cargando imágenes...
+        </p>
+      ) : images.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          Este producto todavía no tiene imágenes.
+        </p>
+      ) : (
+        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {images.map((image) => (
+            <div
+              key={image.id}
+              className="rounded-md border p-3"
+            >
+              {image.public_url && (
+                <Image
+                  src={image.public_url}
+                  alt={productName}
+                  width={320}
+                  height={320}
+                  className="aspect-square w-full rounded-md object-cover"
+                />
+              )}
 
-          <p className="mt-2 text-xs text-muted-foreground">
-            {image.width ?? "?"} × {image.height ?? "?"} px
-            {" · "}
-            {image.file_size_bytes
-              ? `${Math.round(image.file_size_bytes / 1024)} KB`
-              : "tamaño desconocido"}
-          </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                {image.width ?? "?"} × {image.height ?? "?"} px
+                {" · "}
+                {image.file_size_bytes
+                  ? `${Math.round(image.file_size_bytes / 1024)} KB`
+                  : "tamaño desconocido"}
+              </p>
+
+              <button
+                type="button"
+                onClick={() => void handleDelete(image)}
+                disabled={deletingImageId === image.id}
+                className="mt-3 w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+              >
+                {deletingImageId === image.id
+                  ? "Eliminando..."
+                  : "Eliminar"}
+              </button>
+            </div>
+          ))}
         </div>
       )}
     </div>

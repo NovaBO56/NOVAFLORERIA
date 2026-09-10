@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import ProductImageManagement from "@/components/admin/product-image-management";
+import ProductComponentManagement from "@/components/admin/product-component-management";
 type Category = {
   id: string;
   name: string;
@@ -666,6 +667,9 @@ useEffect(() => {
                 <ProductImageManagement
   productId={product.id}
   productName={product.name}
+/>
+<ProductComponentManagement
+  productId={product.id}
 />
               </article>
             ))}

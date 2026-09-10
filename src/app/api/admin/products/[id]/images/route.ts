@@ -1,4 +1,3 @@
-
 import { NextResponse } from "next/server";
 import sharp from "sharp";
 import { requireAdmin } from "@/lib/auth/permissions";
@@ -22,6 +21,108 @@ const ALLOWED_MIME_TYPES = [
 type RouteContext = {
   params: Promise<{ id: string }>;
 };
+
+const IMAGE_SELECT =
+  "id, product_id, storage_path, public_url, alt_text, sort_order, mime_type, width, height, file_size_bytes, created_at";
+
+export async function GET(
+  _request: Request,
+  context: RouteContext,
+) {
+  try {
+    await requireAdmin();
+
+    const { id } = await context.params;
+
+    if (!id) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "El ID del producto es obligatorio.",
+        },
+        { status: 400 },
+      );
+    }
+
+    const supabase = await createClient();
+
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("id")
+      .eq("id", id)
+      .maybeSingle();
+
+    if (productError) {
+      console.error(
+        "Error verificando producto:",
+        productError,
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No se pudo verificar el producto.",
+        },
+        { status: 500 },
+      );
+    }
+
+    if (!product) {
+      return NextResponse.json(
+        {
+          success: false,
+          message: "El producto no existe.",
+        },
+        { status: 404 },
+      );
+    }
+
+    const { data: images, error: imagesError } = await supabase
+      .from("product_images")
+      .select(IMAGE_SELECT)
+      .eq("product_id", id)
+      .order("sort_order", { ascending: true })
+      .order("created_at", { ascending: true });
+
+    if (imagesError) {
+      console.error(
+        "Error cargando imágenes:",
+        imagesError,
+      );
+
+      return NextResponse.json(
+        {
+          success: false,
+          message: "No se pudieron cargar las imágenes.",
+        },
+        { status: 500 },
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      images: images ?? [],
+    });
+  } catch (error) {
+    console.error(
+      "Error inesperado cargando imágenes:",
+      error,
+    );
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : "No se pudieron cargar las imágenes.";
+
+    return NextResponse.json(
+      {
+        success: false,
+        message,
+      },
+      { status: 403 },
+    );
+  }
+}
 
 export async function POST(
   request: Request,
@@ -259,9 +360,7 @@ export async function POST(
         height,
         file_size_bytes: processedBuffer.length,
       })
-      .select(
-        "id, product_id, storage_path, public_url, alt_text, sort_order, mime_type, width, height, file_size_bytes, created_at",
-      )
+      .select(IMAGE_SELECT)
       .single();
 
     if (imageError) {
