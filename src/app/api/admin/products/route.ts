@@ -1,7 +1,7 @@
-
 import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { createProductSchema } from "@/validations/products";
 
 const productSelect =
   "id, name, description, price, category_id, occasion, season_id, is_featured, is_available, is_sold_out, catalog_order, is_active, created_at, updated_at";
@@ -9,7 +9,6 @@ const productSelect =
 export async function GET() {
   try {
     await requireEmployeeOrAdmin();
-
     const supabase = await createClient();
 
     const { data, error } = await supabase
@@ -20,33 +19,16 @@ export async function GET() {
 
     if (error) {
       console.error("Error obteniendo productos:", error);
-
       return NextResponse.json(
-        {
-          success: false,
-          message: "No se pudieron obtener los productos.",
-        },
+        { success: false, message: "No se pudieron obtener los productos." },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({
-      success: true,
-      products: data,
-    });
+    return NextResponse.json({ success: true, products: data });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Acceso no autorizado.";
-
-    return NextResponse.json(
-      {
-        success: false,
-        message,
-      },
-      { status: 403 },
-    );
+    const message = error instanceof Error ? error.message : "Acceso no autorizado.";
+    return NextResponse.json({ success: false, message }, { status: 403 });
   }
 }
 
@@ -55,177 +37,46 @@ export async function POST(request: Request) {
     await requireEmployeeOrAdmin();
 
     const body = await request.json();
+    const result = createProductSchema.safeParse(body);
 
-    const name =
-      typeof body.name === "string" ? body.name.trim() : "";
-
-    const description =
-      typeof body.description === "string"
-        ? body.description.trim()
-        : "";
-
-    const occasion =
-      typeof body.occasion === "string"
-        ? body.occasion.trim()
-        : "";
-
-    const price =
-      typeof body.price === "number"
-        ? body.price
-        : Number(body.price);
-
-    const catalogOrder =
-      typeof body.catalog_order === "number"
-        ? body.catalog_order
-        : Number(body.catalog_order ?? 0);
-
-    const categoryId =
-      typeof body.category_id === "string" &&
-      body.category_id
-        ? body.category_id
-        : null;
-
-    const seasonId =
-      typeof body.season_id === "string" &&
-      body.season_id
-        ? body.season_id
-        : null;
-
-    const isFeatured =
-      typeof body.is_featured === "boolean"
-        ? body.is_featured
-        : false;
-
-    const isAvailable =
-      typeof body.is_available === "boolean"
-        ? body.is_available
-        : true;
-
-    const isSoldOut =
-      typeof body.is_sold_out === "boolean"
-        ? body.is_sold_out
-        : false;
-
-    const isActive =
-      typeof body.is_active === "boolean"
-        ? body.is_active
-        : true;
-
-    if (!name) {
+    if (!result.success) {
       return NextResponse.json(
-        {
-          success: false,
-          message: "El nombre del producto es obligatorio.",
-        },
+        { success: false, message: result.error.issues[0]?.message ?? "Datos de producto inválidos." },
         { status: 400 },
       );
     }
 
-    if (name.length > 200) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "El nombre del producto es demasiado largo.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (description.length > 2000) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "La descripción es demasiado larga.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (occasion.length > 120) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "La ocasión es demasiado larga.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (!Number.isFinite(price) || price < 0) {
-      return NextResponse.json(
-        {
-          success: false,
-          message: "El precio debe ser un número mayor o igual a cero.",
-        },
-        { status: 400 },
-      );
-    }
-
-    if (
-      !Number.isInteger(catalogOrder) ||
-      catalogOrder < 0
-    ) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "El orden del catálogo debe ser un número entero mayor o igual a cero.",
-        },
-        { status: 400 },
-      );
-    }
+    const {
+      name, description, price, category_id, occasion, season_id,
+      is_featured, is_available, is_sold_out, catalog_order, is_active,
+    } = result.data;
 
     const supabase = await createClient();
-
     const { data, error } = await supabase
       .from("products")
       .insert({
         name,
         description: description || null,
         price,
-        category_id: categoryId,
+        category_id: category_id || null,
         occasion: occasion || null,
-        season_id: seasonId,
-        is_featured: isFeatured,
-        is_available: isAvailable,
-        is_sold_out: isSoldOut,
-        catalog_order: catalogOrder,
-        is_active: isActive,
+        season_id: season_id || null,
+        is_featured, is_available, is_sold_out, catalog_order, is_active,
       })
       .select(productSelect)
       .single();
 
     if (error) {
       console.error("Error creando producto:", error);
-
       return NextResponse.json(
-        {
-          success: false,
-          message: "No se pudo crear el producto.",
-        },
+        { success: false, message: "No se pudo crear el producto." },
         { status: 500 },
       );
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        product: data,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, product: data }, { status: 201 });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "No se pudo crear el producto.";
-
-    return NextResponse.json(
-      {
-        success: false,
-        message,
-      },
-      { status: 403 },
-    );
+    const message = error instanceof Error ? error.message : "No se pudo crear el producto.";
+    return NextResponse.json({ success: false, message }, { status: 403 });
   }
 }

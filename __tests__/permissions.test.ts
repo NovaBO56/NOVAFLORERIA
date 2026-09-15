@@ -1,27 +1,11 @@
-
 import { describe, expect, it } from "vitest";
+import {
+  canUseAdminFunctions,
+  canUseEmployeeFunctions,
+  type AuthProfile,
+} from "@/lib/auth/permissions";
 
-type UserRole = "administrador" | "empleado";
-
-type AuthProfile = {
-  id: string;
-  full_name: string | null;
-  role: UserRole;
-  is_active: boolean;
-};
-
-function canUseAdminFunctions(profile: AuthProfile): boolean {
-  return profile.is_active && profile.role === "administrador";
-}
-
-function canUseEmployeeFunctions(profile: AuthProfile): boolean {
-  return (
-    profile.is_active &&
-    (profile.role === "empleado" || profile.role === "administrador")
-  );
-}
-
-describe("Permisos por rol", () => {
+describe("Permisos por rol (código real de producción)", () => {
   const administrador: AuthProfile = {
     id: "admin-test",
     full_name: "Administrador de prueba",
@@ -43,11 +27,18 @@ describe("Permisos por rol", () => {
     is_active: false,
   };
 
+  const adminInactivo: AuthProfile = {
+    id: "inactive-admin-test",
+    full_name: "Administrador inactivo",
+    role: "administrador",
+    is_active: false,
+  };
+
   it("el administrador activo puede usar funciones administrativas", () => {
     expect(canUseAdminFunctions(administrador)).toBe(true);
   });
 
-  it("el empleado activo no puede usar funciones administrativas", () => {
+  it("el empleado activo NO puede usar funciones administrativas", () => {
     expect(canUseAdminFunctions(empleado)).toBe(false);
   });
 
@@ -59,11 +50,19 @@ describe("Permisos por rol", () => {
     expect(canUseEmployeeFunctions(administrador)).toBe(true);
   });
 
-  it("un usuario inactivo no puede usar funciones normales", () => {
+  it("un empleado inactivo NO puede usar funciones normales", () => {
     expect(canUseEmployeeFunctions(empleadoInactivo)).toBe(false);
   });
 
-  it("un usuario inactivo no puede usar funciones administrativas", () => {
+  it("un empleado inactivo NO puede usar funciones administrativas", () => {
     expect(canUseAdminFunctions(empleadoInactivo)).toBe(false);
+  });
+
+  it("un administrador inactivo NO puede usar funciones administrativas", () => {
+    expect(canUseAdminFunctions(adminInactivo)).toBe(false);
+  });
+
+  it("un administrador inactivo NO puede usar funciones normales", () => {
+    expect(canUseEmployeeFunctions(adminInactivo)).toBe(false);
   });
 });

@@ -1,4 +1,3 @@
-
 import { createClient } from "@/lib/supabase/server";
 
 export type UserRole = "administrador" | "empleado";
@@ -9,6 +8,22 @@ export type AuthProfile = {
   role: UserRole;
   is_active: boolean;
 };
+
+/**
+ * Funciones puras de permisos. Úsalas tanto en la app como en los
+ * tests: si cambia la regla de negocio, cambia en un solo lugar y
+ * los tests lo detectan.
+ */
+export function canUseAdminFunctions(profile: AuthProfile): boolean {
+  return profile.is_active && profile.role === "administrador";
+}
+
+export function canUseEmployeeFunctions(profile: AuthProfile): boolean {
+  return (
+    profile.is_active &&
+    (profile.role === "empleado" || profile.role === "administrador")
+  );
+}
 
 export async function getCurrentUserProfile(): Promise<AuthProfile | null> {
   const supabase = await createClient();
@@ -52,7 +67,7 @@ export async function requireActiveUser(): Promise<AuthProfile> {
 export async function requireAdmin(): Promise<AuthProfile> {
   const profile = await requireActiveUser();
 
-  if (profile.role !== "administrador") {
+  if (!canUseAdminFunctions(profile)) {
     throw new Error("Acceso exclusivo para administradores.");
   }
 
@@ -62,12 +77,9 @@ export async function requireAdmin(): Promise<AuthProfile> {
 export async function requireEmployeeOrAdmin(): Promise<AuthProfile> {
   const profile = await requireActiveUser();
 
-  if (
-    profile.role !== "empleado" &&
-    profile.role !== "administrador"
-  ) {
+  if (!canUseEmployeeFunctions(profile)) {
     throw new Error("Rol de usuario no válido.");
   }
 
   return profile;
-}
+} 
