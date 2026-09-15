@@ -1,9 +1,11 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 const BUCKET_NAME = "product-images";
+
+
 
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_IMAGES_PER_PRODUCT = 10;
@@ -30,7 +32,7 @@ export async function GET(
   context: RouteContext,
 ) {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
 
     const { id } = await context.params;
 
@@ -129,7 +131,7 @@ export async function POST(
   context: RouteContext,
 ) {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
 
     const { id } = await context.params;
 

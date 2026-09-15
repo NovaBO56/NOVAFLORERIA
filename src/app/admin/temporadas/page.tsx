@@ -1,11 +1,11 @@
 
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import SeasonManagement from "@/components/admin/season-management";
 
 export default async function AdminSeasonsPage() {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
   } catch {
     redirect("/");
   }

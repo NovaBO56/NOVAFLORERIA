@@ -1,10 +1,10 @@
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import CategoryManagement from "@/components/admin/category-management";
 
 export default async function AdminCategoriesPage() {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
   } catch {
     redirect("/");
   }

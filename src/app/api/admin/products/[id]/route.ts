@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = {
@@ -12,7 +12,7 @@ export async function PATCH(
   context: RouteContext,
 ) {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
 
     const { id } = await context.params;
 

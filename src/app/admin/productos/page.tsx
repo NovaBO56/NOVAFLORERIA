@@ -1,11 +1,11 @@
 
 import { redirect } from "next/navigation";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import ProductManagement from "@/components/admin/product-management";
 
 export default async function AdminProductsPage() {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
   } catch {
     redirect("/");
   }
