@@ -1,6 +1,6 @@
 
 import { NextResponse } from "next/server";
-import { requireAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 
 const productSelect =
@@ -8,7 +8,7 @@ const productSelect =
 
 export async function GET() {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
 
     const supabase = await createClient();
 
@@ -52,7 +52,7 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    await requireEmployeeOrAdmin();
 
     const body = await request.json();
 
