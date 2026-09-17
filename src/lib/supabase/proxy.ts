@@ -30,10 +30,18 @@ export async function updateSession(request: NextRequest) {
     console.error("Error verificando sesión:", error);
   }
 
-  const isLoginPage = request.nextUrl.pathname === "/login";
+    const isLoginPage = request.nextUrl.pathname === "/login";
   const isAuthenticated = Boolean(data?.claims?.sub);
 
-  if (!isAuthenticated && !isLoginPage) {
+  // Rutas públicas: el checkout de pedidos no requiere sesión
+  // (el cliente de la florería no tiene cuenta). La seguridad real
+  // de esa ruta vive en la función create_order() de Postgres, no aquí.
+  const publicApiRoutes = ["/api/orders"];
+  const isPublicApiRoute = publicApiRoutes.some(
+    (route) => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`),
+  );
+
+  if (!isAuthenticated && !isLoginPage && !isPublicApiRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
