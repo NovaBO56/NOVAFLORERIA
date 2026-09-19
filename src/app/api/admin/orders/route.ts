@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 const ORDER_SELECT = `
   id, order_number, customer_id, order_type, status, subtotal, discount_total, total,
   customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason,
-  created_at, updated_at,
+  deleted_at, created_at, updated_at,
   customer:customers (id, name, phone, whatsapp)
 `;
 
