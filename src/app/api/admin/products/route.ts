@@ -6,16 +6,25 @@ import { createProductSchema } from "@/validations/products";
 const productSelect =
   "id, name, description, price, category_id, occasion, season_id, is_featured, is_available, is_sold_out, catalog_order, is_active, created_at, updated_at";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireEmployeeOrAdmin();
     const supabase = await createClient();
 
-    const { data, error } = await supabase
+    const { searchParams } = new URL(request.url);
+    const search = searchParams.get("search");
+
+    let query = supabase
       .from("products")
       .select(productSelect)
       .order("catalog_order", { ascending: true })
       .order("name", { ascending: true });
+
+    if (search) {
+      query = query.ilike("name", `%${search}%`);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       console.error("Error obteniendo productos:", error);
