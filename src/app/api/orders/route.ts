@@ -9,13 +9,24 @@ export async function POST(request: Request) {
 
     if (!result.success) {
       return NextResponse.json(
-        { success: false, message: result.error.issues[0]?.message ?? "Datos de pedido inválidos." },
+        {
+          success: false,
+          message:
+            result.error.issues[0]?.message ?? "Datos de pedido inválidos.",
+        },
         { status: 400 },
       );
     }
 
-    const { customer_name, customer_phone, customer_whatsapp, items, customer_message, idempotency_key } =
-      result.data;
+    const {
+      customer_name,
+      customer_phone,
+      customer_whatsapp,
+      items,
+      customer_message,
+      idempotency_key,
+      promotion_id,
+    } = result.data;
 
     const supabase = await createClient();
 
@@ -26,22 +37,33 @@ export async function POST(request: Request) {
       p_items: items,
       p_customer_message: customer_message || null,
       p_idempotency_key: idempotency_key,
+      p_promotion_id: promotion_id || null,
     });
 
     if (error) {
       // P0001 = excepción controlada de la función (stock insuficiente,
       // producto no disponible, etc.) — el mensaje ya es claro para el cliente.
       if (error.code === "P0001") {
-        return NextResponse.json({ success: false, message: error.message }, { status: 400 });
+        return NextResponse.json(
+          { success: false, message: error.message },
+          { status: 400 },
+        );
       }
+
       console.error("Error creando pedido:", error);
       return NextResponse.json(
-        { success: false, message: "No se pudo crear el pedido. Intenta de nuevo." },
+        {
+          success: false,
+          message: "No se pudo crear el pedido. Intenta de nuevo.",
+        },
         { status: 500 },
       );
     }
 
-    return NextResponse.json({ success: true, order_id: orderId }, { status: 201 });
+    return NextResponse.json(
+      { success: true, order_id: orderId },
+      { status: 201 },
+    );
   } catch {
     return NextResponse.json(
       { success: false, message: "No se pudo procesar el pedido." },

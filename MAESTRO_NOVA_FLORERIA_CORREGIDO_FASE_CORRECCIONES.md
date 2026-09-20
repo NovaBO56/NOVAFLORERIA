@@ -1,7 +1,3 @@
-
-
-
-
 Y mantengo nuestra regla: \*\*solo trabajamos una fase a la vez y no
 
 avanzamos hasta que tú la confirmes.\*\*
@@ -411,13 +407,19 @@ Puede:
 **### Empleado**
 
 Puede realizar prácticamente **\*\*todas las operaciones normales\*\***, igual
+
 que el administrador.
 
 **Esto incluye la gestión normal del catálogo de FASE 2:**
+
 - Crear y editar productos.
+
 - Gestionar categorías.
+
 - Gestionar temporadas.
+
 - Gestionar imágenes de productos.
+
 - Gestionar la estructura de productos compuestos/combos.
 
 No puede:
@@ -529,12 +531,17 @@ Preparar la estructura para productos compuestos.
 **### Regla de permisos de catálogo**
 
 La gestión normal del catálogo puede ser realizada por:
+
 - **Administrador:** ✅
+
 - **Empleado:** ✅
+
 - **Anónimo/público:** ❌ para operaciones de administración
 
 Las políticas de RLS y la autorización de las APIs deben respetar exactamente esta regla.
+
 Las funciones exclusivamente administrativas de FASE 1 (usuarios, roles/permisos,
+
 configuración crítica y auditoría protegida) siguen siendo exclusivas del administrador.
 
 **------------------------------------------------------------------------**

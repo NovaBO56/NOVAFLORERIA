@@ -3,9 +3,10 @@ import { createPhysicalSaleSchema, advanceOrderStatusSchema } from "@/validation
 
 describe("Validaciones de ventas físicas (Zod real de producción)", () => {
   const validProductId = "e71f5830-6516-45cd-968a-fe61ca62a524";
+  const validPromotionId = "93eca639-f2b5-4d91-9e43-9623fc8417d5";
 
   describe("createPhysicalSaleSchema", () => {
-    it("acepta una venta válida mínima", () => {
+    it("acepta una venta válida mínima, sin descuento", () => {
       const result = createPhysicalSaleSchema.safeParse({
         items: [{ product_id: validProductId, quantity: 1 }],
         payment_method: "efectivo",
@@ -13,15 +14,43 @@ describe("Validaciones de ventas físicas (Zod real de producción)", () => {
       expect(result.success).toBe(true);
     });
 
-    it("usa 0 como descuento por defecto si no se envía", () => {
+    it("acepta una venta con promoción", () => {
       const result = createPhysicalSaleSchema.safeParse({
         items: [{ product_id: validProductId, quantity: 1 }],
+        promotion_id: validPromotionId,
         payment_method: "qr",
       });
       expect(result.success).toBe(true);
-      if (result.success) {
-        expect(result.data.discount_total).toBe(0);
-      }
+    });
+
+    it("acepta una venta con descuento manual y motivo", () => {
+      const result = createPhysicalSaleSchema.safeParse({
+        items: [{ product_id: validProductId, quantity: 1 }],
+        manual_discount_amount: 10,
+        manual_discount_reason: "Cliente frecuente",
+        payment_method: "efectivo",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("rechaza descuento manual SIN motivo", () => {
+      const result = createPhysicalSaleSchema.safeParse({
+        items: [{ product_id: validProductId, quantity: 1 }],
+        manual_discount_amount: 10,
+        payment_method: "efectivo",
+      });
+      expect(result.success).toBe(false);
+    });
+
+    it("rechaza usar promoción Y descuento manual al mismo tiempo", () => {
+      const result = createPhysicalSaleSchema.safeParse({
+        items: [{ product_id: validProductId, quantity: 1 }],
+        promotion_id: validPromotionId,
+        manual_discount_amount: 10,
+        manual_discount_reason: "Motivo",
+        payment_method: "efectivo",
+      });
+      expect(result.success).toBe(false);
     });
 
     it("rechaza sin items", () => {
@@ -37,10 +66,11 @@ describe("Validaciones de ventas físicas (Zod real de producción)", () => {
       expect(result.success).toBe(false);
     });
 
-    it("rechaza descuento negativo", () => {
+    it("rechaza monto de descuento manual negativo o cero", () => {
       const result = createPhysicalSaleSchema.safeParse({
         items: [{ product_id: validProductId, quantity: 1 }],
-        discount_total: -5,
+        manual_discount_amount: -5,
+        manual_discount_reason: "Motivo",
         payment_method: "efectivo",
       });
       expect(result.success).toBe(false);
