@@ -7,31 +7,22 @@ const saleItemSchema = z.object({
 
 export const createPhysicalSaleSchema = z
   .object({
-    items: z
-      .array(saleItemSchema)
-      .min(1, "La venta debe tener al menos un producto."),
+    items: z.array(saleItemSchema).min(1, "La venta debe tener al menos un producto."),
+    customer_id: z.string().uuid().optional().nullable(),
     promotion_id: z.string().uuid().optional().nullable(),
     manual_discount_amount: z.coerce.number().positive().optional().nullable(),
     manual_discount_reason: z.string().trim().max(500).optional().nullable(),
-    payment_method: z.enum(["qr", "efectivo"], {
-      message: "Método de pago no válido.",
-    }),
+    payment_method: z.enum(["qr", "efectivo"], { message: "Método de pago no válido." }),
   })
   .superRefine((data, ctx) => {
     if (data.promotion_id && data.manual_discount_amount) {
       ctx.addIssue({
         code: "custom",
         path: ["manual_discount_amount"],
-        message:
-          "No se puede usar una promoción y un descuento manual al mismo tiempo.",
+        message: "No se puede usar una promoción y un descuento manual al mismo tiempo.",
       });
     }
-
-    if (
-      data.manual_discount_amount &&
-      (!data.manual_discount_reason ||
-        data.manual_discount_reason.trim() === "")
-    ) {
+    if (data.manual_discount_amount && (!data.manual_discount_reason || data.manual_discount_reason.trim() === "")) {
       ctx.addIssue({
         code: "custom",
         path: ["manual_discount_reason"],

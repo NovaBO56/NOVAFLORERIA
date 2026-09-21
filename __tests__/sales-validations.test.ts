@@ -83,6 +83,23 @@ describe("Validaciones de ventas físicas (Zod real de producción)", () => {
       });
       expect(result.success).toBe(false);
     });
+
+    it("acepta venta con customer_id válido", () => {
+      const result = createPhysicalSaleSchema.safeParse({
+        items: [{ product_id: validProductId, quantity: 1 }],
+        customer_id: "93eca639-f2b5-4d91-9e43-9623fc8417d5",
+        payment_method: "efectivo",
+      });
+      expect(result.success).toBe(true);
+    });
+
+    it("acepta venta anónima sin customer_id", () => {
+      const result = createPhysicalSaleSchema.safeParse({
+        items: [{ product_id: validProductId, quantity: 1 }],
+        payment_method: "efectivo",
+      });
+      expect(result.success).toBe(true);
+    });
   });
 
   describe("advanceOrderStatusSchema", () => {

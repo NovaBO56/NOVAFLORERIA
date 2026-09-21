@@ -12,3 +12,14 @@ export const salesReportQuerySchema = z
     message: "'from' no puede ser posterior a 'to'.",
     path: ["to"],
   });
+
+export const productsSoldReportQuerySchema = z
+  .object({
+    from: dateOnly,
+    to: dateOnly,
+    format: z.enum(["json", "pdf"]).optional().default("json"),
+  })
+  .refine((data) => new Date(data.from) <= new Date(data.to), {
+    message: "'from' no puede ser posterior a 'to'.",
+    path: ["to"],
+  });
