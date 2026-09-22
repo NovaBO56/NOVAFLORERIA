@@ -36,7 +36,7 @@ export async function updateSession(request: NextRequest) {
   // Rutas públicas: el checkout de pedidos no requiere sesión
   // (el cliente de la florería no tiene cuenta). La seguridad real
   // de esa ruta vive en la función create_order() de Postgres, no aquí.
-  const publicApiRoutes = ["/api/orders", "/api/payment-qr", "/api/whatsapp-config"];
+  const publicApiRoutes = ["/api/orders", "/api/payment-qr", "/api/whatsapp-config", "/api/business-hours"];
 
   const isPublicApiRoute = publicApiRoutes.some(
     (route) => request.nextUrl.pathname === route || request.nextUrl.pathname.startsWith(`${route}/`),
