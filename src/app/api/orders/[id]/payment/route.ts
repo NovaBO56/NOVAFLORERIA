@@ -1,12 +1,18 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
-export async function POST(_request: Request, context: RouteContext) {
+export async function POST(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
     const supabase = await createClient();
+    const allowed = await checkRateLimit(supabase, request, "reportPayment");
+
+    if (!allowed) {
+      return rateLimitResponse();
+    }
 
     const { data, error } = await supabase.rpc("create_payment", {
       p_order_id: id,

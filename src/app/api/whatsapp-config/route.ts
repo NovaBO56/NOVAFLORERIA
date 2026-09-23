@@ -1,9 +1,19 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const supabase = await createClient();
+    const allowed = await checkRateLimit(
+      supabase,
+      request,
+      "getWhatsappConfig",
+    );
+
+    if (!allowed) {
+      return rateLimitResponse();
+    }
 
     const { data, error } = await supabase
       .from("whatsapp_config")

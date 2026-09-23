@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createOrderSchema } from "@/validations/orders";
+import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
+    const supabase = await createClient();
+    const allowed = await checkRateLimit(supabase, request, "createOrder");
+
+    if (!allowed) {
+      return rateLimitResponse();
+    }
+
     const body = await request.json();
     const result = createOrderSchema.safeParse(body);
 
@@ -27,8 +35,6 @@ export async function POST(request: Request) {
       idempotency_key,
       promotion_id,
     } = result.data;
-
-    const supabase = await createClient();
 
     const { data: orderId, error } = await supabase.rpc("create_order", {
       p_customer_name: customer_name,
