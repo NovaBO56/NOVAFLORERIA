@@ -43,7 +43,18 @@ export async function updateSession(request: NextRequest) {
   );
 
   if (!isAuthenticated && !isLoginPage && !isPublicApiRoute) {
-    return NextResponse.redirect(new URL("/login", request.url));
+    const loginUrl = new URL("/login", request.url);
+
+    // Fase 15 §4.1: al expulsar de una ruta /admin sin sesión, se conserva
+    // la URL a la que se quería volver (?redirect=/admin/productos).
+    if (request.nextUrl.pathname.startsWith("/admin")) {
+      loginUrl.searchParams.set(
+        "redirect",
+        `${request.nextUrl.pathname}${request.nextUrl.search}`,
+      );
+    }
+
+    return NextResponse.redirect(loginUrl);
   }
 
   if (isAuthenticated && isLoginPage) {

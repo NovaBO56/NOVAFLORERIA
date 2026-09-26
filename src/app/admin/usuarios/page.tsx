@@ -1,14 +1,14 @@
-import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/auth/permissions";
 import UserManagement from "@/components/admin/user-management";
 import CreateUserForm from "@/components/admin/create-user-form";
+import { AccessDenied } from "@/components/admin/layout/access-denied";
 import SystemSettings from "@/components/admin/system-settings";
 
 export default async function AdminUsersPage() {
   try {
     await requireAdmin();
   } catch {
-    redirect("/");
+    return <AccessDenied />;
   }
 
   return (
