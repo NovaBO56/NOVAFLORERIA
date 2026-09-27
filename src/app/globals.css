@@ -7,10 +7,14 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-  --font-heading: var(--font-sans);
-  --font-display: var(--font-fraunces), Georgia, serif;
+
+--font-sans: var(--font-geist-sans);
+
+--font-mono: var(--font-geist-mono);
+
+--font-heading: var(--font-geist-sans);
+--font-display: var(--font-dancing-script);
+
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -19,110 +23,166 @@
   --color-sidebar-primary: var(--sidebar-primary);
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-sidebar: var(--sidebar);
+
   --color-chart-5: var(--chart-5);
   --color-chart-4: var(--chart-4);
   --color-chart-3: var(--chart-3);
   --color-chart-2: var(--chart-2);
   --color-chart-1: var(--chart-1);
+
   --color-ring: var(--ring);
   --color-input: var(--input);
   --color-border: var(--border);
   --color-destructive: var(--destructive);
+
   --color-accent-foreground: var(--accent-foreground);
   --color-accent: var(--accent);
+
   --color-muted-foreground: var(--muted-foreground);
   --color-muted: var(--muted);
+
   --color-secondary-foreground: var(--secondary-foreground);
   --color-secondary: var(--secondary);
+
   --color-primary-foreground: var(--primary-foreground);
   --color-primary: var(--primary);
+
   --color-popover-foreground: var(--popover-foreground);
   --color-popover: var(--popover);
+
   --color-card-foreground: var(--card-foreground);
   --color-card: var(--card);
+
+  /* NOVA — sistema visual */
   --color-brand: var(--brand);
   --color-brand-hover: var(--brand-hover);
   --color-brand-soft: var(--brand-soft);
+
   --color-bg-public: var(--bg-public);
   --color-bg-admin: var(--bg-admin);
   --color-surface: var(--surface);
+
   --color-text: var(--text);
   --color-text-secondary: var(--text-secondary);
+
   --color-border-decorative: var(--border-decorative);
   --color-border-field: var(--border-field);
+
   --color-accent-terracota: var(--accent-terracota);
   --color-leaf: var(--leaf);
   --color-danger: var(--danger);
+
   --color-admin-wash-start: var(--admin-wash-start);
   --color-admin-wash-end: var(--admin-wash-end);
   --color-header-glass: var(--header-glass);
+
   --radius-sm: 0.5rem;
   --radius-md: 0.75rem;
   --radius-lg: 1rem;
+  --radius-xl: 1.25rem;
+  --radius-2xl: 1.5rem;
+  --radius-3xl: 1.75rem;
+  --radius-4xl: 2rem;
   --radius-full: 9999px;
-  --radius-xl: calc(var(--radius) * 1.4);
-  --radius-2xl: calc(var(--radius) * 1.8);
-  --radius-3xl: calc(var(--radius) * 2.2);
-  --radius-4xl: calc(var(--radius) * 2.6);
 }
 
 @theme {
-  --shadow-card: 0 1px 2px rgb(30 24 38 / 0.04), 0 4px 12px rgb(30 24 38 / 0.06);
-  --shadow-card-hover: 0 1px 2px rgb(30 24 38 / 0.056), 0 4px 12px rgb(30 24 38 / 0.084);
-  --shadow-overlay: 0 8px 24px rgb(30 24 38 / 0.12);
+  --shadow-card:
+    0 1px 2px rgb(36 26 46 / 0.035),
+    0 4px 14px rgb(36 26 46 / 0.055);
+
+  --shadow-card-hover:
+    0 2px 4px rgb(36 26 46 / 0.045),
+    0 8px 22px rgb(36 26 46 / 0.075);
+
+  --shadow-overlay:
+    0 12px 32px rgb(36 26 46 / 0.14);
 }
 
-:root {
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+/* =========================================================
+   NOVA FLORERÍA — C MODERNO
+   ========================================================= */
 
-  /* Design System — Fase 16 · Paso 2 (nombres y valores aprobados). Base = voz pública */
-  --brand: #6B3FA0;
-  --brand-hover: #58318A;
-  --brand-soft: #F4ECF9;
-  --bg-public: #FCFAFD;
-  --bg-admin: #F8F6FA;
-  --surface: #FFFFFF;
-  --text: #241A2E;
-  --text-secondary: #6A5F73;
-  --border-decorative: #E6DCEE;
-  --border-field: #8F8299;
-  --accent-terracota: #A94E1F;
-  --leaf: #3F6B4F;
-  --danger: #B42318;
-  --admin-wash-start: #F1EAF8;
-  --admin-wash-end: #F8F6FA;
-  --header-glass: rgb(255 255 255 / 0.92);
+:root {
+  /* shadcn / Tailwind base */
+  --background: #faf8fc;
+  --foreground: #241a2e;
+
+  --card: #ffffff;
+  --card-foreground: #241a2e;
+
+  --popover: #ffffff;
+  --popover-foreground: #241a2e;
+
+  --primary: #6b3fa0;
+  --primary-foreground: #ffffff;
+
+  --secondary: #f4ecf9;
+  --secondary-foreground: #4f2e76;
+
+  --muted: #f3f0f5;
+  --muted-foreground: #6a5f73;
+
+  --accent: #f4ecf9;
+  --accent-foreground: #4f2e76;
+
+  --destructive: #b42318;
+
+  --border: #e6dcee;
+  --input: #d9cfdf;
+
+  --ring: #8f62bd;
+
+  /* Charts */
+  --chart-1: #6b3fa0;
+  --chart-2: #3f6b4f;
+  --chart-3: #a94e1f;
+  --chart-4: #b98900;
+  --chart-5: #8f62bd;
+
+  --radius: 0.75rem;
+
+  /* Sidebar */
+  --sidebar: #ffffff;
+  --sidebar-foreground: #241a2e;
+  --sidebar-primary: #6b3fa0;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f4ecf9;
+  --sidebar-accent-foreground: #4f2e76;
+  --sidebar-border: #e6dcee;
+  --sidebar-ring: #8f62bd;
+
+  /* =======================================================
+     NOVA — C MODERNO
+     ======================================================= */
+
+  --brand: #6b3fa0;
+  --brand-hover: #58318a;
+  --brand-soft: #f4ecf9;
+
+  --bg-public: #fcfafd;
+  --bg-admin: #f7f4f9;
+
+  --surface: #ffffff;
+
+  --text: #241a2e;
+  --text-secondary: #6a5f73;
+
+  --border-decorative: #e6dcee;
+  --border-field: #9a8da3;
+
+  --accent-terracota: #a94e1f;
+  --leaf: #3f6b4f;
+  --danger: #b42318;
+
+  --admin-wash-start: #f1eaf8;
+  --admin-wash-end: #f7f4f9;
+
+  /* Conservado por compatibilidad.
+     El nuevo diseño no depende de glassmorphism. */
+  --header-glass: rgb(255 255 255 / 0.96);
+
+  /* Espaciado */
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -134,51 +194,116 @@
   --space-24: 96px;
 }
 
+/* =========================================================
+   DARK
+   ========================================================= */
+
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.87 0 0);
-  --chart-2: oklch(0.556 0 0);
-  --chart-3: oklch(0.439 0 0);
-  --chart-4: oklch(0.371 0 0);
-  --chart-5: oklch(0.269 0 0);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --background: #17131b;
+  --foreground: #f8f5fa;
+
+  --card: #211c26;
+  --card-foreground: #f8f5fa;
+
+  --popover: #211c26;
+  --popover-foreground: #f8f5fa;
+
+  --primary: #9a6bc5;
+  --primary-foreground: #1b1322;
+
+  --secondary: #30243a;
+  --secondary-foreground: #f4ecf9;
+
+  --muted: #2b252f;
+  --muted-foreground: #b9afbf;
+
+  --accent: #30243a;
+  --accent-foreground: #f4ecf9;
+
+  --destructive: #ef756b;
+
+  --border: rgb(255 255 255 / 0.12);
+  --input: rgb(255 255 255 / 0.16);
+
+  --ring: #9a6bc5;
+
+  --chart-1: #9a6bc5;
+  --chart-2: #72a681;
+  --chart-3: #d87948;
+  --chart-4: #d5ad42;
+  --chart-5: #b28bd3;
+
+  --sidebar: #211c26;
+  --sidebar-foreground: #f8f5fa;
+  --sidebar-primary: #9a6bc5;
+  --sidebar-primary-foreground: #1b1322;
+  --sidebar-accent: #30243a;
+  --sidebar-accent-foreground: #f4ecf9;
+  --sidebar-border: rgb(255 255 255 / 0.12);
+  --sidebar-ring: #9a6bc5;
+
+  --brand: #9a6bc5;
+  --brand-hover: #b28bd3;
+  --brand-soft: #30243a;
+
+  --bg-public: #19151d;
+  --bg-admin: #17131b;
+
+  --surface: #211c26;
+
+  --text: #f8f5fa;
+  --text-secondary: #b9afbf;
+
+  --border-decorative: rgb(255 255 255 / 0.12);
+  --border-field: #8d8094;
+
+  --accent-terracota: #d87948;
+  --leaf: #72a681;
+  --danger: #ef756b;
+
+  --admin-wash-start: #211c26;
+  --admin-wash-end: #17131b;
+
+  --header-glass: rgb(33 28 38 / 0.96);
 }
+
+/* =========================================================
+   BASE
+   ========================================================= */
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
-  body {
-    @apply bg-background text-foreground;
-  }
+
   html {
     @apply font-sans;
   }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
+  ::selection {
+    background: var(--brand-soft);
+    color: var(--brand-hover);
+  }
 }
+
+/* =========================================================
+   PUBLIC
+   ========================================================= */
 
 @layer base {
   .theme-public {
@@ -187,26 +312,133 @@
     font-size: 1rem;
     line-height: 1.6;
   }
-  .theme-public :is(h1, h2, h3) {
-    font-family: var(--font-fraunces), Georgia, serif;
-  }
-  .theme-public h1 { font-size: 2rem; line-height: 1.15; font-weight: 600; }
-  .theme-public h2 { font-size: 1.5rem; line-height: 1.2; font-weight: 500; }
-  .theme-public h3 { font-size: 1.25rem; line-height: 1.25; font-weight: 500; }
 
+  .theme-public :is(h1, h2, h3) {
+    font-family:
+      var(--font-geist-sans),
+      ui-sans-serif,
+      system-ui,
+      sans-serif;
+    color: var(--text);
+  }
+
+  .theme-public h1 {
+    font-size: 2rem;
+    line-height: 1.15;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+
+  .theme-public h2 {
+    font-size: 1.5rem;
+    line-height: 1.2;
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .theme-public h3 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    font-weight: 600;
+  }
+}
+
+/* =========================================================
+   ADMIN — C MODERNO
+   ========================================================= */
+
+@layer base {
   .theme-admin {
-    --text: #1E1826;
-    --text-secondary: #665B70;
-    --border-field: #8C8096;
+    --text: #241a2e;
+    --text-secondary: #6a5f73;
+    --border-field: #9a8da3;
+
     background-color: var(--bg-admin);
     color: var(--text);
+
     font-size: 0.875rem;
     line-height: 1.5;
+
+    min-height: 100vh;
   }
-  .theme-admin :is(h1, h2, h3) {
-    font-family: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+
+  .theme-admin :is(h1, h2, h3, h4) {
+    font-family:
+      var(--font-geist-sans),
+      ui-sans-serif,
+      system-ui,
+      sans-serif;
+    color: var(--text);
   }
-  .theme-admin h1 { font-size: 1.75rem; line-height: 1.2; font-weight: 600; }
-  .theme-admin h2 { font-size: 1.25rem; line-height: 1.25; font-weight: 600; }
-  .theme-admin h3 { font-size: 1rem; line-height: 1.3; font-weight: 600; }
+
+  .theme-admin h1 {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    font-weight: 650;
+    letter-spacing: -0.025em;
+  }
+
+  .theme-admin h2 {
+    font-size: 1.25rem;
+    line-height: 1.25;
+    font-weight: 650;
+    letter-spacing: -0.015em;
+  }
+
+  .theme-admin h3 {
+    font-size: 1rem;
+    line-height: 1.3;
+    font-weight: 600;
+  }
+
+  .theme-admin h4 {
+    font-size: 0.9375rem;
+    line-height: 1.35;
+    font-weight: 600;
+  }
+}
+
+/* =========================================================
+   UTILIDADES VISUALES GLOBALES
+   ========================================================= */
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .tabular-nums {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* =========================================================
+   MOTION — SUTIL Y ACCESIBLE
+   ========================================================= */
+
+@media (prefers-reduced-motion: no-preference) {
+  .theme-admin a,
+  .theme-admin button,
+  .theme-admin input,
+  .theme-admin textarea,
+  .theme-admin select {
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
+
+  .theme-public a,
+  .theme-public button {
+    transition:
+      color 160ms ease,
+      background-color 160ms ease,
+      border-color 160ms ease,
+      box-shadow 160ms ease,
+      transform 160ms ease,
+      opacity 160ms ease;
+  }
 }

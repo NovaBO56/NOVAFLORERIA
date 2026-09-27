@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 type UserRole = "administrador" | "empleado";
 
@@ -45,13 +48,13 @@ export default function UserManagement() {
     }
   }
 
- useEffect(() => {
-  const timeoutId = setTimeout(() => {
-    void loadUsers();
-  }, 0);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void loadUsers();
+    }, 0);
 
-  return () => clearTimeout(timeoutId);
-}, []);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   async function updateStatus(user: User) {
     const response = await fetch(`/api/admin/users/${user.id}/status`, {
@@ -99,61 +102,44 @@ export default function UserManagement() {
   }
 
   if (loading) {
-    return <p>Cargando usuarios...</p>;
+    return <Card className="h-32 animate-pulse" />;
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border p-4">
-        <p className="text-sm">{error}</p>
-        <button
-          onClick={loadUsers}
-          className="mt-3 rounded-md border px-4 py-2"
-        >
+      <Card className="items-center gap-2 text-center">
+        <p className="text-text-secondary">{error}</p>
+        <Button variant="outline" onClick={() => void loadUsers()}>
           Reintentar
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {users.map((user) => (
-        <div
-          key={user.id}
-          className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
-        >
+        <Card key={user.id} className="flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
-            <p className="font-semibold">
-              {user.full_name ?? "Sin nombre"}
-            </p>
-
-            <p className="text-sm text-muted-foreground">
-              Rol: {user.role}
-            </p>
-
-            <p className="text-sm text-muted-foreground">
-              Estado: {user.is_active ? "Activo" : "Inactivo"}
-            </p>
+            <p className="font-semibold text-text">{user.full_name ?? "Sin nombre"}</p>
+            <p className="text-text-secondary">Rol: {user.role}</p>
+            <div className="mt-1">
+              <Badge variant={user.is_active ? "brand" : "outline"}>
+                {user.is_active ? "Activo" : "Inactivo"}
+              </Badge>
+            </div>
           </div>
 
           <div className="flex gap-2">
-            <button
-              onClick={() => updateStatus(user)}
-              className="rounded-md border px-3 py-2 text-sm"
-            >
+            <Button size="sm" variant="outline" onClick={() => void updateStatus(user)}>
               {user.is_active ? "Desactivar" : "Activar"}
-            </button>
+            </Button>
 
-            <button
-              onClick={() => updateRole(user)}
-              className="rounded-md border px-3 py-2 text-sm"
-            >
-              Cambiar a{" "}
-              {user.role === "administrador" ? "empleado" : "administrador"}
-            </button>
+            <Button size="sm" variant="outline" onClick={() => void updateRole(user)}>
+              Cambiar a {user.role === "administrador" ? "empleado" : "administrador"}
+            </Button>
           </div>
-        </div>
+        </Card>
       ))}
     </div>
   );

@@ -1,4 +1,3 @@
-
 "use client";
 
 import {
@@ -6,6 +5,10 @@ import {
   useEffect,
   useState,
 } from "react";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, Input } from "@/components/ui/field";
 
 type Product = {
   id: string;
@@ -29,13 +32,15 @@ type ProductComponentManagementProps = {
   productId: string;
 };
 
+/** Estilo de un `<select>` nativo equivalente al de Input (Design System Fase 16). */
+const selectClassName =
+  "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
+
 export default function ProductComponentManagement({
   productId,
 }: ProductComponentManagementProps) {
   const [products, setProducts] = useState<Product[]>([]);
-  const [components, setComponents] = useState<
-    ProductComponent[]
-  >([]);
+ const [components, setComponents] = useState<ProductComponent[]>([]);
   const [componentProductId, setComponentProductId] =
     useState("");
   const [quantity, setQuantity] = useState("1");
@@ -225,125 +230,91 @@ export default function ProductComponentManagement({
   );
 
   return (
-    <section className="space-y-4 rounded-lg border p-4">
+    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4">
       <div>
-        <h3 className="text-lg font-semibold">
-          Componentes del producto
-        </h3>
-
-        <p className="text-sm text-muted-foreground">
-          Permite definir qué productos forman parte
-          de este producto compuesto.
+        <h4 className="font-medium text-text">Componentes del producto</h4>
+        <p className="text-text-secondary">
+          Permite definir qué productos forman parte de este producto compuesto.
         </p>
       </div>
 
-      {error && (
-        <p className="text-sm text-red-600">
-          {error}
-        </p>
-      )}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {message && <p className="text-sm text-leaf">{message}</p>}
 
-      {message && (
-        <p className="text-sm text-green-600">
-          {message}
-        </p>
-      )}
+      <div className="grid gap-3 md:grid-cols-[1fr_140px_auto] md:items-end">
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor={`component-product-${productId}`}
+            className="text-[13px] leading-[1.4] font-medium tracking-[0.02em] text-text uppercase"
+          >
+            Producto componente
+          </label>
+          <select
+            id={`component-product-${productId}`}
+            value={componentProductId}
+            onChange={(event) => setComponentProductId(event.target.value)}
+            disabled={saving || loading}
+            className={selectClassName}
+          >
+            <option value="">Seleccionar producto</option>
+            {availableProducts.map((product) => (
+              <option key={product.id} value={product.id}>
+                {product.name}
+              </option>
+            ))}
+          </select>
+        </div>
 
-      <div className="grid gap-3 md:grid-cols-[1fr_140px_auto]">
-        <select
-          value={componentProductId}
-          onChange={(event) =>
-            setComponentProductId(
-              event.target.value,
-            )
-          }
-          disabled={saving || loading}
-          className="rounded-md border px-3 py-2"
-        >
-          <option value="">
-            Seleccionar producto
-          </option>
+        <Field label="Cantidad">
+          <Input
+            type="number"
+            min="0.001"
+            step="0.001"
+            value={quantity}
+            onChange={(event) => setQuantity(event.target.value)}
+            disabled={saving || loading}
+            placeholder="Cantidad"
+          />
+        </Field>
 
-          {availableProducts.map((product) => (
-            <option
-              key={product.id}
-              value={product.id}
-            >
-              {product.name}
-            </option>
-          ))}
-        </select>
-
-        <input
-          type="number"
-          min="0.001"
-          step="0.001"
-          value={quantity}
-          onChange={(event) =>
-            setQuantity(event.target.value)
-          }
-          disabled={saving || loading}
-          className="rounded-md border px-3 py-2"
-          placeholder="Cantidad"
-        />
-
-        <button
+        <Button
           type="button"
-          onClick={() =>
-            void handleAddComponent()
-          }
-          disabled={saving || loading}
-          className="rounded-md bg-black px-4 py-2 text-white disabled:opacity-50"
+          onClick={() => void handleAddComponent()}
+          loading={saving}
+          loadingText="Agregando…"
+          disabled={loading}
         >
-          {saving ? "Agregando..." : "Agregar"}
-        </button>
+          Agregar
+        </Button>
       </div>
 
       {loading ? (
-        <p className="text-sm text-muted-foreground">
-          Cargando componentes...
-        </p>
+        <p className="text-text-secondary">Cargando componentes...</p>
       ) : components.length === 0 ? (
-        <p className="text-sm text-muted-foreground">
-          Este producto todavía no tiene
-          componentes.
-        </p>
+        <p className="text-text-secondary">Este producto todavía no tiene componentes.</p>
       ) : (
-        <div className="space-y-2">
+        <div className="flex flex-col gap-2">
           {components.map((component) => (
-            <div
-              key={component.id}
-              className="flex items-center justify-between gap-4 rounded-md border p-3"
-            >
+            <Card key={component.id} className="flex-row items-center justify-between gap-4 p-3">
               <div>
-                <p className="font-medium">
-                  {
-                    component.component_product
-                      .name
-                  }
-                </p>
-
-                <p className="text-sm text-muted-foreground">
-                  Cantidad: {component.quantity}
-                </p>
+                <p className="font-medium text-text">{component.component_product.name}</p>
+                <p className="text-text-secondary">Cantidad: {component.quantity}</p>
               </div>
 
-              <button
+              <Button
                 type="button"
-                onClick={() =>
-                  void handleDeleteComponent(
-                    component.id,
-                  )
-                }
+                variant="outline"
+                size="sm"
+                onClick={() => void handleDeleteComponent(component.id)}
                 disabled={saving}
-                className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
               >
+                <Trash2 aria-hidden="true" />
                 Eliminar
-              </button>
-            </div>
+              </Button>
+            </Card>
           ))}
         </div>
       )}
-    </section>
+    </div>
   );
 }

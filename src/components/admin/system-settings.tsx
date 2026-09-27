@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 type SystemSetting = {
   key: string;
@@ -40,13 +43,13 @@ export default function SystemSettings() {
     }
   }
 
- useEffect(() => {
-  const timeoutId = setTimeout(() => {
-    void loadSettings();
-  }, 0);
+  useEffect(() => {
+    const timeoutId = setTimeout(() => {
+      void loadSettings();
+    }, 0);
 
-  return () => clearTimeout(timeoutId);
-}, []);
+    return () => clearTimeout(timeoutId);
+  }, []);
 
   async function updateSetting(setting: SystemSetting) {
     const value = window.prompt(
@@ -94,60 +97,51 @@ export default function SystemSettings() {
   }
 
   if (loading) {
-    return <p>Cargando configuración...</p>;
+    return <Card className="h-32 animate-pulse" />;
   }
 
   if (error) {
     return (
-      <div className="rounded-lg border p-4">
-        <p className="text-sm">{error}</p>
-
-        <button
-          onClick={loadSettings}
-          className="mt-3 rounded-md border px-4 py-2"
-        >
+      <Card className="items-center gap-2 text-center">
+        <p className="text-text-secondary">{error}</p>
+        <Button variant="outline" onClick={() => void loadSettings()}>
           Reintentar
-        </button>
-      </div>
+        </Button>
+      </Card>
     );
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex flex-col gap-4">
       {settings.length === 0 ? (
-        <div className="rounded-lg border p-6">
-          <p>No hay configuraciones registradas.</p>
-        </div>
+        <Card className="items-center text-center">
+          <p className="text-text-secondary">No hay configuraciones registradas.</p>
+        </Card>
       ) : (
         settings.map((setting) => (
-          <div
+          <Card
             key={setting.key}
-            className="flex flex-col gap-4 rounded-lg border p-4 md:flex-row md:items-center md:justify-between"
+            className="flex-col gap-4 md:flex-row md:items-center md:justify-between"
           >
             <div>
-              <p className="font-semibold">{setting.key}</p>
-
-              <p className="text-sm text-muted-foreground">
+              <p className="font-semibold text-text">{setting.key}</p>
+              <p className="text-text-secondary">
                 Valor:{" "}
                 {typeof setting.value === "string"
                   ? setting.value
                   : JSON.stringify(setting.value)}
               </p>
-
-              <p className="text-sm text-muted-foreground">
-                {setting.is_critical
-                  ? "Configuración crítica"
-                  : "Configuración normal"}
-              </p>
+              <div className="mt-1">
+                <Badge variant={setting.is_critical ? "outline" : "brand"}>
+                  {setting.is_critical ? "Configuración crítica" : "Configuración normal"}
+                </Badge>
+              </div>
             </div>
 
-            <button
-              onClick={() => updateSetting(setting)}
-              className="rounded-md border px-3 py-2 text-sm"
-            >
+            <Button size="sm" variant="outline" onClick={() => void updateSetting(setting)}>
               Modificar
-            </button>
-          </div>
+            </Button>
+          </Card>
         ))
       )}
     </div>

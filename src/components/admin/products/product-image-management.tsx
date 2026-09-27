@@ -2,6 +2,9 @@
 
 import Image from "next/image";
 import { useCallback, useEffect, useRef, useState } from "react";
+import { Trash2, Upload } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
 
 type ProductImageManagementProps = {
   productId: string;
@@ -167,28 +170,27 @@ export default function ProductImageManagement({
   }
 
   return (
-    <div className="mt-5 rounded-lg border p-4">
+    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="font-medium">Imágenes del producto</h4>
-
-          <p className="text-sm text-muted-foreground">
+          <h4 className="font-medium text-text">Imágenes del producto</h4>
+          <p className="text-text-secondary">
             Sube imágenes para {productName}. Máximo 10 imágenes.
           </p>
         </div>
 
-        <button
+        <Button
           type="button"
+          variant="outline"
+          size="sm"
           onClick={openFileSelector}
-          disabled={uploading || images.length >= 10}
-          className="rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+          loading={uploading}
+          loadingText="Procesando…"
+          disabled={images.length >= 10}
         >
-          {uploading
-            ? "Procesando..."
-            : images.length >= 10
-              ? "Límite alcanzado"
-              : "Subir imagen"}
-        </button>
+          <Upload aria-hidden="true" />
+          {images.length >= 10 ? "Límite alcanzado" : "Subir imagen"}
+        </Button>
       </div>
 
       <input
@@ -199,36 +201,27 @@ export default function ProductImageManagement({
         className="hidden"
       />
 
-      {message && (
-        <p className="mt-3 text-sm">{message}</p>
-      )}
+      {message && <p className="text-sm text-text">{message}</p>}
 
       {loadingImages ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Cargando imágenes...
-        </p>
+        <p className="text-text-secondary">Cargando imágenes...</p>
       ) : images.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          Este producto todavía no tiene imágenes.
-        </p>
+        <p className="text-text-secondary">Este producto todavía no tiene imágenes.</p>
       ) : (
-        <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((image) => (
-            <div
-              key={image.id}
-              className="rounded-md border p-3"
-            >
+            <Card key={image.id} className="gap-2 p-3">
               {image.public_url && (
                 <Image
                   src={image.public_url}
                   alt={productName}
                   width={320}
                   height={320}
-                  className="aspect-square w-full rounded-md object-cover"
+                  className="aspect-square w-full rounded-sm object-cover"
                 />
               )}
 
-              <p className="mt-2 text-xs text-muted-foreground">
+              <p className="text-[13px] text-text-secondary">
                 {image.width ?? "?"} × {image.height ?? "?"} px
                 {" · "}
                 {image.file_size_bytes
@@ -236,17 +229,18 @@ export default function ProductImageManagement({
                   : "tamaño desconocido"}
               </p>
 
-              <button
+              <Button
                 type="button"
+                variant="outline"
+                size="sm"
                 onClick={() => void handleDelete(image)}
-                disabled={deletingImageId === image.id}
-                className="mt-3 w-full rounded-md border px-3 py-2 text-sm disabled:opacity-50"
+                loading={deletingImageId === image.id}
+                loadingText="Eliminando…"
               >
-                {deletingImageId === image.id
-                  ? "Eliminando..."
-                  : "Eliminar"}
-              </button>
-            </div>
+                <Trash2 aria-hidden="true" />
+                Eliminar
+              </Button>
+            </Card>
           ))}
         </div>
       )}

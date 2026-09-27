@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
-import CategoryManagement from "@/components/admin/category-management";
+import CategoryManagement from "@/components/admin/products/category-management";
 
 export default async function AdminCategoriesPage() {
   try {
@@ -10,17 +10,15 @@ export default async function AdminCategoriesPage() {
   }
 
   return (
-    <main className="min-h-screen p-8">
-      <div className="mx-auto max-w-5xl space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold">Gestión de categorías</h1>
-          <p className="mt-2 text-muted-foreground">
-            Administra las categorías utilizadas en el catálogo de productos.
-          </p>
-        </div>
-
-        <CategoryManagement />
+    <div className="mx-auto flex max-w-5xl flex-col gap-6">
+      <div>
+        <h1>Gestión de categorías</h1>
+        <p className="text-text-secondary">
+          Administra las categorías utilizadas en el catálogo de productos.
+        </p>
       </div>
-    </main>
+
+      <CategoryManagement />
+    </div>
   );
 }

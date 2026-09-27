@@ -1,9 +1,15 @@
-
 "use client";
 
 import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Field, Input } from "@/components/ui/field";
 
 type UserRole = "administrador" | "empleado";
+
+/** Estilo de un `<select>` nativo equivalente al de Input (Design System Fase 16). */
+const selectClassName =
+  "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function CreateUserForm() {
   const [email, setEmail] = useState("");
@@ -52,77 +58,64 @@ export default function CreateUserForm() {
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 rounded-lg border p-6">
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          Nombre completo
-        </label>
-        <input
-          value={fullName}
-          onChange={(event) => setFullName(event.target.value)}
-          required
-          maxLength={100}
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
+    <Card>
+      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <Field label="Nombre completo">
+          <Input
+            value={fullName}
+            onChange={(event) => setFullName(event.target.value)}
+            required
+            maxLength={100}
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          Correo electrónico
-        </label>
-        <input
-          type="email"
-          value={email}
-          onChange={(event) => setEmail(event.target.value)}
-          required
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
+        <Field label="Correo electrónico">
+          <Input
+            type="email"
+            value={email}
+            onChange={(event) => setEmail(event.target.value)}
+            required
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          Contraseña
-        </label>
-        <input
-          type="password"
-          value={password}
-          onChange={(event) => setPassword(event.target.value)}
-          required
-          minLength={8}
-          className="w-full rounded-md border px-3 py-2"
-        />
-      </div>
+        <Field label="Contraseña">
+          <Input
+            type="password"
+            value={password}
+            onChange={(event) => setPassword(event.target.value)}
+            required
+            minLength={8}
+          />
+        </Field>
 
-      <div>
-        <label className="mb-1 block text-sm font-medium">
-          Rol
-        </label>
-        <select
-          value={role}
-          onChange={(event) =>
-            setRole(event.target.value as UserRole)
-          }
-          className="w-full rounded-md border px-3 py-2"
-        >
-          <option value="empleado">Empleado</option>
-          <option value="administrador">Administrador</option>
-        </select>
-      </div>
+        <div className="flex flex-col gap-1.5">
+          <label
+            htmlFor="create-user-role"
+            className="text-[13px] leading-[1.4] font-medium tracking-[0.02em] text-text uppercase"
+          >
+            Rol
+          </label>
+          <select
+            id="create-user-role"
+            value={role}
+            onChange={(event) => setRole(event.target.value as UserRole)}
+            className={selectClassName}
+          >
+            <option value="empleado">Empleado</option>
+            <option value="administrador">Administrador</option>
+          </select>
+        </div>
 
-      <button
-        type="submit"
-        disabled={loading}
-        className="rounded-md border px-4 py-2"
-      >
-        {loading ? "Creando..." : "Crear usuario"}
-      </button>
+        <Button type="submit" loading={loading} loadingText="Creando…" className="self-start">
+          Crear usuario
+        </Button>
 
-      {message && (
-        <p className="text-sm" role="status">
-          {message}
-        </p>
-      )}
-    </form>
+        {message && (
+          <p className="text-sm text-text" role="status">
+            {message}
+          </p>
+        )}
+      </form>
+    </Card>
   );
 }
-
