@@ -22,79 +22,206 @@ type Season = {
   is_active: boolean;
 };
 
+const PAGE_SIZE = 20;
+
+type ProductFilters = {
+  search: string;
+  categoryId: string;
+  seasonId: string;
+  status: "" | "active" | "inactive";
+  availability: "" | "available" | "unavailable";
+  soldOut: "" | "sold" | "not_sold";
+  featured: "" | "featured" | "not_featured";
+};
+
+const initialFilters: ProductFilters = {
+  search: "",
+  categoryId: "",
+  seasonId: "",
+  status: "",
+  availability: "",
+  soldOut: "",
+  featured: "",
+};
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
 
+  const [editingProduct, setEditingProduct] =
+    useState<Product | null>(null);
 
-  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [filters, setFilters] =
+    useState<ProductFilters>(initialFilters);
+
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [message, setMessage] = useState("");
 
-  const loadData = useCallback(async () => {
+  const loadCatalogData = useCallback(async () => {
     try {
-      setLoading(true);
-      setMessage("");
+      const [
+        categoriesResponse,
+        seasonsResponse,
+      ] = await Promise.all([
+        fetch("/api/admin/categories"),
+        fetch("/api/admin/seasons"),
+      ]);
 
-  const [
-  productsResponse,
-  categoriesResponse,
-  seasonsResponse,
-] = await Promise.all([
-  fetch("/api/admin/products"),
-  fetch("/api/admin/categories"),
-  fetch("/api/admin/seasons"),
-]);
+      const categoriesData =
+        await categoriesResponse.json();
+      const seasonsData =
+        await seasonsResponse.json();
 
-      const productsData = await productsResponse.json();
-      const categoriesData = await categoriesResponse.json();
-      const seasonsData = await seasonsResponse.json();
- 
-
-      if (!productsResponse.ok || !productsData.success) {
+      if (
+        !categoriesResponse.ok ||
+        !categoriesData.success
+      ) {
         throw new Error(
-          productsData.error || "No se pudieron cargar los productos.",
+          categoriesData.message ||
+            categoriesData.error ||
+            "No se pudieron cargar las categorías.",
         );
       }
 
-      if (!categoriesResponse.ok || !categoriesData.success) {
+      if (
+        !seasonsResponse.ok ||
+        !seasonsData.success
+      ) {
         throw new Error(
-          categoriesData.error || "No se pudieron cargar las categorías.",
+          seasonsData.message ||
+            seasonsData.error ||
+            "No se pudieron cargar las temporadas.",
         );
       }
 
-      if (!seasonsResponse.ok || !seasonsData.success) {
-        throw new Error(
-          seasonsData.error || "No se pudieron cargar las temporadas.",
-        );
-      }
-
-  
-
-      setProducts(productsData.products ?? []);
       setCategories(categoriesData.categories ?? []);
       setSeasons(seasonsData.seasons ?? []);
-    
     } catch (error) {
       setMessage(
         error instanceof Error
           ? error.message
-          : "Ocurrió un error al cargar los datos.",
+          : "No se pudieron cargar los filtros.",
+      );
+    }
+  }, []);
+
+  const loadProducts = useCallback(async () => {
+    try {
+      setLoading(true);
+      setMessage("");
+
+      const params = new URLSearchParams();
+
+      if (filters.search.trim()) {
+        params.set("search", filters.search.trim());
+      }
+
+      if (filters.categoryId) {
+        params.set("category_id", filters.categoryId);
+      }
+
+      if (filters.seasonId) {
+        params.set("season_id", filters.seasonId);
+      }
+
+      if (filters.status === "active") {
+        params.set("is_active", "true");
+      }
+
+      if (filters.status === "inactive") {
+        params.set("is_active", "false");
+      }
+
+      if (filters.availability === "available") {
+        params.set("is_available", "true");
+      }
+
+      if (filters.availability === "unavailable") {
+        params.set("is_available", "false");
+      }
+
+      if (filters.soldOut === "sold") {
+        params.set("is_sold_out", "true");
+      }
+
+      if (filters.soldOut === "not_sold") {
+        params.set("is_sold_out", "false");
+      }
+
+      if (filters.featured === "featured") {
+        params.set("is_featured", "true");
+      }
+
+      if (filters.featured === "not_featured") {
+        params.set("is_featured", "false");
+      }
+
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+
+      const response = await fetch(
+        `/api/admin/products?${params.toString()}`,
+      );
+
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(
+          data.message ||
+            data.error ||
+            "No se pudieron cargar los productos.",
+        );
+      }
+
+      setProducts(data.products ?? []);
+      setTotal(Number(data.total ?? 0));
+    } catch (error) {
+      setMessage(
+        error instanceof Error
+          ? error.message
+          : "Ocurrió un error al cargar los productos.",
       );
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [filters, page]);
 
   useEffect(() => {
-    void loadData();
-  }, [loadData]);
+    void loadCatalogData();
+  }, [loadCatalogData]);
+
+  useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      void loadProducts();
+    }, 250);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [loadProducts]);
+
+  function updateFilter<K extends keyof ProductFilters>(
+    field: K,
+    value: ProductFilters[K],
+  ) {
+    setPage(1);
+
+    setFilters((current) => ({
+      ...current,
+      [field]: value,
+    }));
+  }
+
+  function clearFilters() {
+    setPage(1);
+    setFilters(initialFilters);
+  }
 
   function handleEdit(product: Product) {
     setEditingProduct(product);
+
     window.scrollTo({
       top: 0,
       behavior: "smooth",
@@ -107,37 +234,46 @@ export default function ProductManagement() {
 
   async function handleProductSaved() {
     setEditingProduct(null);
-    await loadData();
+    await loadProducts();
   }
 
   async function toggleProduct(
     product: Product,
-    field: "is_active" | "is_available" | "is_sold_out" | "is_featured",
+    field:
+      | "is_active"
+      | "is_available"
+      | "is_sold_out"
+      | "is_featured",
   ) {
     setMessage("");
 
     const newValue = !product[field];
 
     try {
-      const response = await fetch(`/api/admin/products/${product.id}`, {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
+      const response = await fetch(
+        `/api/admin/products/${product.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            [field]: newValue,
+          }),
         },
-        body: JSON.stringify({
-          [field]: newValue,
-        }),
-      });
+      );
 
       const data = await response.json();
 
       if (!response.ok || !data.success) {
         throw new Error(
-          data.error || "No se pudo actualizar el producto.",
+          data.message ||
+            data.error ||
+            "No se pudo actualizar el producto.",
         );
       }
 
-      await loadData();
+      await loadProducts();
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -147,15 +283,19 @@ export default function ProductManagement() {
     }
   }
 
-  if (loading) {
-    return (
-      <div className="flex flex-col gap-5">
-        <Card className="h-72 animate-pulse" />
-        <Card className="h-48 animate-pulse" />
-        <Card className="h-48 animate-pulse" />
-      </div>
-    );
-  }
+  const totalPages = Math.max(
+    1,
+    Math.ceil(total / PAGE_SIZE),
+  );
+
+  const hasFilters =
+    filters.search.trim() !== "" ||
+    filters.categoryId !== "" ||
+    filters.seasonId !== "" ||
+    filters.status !== "" ||
+    filters.availability !== "" ||
+    filters.soldOut !== "" ||
+    filters.featured !== "";
 
   return (
     <div className="flex flex-col gap-6">
@@ -188,13 +328,244 @@ export default function ProductManagement() {
         onCancel={handleCancelEdit}
       />
 
-      <ProductList
-  products={products}
-  categories={categories}
-  seasons={seasons}
-  onEdit={handleEdit}
-  onToggle={toggleProduct}
-/>
+      <Card className="gap-0 overflow-hidden p-0">
+        <div className="border-b border-border-decorative p-4 sm:p-5">
+          <div className="flex flex-col gap-1">
+            <h2 className="text-xl font-semibold text-text">
+              Gestión de productos
+            </h2>
+
+            <p className="text-sm text-text-secondary">
+              Busca, filtra y administra los productos del
+              catálogo.
+            </p>
+          </div>
+
+          <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(240px,1.5fr)_repeat(3,minmax(150px,1fr))]">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-search"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Buscar
+              </label>
+
+              <input
+                id="product-search"
+                value={filters.search}
+                onChange={(event) =>
+                  updateFilter(
+                    "search",
+                    event.target.value,
+                  )
+                }
+                placeholder="Buscar por nombre..."
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none transition-colors focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-category-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Categoría
+              </label>
+
+              <select
+                id="product-category-filter"
+                value={filters.categoryId}
+                onChange={(event) =>
+                  updateFilter(
+                    "categoryId",
+                    event.target.value,
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todas</option>
+
+                {categories.map((category) => (
+                  <option
+                    key={category.id}
+                    value={category.id}
+                  >
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-season-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Temporada
+              </label>
+
+              <select
+                id="product-season-filter"
+                value={filters.seasonId}
+                onChange={(event) =>
+                  updateFilter(
+                    "seasonId",
+                    event.target.value,
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todas</option>
+
+                {seasons.map((season) => (
+                  <option
+                    key={season.id}
+                    value={season.id}
+                  >
+                    {season.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-status-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Estado
+              </label>
+
+              <select
+                id="product-status-filter"
+                value={filters.status}
+                onChange={(event) =>
+                  updateFilter(
+                    "status",
+                    event.target.value as ProductFilters["status"],
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todos</option>
+                <option value="active">Activos</option>
+                <option value="inactive">Inactivos</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-availability-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Disponibilidad
+              </label>
+
+              <select
+                id="product-availability-filter"
+                value={filters.availability}
+                onChange={(event) =>
+                  updateFilter(
+                    "availability",
+                    event.target.value as ProductFilters["availability"],
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todas</option>
+                <option value="available">
+                  Disponibles
+                </option>
+                <option value="unavailable">
+                  No disponibles
+                </option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-sold-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Inventario
+              </label>
+
+              <select
+                id="product-sold-filter"
+                value={filters.soldOut}
+                onChange={(event) =>
+                  updateFilter(
+                    "soldOut",
+                    event.target.value as ProductFilters["soldOut"],
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todos</option>
+                <option value="sold">Agotados</option>
+                <option value="not_sold">
+                  No agotados
+                </option>
+              </select>
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label
+                htmlFor="product-featured-filter"
+                className="text-xs font-medium uppercase tracking-wide text-text-secondary"
+              >
+                Destacado
+              </label>
+
+              <select
+                id="product-featured-filter"
+                value={filters.featured}
+                onChange={(event) =>
+                  updateFilter(
+                    "featured",
+                    event.target.value as ProductFilters["featured"],
+                  )
+                }
+                className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+              >
+                <option value="">Todos</option>
+                <option value="featured">Destacados</option>
+                <option value="not_featured">
+                  No destacados
+                </option>
+              </select>
+            </div>
+          </div>
+
+          {hasFilters && (
+            <div className="mt-4 flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={clearFilters}
+              >
+                Limpiar filtros
+              </Button>
+            </div>
+          )}
+        </div>
+
+        <ProductList
+          products={products}
+          categories={categories}
+          seasons={seasons}
+          total={total}
+          page={page}
+          totalPages={totalPages}
+          loading={loading}
+          onPageChange={setPage}
+          onEdit={handleEdit}
+          onToggle={toggleProduct}
+        />
+      </Card>
     </div>
   );
 }
