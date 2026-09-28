@@ -22,20 +22,12 @@ type Season = {
   is_active: boolean;
 };
 
-type InventoryItem = {
-  id: string;
-  name: string;
-  unit: string;
-  current_stock: number;
-  item_type: string;
-  is_active: boolean;
-};
 
 export default function ProductManagement() {
   const [products, setProducts] = useState<Product[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);
   const [seasons, setSeasons] = useState<Season[]>([]);
-  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
+
 
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
 
@@ -47,22 +39,20 @@ export default function ProductManagement() {
       setLoading(true);
       setMessage("");
 
-      const [
-        productsResponse,
-        categoriesResponse,
-        seasonsResponse,
-        inventoryResponse,
-      ] = await Promise.all([
-        fetch("/api/admin/products"),
-        fetch("/api/admin/categories"),
-        fetch("/api/admin/seasons"),
-        fetch("/api/admin/inventory/items"),
-      ]);
+  const [
+  productsResponse,
+  categoriesResponse,
+  seasonsResponse,
+] = await Promise.all([
+  fetch("/api/admin/products"),
+  fetch("/api/admin/categories"),
+  fetch("/api/admin/seasons"),
+]);
 
       const productsData = await productsResponse.json();
       const categoriesData = await categoriesResponse.json();
       const seasonsData = await seasonsResponse.json();
-      const inventoryData = await inventoryResponse.json();
+ 
 
       if (!productsResponse.ok || !productsData.success) {
         throw new Error(
@@ -82,16 +72,12 @@ export default function ProductManagement() {
         );
       }
 
-      if (!inventoryResponse.ok || !inventoryData.success) {
-        throw new Error(
-          inventoryData.message || "No se pudo cargar el inventario.",
-        );
-      }
+  
 
       setProducts(productsData.products ?? []);
       setCategories(categoriesData.categories ?? []);
       setSeasons(seasonsData.seasons ?? []);
-      setInventoryItems(inventoryData.items ?? []);
+    
     } catch (error) {
       setMessage(
         error instanceof Error
@@ -203,13 +189,12 @@ export default function ProductManagement() {
       />
 
       <ProductList
-        products={products}
-        categories={categories}
-        seasons={seasons}
-        inventoryItems={inventoryItems}
-        onEdit={handleEdit}
-        onToggle={toggleProduct}
-      />
+  products={products}
+  categories={categories}
+  seasons={seasons}
+  onEdit={handleEdit}
+  onToggle={toggleProduct}
+/>
     </div>
   );
 }

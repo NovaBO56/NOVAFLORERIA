@@ -33,7 +33,6 @@ type InventoryRequirement = {
 
 type ProductInventoryManagementProps = {
   productId: string;
-  inventoryItems: InventoryItem[];
 };
 
 const selectClassName =
@@ -53,13 +52,17 @@ function formatUnit(unit: string) {
 
 export default function ProductInventoryManagement({
   productId,
-  inventoryItems,
 }: ProductInventoryManagementProps) {
+  const [inventoryItems, setInventoryItems] = useState<
+    InventoryItem[]
+  >([]);
+
   const [requirements, setRequirements] = useState<
     InventoryRequirement[]
   >([]);
 
   const [loading, setLoading] = useState(true);
+  const [loadingItems, setLoadingItems] = useState(true);
   const [saving, setSaving] = useState(false);
 
   const [inventoryItemId, setInventoryItemId] = useState("");
@@ -72,6 +75,35 @@ export default function ProductInventoryManagement({
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+
+  async function loadInventoryItems() {
+    setLoadingItems(true);
+
+    try {
+      const response = await fetch(
+        "/api/admin/inventory/items",
+      );
+
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message ||
+            "No se pudieron cargar los ítems de inventario.",
+        );
+      }
+
+      setInventoryItems(result.items ?? []);
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "No se pudieron cargar los ítems de inventario.",
+      );
+    } finally {
+      setLoadingItems(false);
+    }
+  }
 
   async function loadRequirements() {
     setLoading(true);
@@ -104,7 +136,10 @@ export default function ProductInventoryManagement({
   }
 
   useEffect(() => {
-    void loadRequirements();
+    void Promise.all([
+      loadInventoryItems(),
+      loadRequirements(),
+    ]);
   }, [productId]);
 
   async function addRequirement() {
@@ -260,6 +295,8 @@ export default function ProductInventoryManagement({
       ),
   );
 
+  const isLoading = loading || loadingItems;
+
   return (
     <div className="flex flex-col gap-4">
       <div>
@@ -300,11 +337,13 @@ export default function ProductInventoryManagement({
             onChange={(event) =>
               setInventoryItemId(event.target.value)
             }
-            disabled={loading || saving}
+            disabled={isLoading || saving}
             className={selectClassName}
           >
             <option value="">
-              Seleccionar ítem
+              {loadingItems
+                ? "Cargando ítems..."
+                : "Seleccionar ítem"}
             </option>
 
             {availableInventoryItems.map((item) => (
@@ -324,7 +363,7 @@ export default function ProductInventoryManagement({
             onChange={(event) =>
               setInventoryQuantity(event.target.value)
             }
-            disabled={loading || saving}
+            disabled={isLoading || saving}
           />
         </Field>
 
@@ -333,7 +372,7 @@ export default function ProductInventoryManagement({
           onClick={() => void addRequirement()}
           loading={saving}
           loadingText="Agregando…"
-          disabled={loading}
+          disabled={isLoading}
         >
           <Plus aria-hidden="true" />
           Agregar

@@ -19,7 +19,11 @@ export const metadata: Metadata = {
   description: "Sistema de gestión para NOVA FLORERÍA",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html
       lang="es"
