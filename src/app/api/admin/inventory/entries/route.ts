@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createInventoryEntrySchema } from "@/validations/inventory";
-
+import { attachUserNames } from "@/lib/inventory/user-names";
 const ENTRY_SELECT =
   "id, inventory_item_id, quantity, unit_cost, supplier_name, notes, received_at, created_by, created_at";
 

@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createInventoryAdjustmentSchema } from "@/validations/inventory";
-
+import { attachUserNames } from "@/lib/inventory/user-names";
 const ADJUSTMENT_SELECT = "id, inventory_item_id, quantity_delta, reason, created_by, created_at";
 
 export async function GET(request: Request) {
