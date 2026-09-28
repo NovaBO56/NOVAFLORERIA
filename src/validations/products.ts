@@ -37,3 +37,34 @@ export const updateProductSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "No hay datos para actualizar.",
   });
+
+// Columnas por las que se puede ordenar. Whitelist explícita: nunca se
+// pasa un nombre de columna del query string directo a .order().
+const SORTABLE_COLUMNS = ["name", "price", "catalog_order", "created_at", "updated_at"] as const;
+
+const booleanParam = z.enum(["true", "false"]).transform((v) => v === "true");
+
+// GET /api/admin/products
+// Todos los filtros son opcionales. Si no se manda "limit", no se pagina
+// (se devuelve todo lo que matchee, igual que el comportamiento anterior)
+// para no romper pantallas que ya consumen este endpoint sin parámetros.
+export const listProductsQuerySchema = z
+  .object({
+    search: z.string().trim().min(1).max(200).optional(),
+    category_id: z.string().uuid("category_id no es válido.").optional(),
+    season_id: z.string().uuid("season_id no es válido.").optional(),
+    is_active: booleanParam.optional(),
+    is_available: booleanParam.optional(),
+    is_sold_out: booleanParam.optional(),
+    is_featured: booleanParam.optional(),
+    min_price: z.coerce.number().min(0).optional(),
+    max_price: z.coerce.number().min(0).optional(),
+    sort: z.enum(SORTABLE_COLUMNS, { message: "Columna de orden no válida." }).optional(),
+    order: z.enum(["asc", "desc"]).optional().default("asc"),
+    page: z.coerce.number().int().min(1).optional(),
+    limit: z.coerce.number().int().min(1).max(100).optional(),
+  })
+  .refine((data) => data.min_price === undefined || data.max_price === undefined || data.min_price <= data.max_price, {
+    message: "min_price no puede ser mayor a max_price.",
+    path: ["min_price"],
+  });

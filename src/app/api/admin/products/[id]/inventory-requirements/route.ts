@@ -66,6 +66,17 @@ export async function POST(request: Request, context: RouteContext) {
       return NextResponse.json({ success: false, message: "El producto no existe." }, { status: 404 });
     }
 
+    const { data: inventoryItem, error: inventoryItemError } = await supabase
+      .from("inventory_items").select("id").eq("id", inventory_item_id).maybeSingle();
+
+    if (inventoryItemError) {
+      console.error("Error verificando ítem de inventario:", inventoryItemError);
+      return NextResponse.json({ success: false, message: "No se pudo verificar el ítem de inventario." }, { status: 500 });
+    }
+    if (!inventoryItem) {
+      return NextResponse.json({ success: false, message: "El ítem de inventario no existe." }, { status: 404 });
+    }
+
     const { data, error } = await supabase
       .from("product_inventory_requirements")
       .insert({ product_id: id, inventory_item_id, quantity })
