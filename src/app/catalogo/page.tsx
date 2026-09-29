@@ -11,7 +11,7 @@ import {
   Search,
   ShoppingBag,
   Sparkles,
-  Truck,
+  Truck,s
   X,
 } from "lucide-react";
 
