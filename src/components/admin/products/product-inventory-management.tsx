@@ -1,6 +1,7 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
   Check,
@@ -53,9 +54,9 @@ function formatUnit(unit: string) {
 export default function ProductInventoryManagement({
   productId,
 }: ProductInventoryManagementProps) {
-  const [inventoryItems, setInventoryItems] = useState<
-    InventoryItem[]
-  >([]);
+  const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(
+    [],
+  );
 
   const [requirements, setRequirements] = useState<
     InventoryRequirement[]
@@ -70,19 +71,18 @@ export default function ProductInventoryManagement({
 
   const [editingRequirementId, setEditingRequirementId] =
     useState<string | null>(null);
+
   const [editingRequirementQuantity, setEditingRequirementQuantity] =
     useState("");
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  async function loadInventoryItems() {
+  const loadInventoryItems = useCallback(async () => {
     setLoadingItems(true);
 
     try {
-      const response = await fetch(
-        "/api/admin/inventory/items",
-      );
+      const response = await fetch("/api/admin/inventory/items");
 
       const result = await response.json();
 
@@ -103,9 +103,9 @@ export default function ProductInventoryManagement({
     } finally {
       setLoadingItems(false);
     }
-  }
+  }, []);
 
-  async function loadRequirements() {
+  const loadRequirements = useCallback(async () => {
     setLoading(true);
     setError("");
 
@@ -133,14 +133,33 @@ export default function ProductInventoryManagement({
     } finally {
       setLoading(false);
     }
-  }
+  }, [productId]);
 
-  useEffect(() => {
+ useEffect(() => {
+  const timer = window.setTimeout(() => {
     void Promise.all([
       loadInventoryItems(),
       loadRequirements(),
     ]);
-  }, [productId]);
+  }, 0);
+
+  return () => window.clearTimeout(timer);
+}, [loadInventoryItems, loadRequirements]);;
+
+  const availableInventoryItems = useMemo(
+    () =>
+      inventoryItems.filter(
+        (item) =>
+          item.is_active &&
+          !requirements.some(
+            (requirement) =>
+              requirement.inventory_item_id === item.id,
+          ),
+      ),
+    [inventoryItems, requirements],
+  );
+
+  const isLoading = loading || loadingItems;
 
   async function addRequirement() {
     setError("");
@@ -272,6 +291,11 @@ export default function ProductInventoryManagement({
         );
       }
 
+      if (editingRequirementId === requirementId) {
+        setEditingRequirementId(null);
+        setEditingRequirementQuantity("");
+      }
+
       setMessage("Ítem eliminado del consumo de inventario.");
 
       await loadRequirements();
@@ -285,17 +309,6 @@ export default function ProductInventoryManagement({
       setSaving(false);
     }
   }
-
-  const availableInventoryItems = inventoryItems.filter(
-    (item) =>
-      item.is_active &&
-      !requirements.some(
-        (requirement) =>
-          requirement.inventory_item_id === item.id,
-      ),
-  );
-
-  const isLoading = loading || loadingItems;
 
   return (
     <div className="flex flex-col gap-4">
@@ -343,7 +356,9 @@ export default function ProductInventoryManagement({
             <option value="">
               {loadingItems
                 ? "Cargando ítems..."
-                : "Seleccionar ítem"}
+                : availableInventoryItems.length === 0
+                  ? "No hay ítems disponibles"
+                  : "Seleccionar ítem"}
             </option>
 
             {availableInventoryItems.map((item) => (
@@ -372,7 +387,7 @@ export default function ProductInventoryManagement({
           onClick={() => void addRequirement()}
           loading={saving}
           loadingText="Agregando…"
-          disabled={isLoading}
+          disabled={isLoading || availableInventoryItems.length === 0}
         >
           <Plus aria-hidden="true" />
           Agregar

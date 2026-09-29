@@ -1,7 +1,8 @@
+
 "use client";
 
-import { useEffect, useState } from "react";
-import { Check, Pencil, Plus, X } from "lucide-react";
+import { useState } from "react";
+import { Check, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -94,7 +95,7 @@ export default function ProductForm({
   onSaved,
   onCancel,
 }: ProductFormProps) {
-  const [form, setForm] = useState<ProductFormData>(
+  const [form, setForm] = useState<ProductFormData>(() =>
     getInitialForm(editingProduct),
   );
 
@@ -102,11 +103,6 @@ export default function ProductForm({
   const [error, setError] = useState("");
 
   const isEditing = Boolean(editingProduct);
-
-  useEffect(() => {
-    setForm(getInitialForm(editingProduct));
-    setError("");
-  }, [editingProduct]);
 
   function updateForm<K extends keyof ProductFormData>(
     field: K,
@@ -139,10 +135,7 @@ export default function ProductForm({
       return;
     }
 
-    if (
-      !Number.isInteger(catalogOrder) ||
-      catalogOrder < 0
-    ) {
+    if (!Number.isInteger(catalogOrder) || catalogOrder < 0) {
       setError(
         "El orden del catálogo debe ser un número entero mayor o igual a cero.",
       );
@@ -200,10 +193,7 @@ export default function ProductForm({
   }
 
   return (
-    <form
-      onSubmit={handleSubmit}
-      className="flex flex-col gap-5"
-    >
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
       <div>
         <h3 className="text-lg font-semibold text-text">
           {isEditing ? "Editar producto" : "Nuevo producto"}
@@ -226,9 +216,7 @@ export default function ProductForm({
         <Field label="Nombre" required>
           <Input
             value={form.name}
-            onChange={(event) =>
-              updateForm("name", event.target.value)
-            }
+            onChange={(event) => updateForm("name", event.target.value)}
             placeholder="Ej. OSO DE 25CM"
             disabled={saving}
           />
@@ -240,9 +228,7 @@ export default function ProductForm({
             min="0"
             step="0.01"
             value={form.price}
-            onChange={(event) =>
-              updateForm("price", event.target.value)
-            }
+            onChange={(event) => updateForm("price", event.target.value)}
             placeholder="0.00"
             disabled={saving}
           />
@@ -251,9 +237,7 @@ export default function ProductForm({
         <Field label="Categoría">
           <select
             value={form.categoryId}
-            onChange={(event) =>
-              updateForm("categoryId", event.target.value)
-            }
+            onChange={(event) => updateForm("categoryId", event.target.value)}
             disabled={saving}
             className="h-11 w-full rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -272,9 +256,7 @@ export default function ProductForm({
         <Field label="Temporada">
           <select
             value={form.seasonId}
-            onChange={(event) =>
-              updateForm("seasonId", event.target.value)
-            }
+            onChange={(event) => updateForm("seasonId", event.target.value)}
             disabled={saving}
             className="h-11 w-full rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50"
           >
@@ -293,9 +275,7 @@ export default function ProductForm({
         <Field label="Ocasión">
           <Input
             value={form.occasion}
-            onChange={(event) =>
-              updateForm("occasion", event.target.value)
-            }
+            onChange={(event) => updateForm("occasion", event.target.value)}
             placeholder="Ej. Cumpleaños"
             disabled={saving}
           />
@@ -318,9 +298,7 @@ export default function ProductForm({
       <Field label="Descripción">
         <Textarea
           value={form.description}
-          onChange={(event) =>
-            updateForm("description", event.target.value)
-          }
+          onChange={(event) => updateForm("description", event.target.value)}
           placeholder="Descripción del producto..."
           rows={4}
           disabled={saving}
@@ -371,9 +349,7 @@ export default function ProductForm({
           <input
             type="checkbox"
             checked={form.isActive}
-            onChange={(event) =>
-              updateForm("isActive", event.target.checked)
-            }
+            onChange={(event) => updateForm("isActive", event.target.checked)}
             disabled={saving}
             className="size-4 accent-brand"
           />
