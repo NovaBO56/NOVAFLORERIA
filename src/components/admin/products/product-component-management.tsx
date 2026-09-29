@@ -1,3 +1,4 @@
+
 "use client";
 
 import {
@@ -5,7 +6,7 @@ import {
   useEffect,
   useState,
 } from "react";
-import { Trash2 } from "lucide-react";
+import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
@@ -32,7 +33,6 @@ type ProductComponentManagementProps = {
   productId: string;
 };
 
-/** Estilo de un `<select>` nativo equivalente al de Input (Design System Fase 16). */
 const selectClassName =
   "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 
@@ -40,19 +40,23 @@ export default function ProductComponentManagement({
   productId,
 }: ProductComponentManagementProps) {
   const [products, setProducts] = useState<Product[]>([]);
- const [components, setComponents] = useState<ProductComponent[]>([]);
+  const [components, setComponents] = useState<ProductComponent[]>([]);
   const [componentProductId, setComponentProductId] =
     useState("");
   const [quantity, setQuantity] = useState("1");
+  const [editingComponentId, setEditingComponentId] =
+    useState<string | null>(null);
+  const [editingQuantity, setEditingQuantity] =
+    useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [savingComponentId, setSavingComponentId] =
+    useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
 
   const loadProducts = useCallback(async () => {
-    const response = await fetch(
-      "/api/admin/products",
-    );
+    const response = await fetch("/api/admin/products");
 
     const result = await response.json();
 
@@ -118,9 +122,7 @@ export default function ProductComponentManagement({
     const parsedQuantity = Number(quantity);
 
     if (!componentProductId) {
-      setError(
-        "Selecciona un producto componente.",
-      );
+      setError("Selecciona un producto componente.");
       return;
     }
 
@@ -128,9 +130,7 @@ export default function ProductComponentManagement({
       !Number.isFinite(parsedQuantity) ||
       parsedQuantity <= 0
     ) {
-      setError(
-        "La cantidad debe ser mayor que cero.",
-      );
+      setError("La cantidad debe ser mayor que cero.");
       return;
     }
 
@@ -145,8 +145,7 @@ export default function ProductComponentManagement({
             "Content-Type": "application/json",
           },
           body: JSON.stringify({
-            component_product_id:
-              componentProductId,
+            component_product_id: componentProductId,
             quantity: parsedQuantity,
           }),
         },
@@ -163,9 +162,7 @@ export default function ProductComponentManagement({
 
       setComponentProductId("");
       setQuantity("1");
-      setMessage(
-        "Componente agregado correctamente.",
-      );
+      setMessage("Componente agregado correctamente.");
 
       await loadComponents();
     } catch (error) {
@@ -176,6 +173,74 @@ export default function ProductComponentManagement({
       );
     } finally {
       setSaving(false);
+    }
+  }
+
+  function startEditingComponent(component: ProductComponent) {
+    setEditingComponentId(component.id);
+    setEditingQuantity(String(component.quantity));
+    setError("");
+    setMessage("");
+  }
+
+  function cancelEditingComponent() {
+    setEditingComponentId(null);
+    setEditingQuantity("");
+  }
+
+  async function handleUpdateComponent(
+    component: ProductComponent,
+  ) {
+    setError("");
+    setMessage("");
+
+    const parsedQuantity = Number(editingQuantity);
+
+    if (
+      !Number.isFinite(parsedQuantity) ||
+      parsedQuantity <= 0
+    ) {
+      setError("La cantidad debe ser mayor que cero.");
+      return;
+    }
+
+    setSavingComponentId(component.id);
+
+    try {
+      const response = await fetch(
+        `/api/admin/products/${productId}/components/${component.id}`,
+        {
+          method: "PATCH",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            quantity: parsedQuantity,
+          }),
+        },
+      );
+
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(
+          result.message ??
+            "No se pudo actualizar el componente.",
+        );
+      }
+
+      setMessage("Cantidad del componente actualizada.");
+      cancelEditingComponent();
+
+      await loadComponents();
+    } catch (error) {
+      setError(
+        error instanceof Error
+          ? error.message
+          : "No se pudo actualizar el componente.",
+      );
+    } finally {
+      setSavingComponentId(null);
     }
   }
 
@@ -202,9 +267,7 @@ export default function ProductComponentManagement({
         );
       }
 
-      setMessage(
-        "Componente eliminado correctamente.",
-      );
+      setMessage("Componente eliminado correctamente.");
 
       await loadComponents();
     } catch (error) {
@@ -218,8 +281,7 @@ export default function ProductComponentManagement({
 
   const existingComponentIds = new Set(
     components.map(
-      (component) =>
-        component.component_product_id,
+      (component) => component.component_product_id,
     ),
   );
 
@@ -232,14 +294,22 @@ export default function ProductComponentManagement({
   return (
     <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4">
       <div>
-        <h4 className="font-medium text-text">Componentes del producto</h4>
+        <h4 className="font-medium text-text">
+          Componentes del producto
+        </h4>
         <p className="text-text-secondary">
-          Permite definir qué productos forman parte de este producto compuesto.
+          Permite definir qué productos forman parte de este
+          producto compuesto.
         </p>
       </div>
 
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {message && <p className="text-sm text-leaf">{message}</p>}
+      {error && (
+        <p className="text-sm text-danger">{error}</p>
+      )}
+
+      {message && (
+        <p className="text-sm text-leaf">{message}</p>
+      )}
 
       <div className="grid gap-3 md:grid-cols-[1fr_140px_auto] md:items-end">
         <div className="flex flex-col gap-1.5">
@@ -249,14 +319,20 @@ export default function ProductComponentManagement({
           >
             Producto componente
           </label>
+
           <select
             id={`component-product-${productId}`}
             value={componentProductId}
-            onChange={(event) => setComponentProductId(event.target.value)}
+            onChange={(event) =>
+              setComponentProductId(event.target.value)
+            }
             disabled={saving || loading}
             className={selectClassName}
           >
-            <option value="">Seleccionar producto</option>
+            <option value="">
+              Seleccionar producto
+            </option>
+
             {availableProducts.map((product) => (
               <option key={product.id} value={product.id}>
                 {product.name}
@@ -271,7 +347,9 @@ export default function ProductComponentManagement({
             min="0.001"
             step="0.001"
             value={quantity}
-            onChange={(event) => setQuantity(event.target.value)}
+            onChange={(event) =>
+              setQuantity(event.target.value)
+            }
             disabled={saving || loading}
             placeholder="Cantidad"
           />
@@ -289,30 +367,122 @@ export default function ProductComponentManagement({
       </div>
 
       {loading ? (
-        <p className="text-text-secondary">Cargando componentes...</p>
+        <p className="text-text-secondary">
+          Cargando componentes...
+        </p>
       ) : components.length === 0 ? (
-        <p className="text-text-secondary">Este producto todavía no tiene componentes.</p>
+        <p className="text-text-secondary">
+          Este producto todavía no tiene componentes.
+        </p>
       ) : (
         <div className="flex flex-col gap-2">
-          {components.map((component) => (
-            <Card key={component.id} className="flex-row items-center justify-between gap-4 p-3">
-              <div>
-                <p className="font-medium text-text">{component.component_product.name}</p>
-                <p className="text-text-secondary">Cantidad: {component.quantity}</p>
-              </div>
+          {components.map((component) => {
+            const isEditing =
+              editingComponentId === component.id;
+            const isSaving =
+              savingComponentId === component.id;
 
-              <Button
-                type="button"
-                variant="outline"
-                size="sm"
-                onClick={() => void handleDeleteComponent(component.id)}
-                disabled={saving}
+            return (
+              <Card
+                key={component.id}
+                className="gap-3 p-3"
               >
-                <Trash2 aria-hidden="true" />
-                Eliminar
-              </Button>
-            </Card>
-          ))}
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="font-medium text-text">
+                      {component.component_product.name}
+                    </p>
+
+                    {!isEditing && (
+                      <p className="text-text-secondary">
+                        Cantidad: {component.quantity}
+                      </p>
+                    )}
+                  </div>
+
+                  {!isEditing && (
+                    <div className="flex items-center gap-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          startEditingComponent(component)
+                        }
+                        disabled={saving || isSaving}
+                      >
+                        <Pencil aria-hidden="true" />
+                        Editar
+                      </Button>
+
+                      <Button
+                        type="button"
+                        variant="outline"
+                        size="sm"
+                        onClick={() =>
+                          void handleDeleteComponent(
+                            component.id,
+                          )
+                        }
+                        disabled={saving || isSaving}
+                      >
+                        <Trash2 aria-hidden="true" />
+                        Eliminar
+                      </Button>
+                    </div>
+                  )}
+                </div>
+
+                {isEditing && (
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+                    <div className="w-full sm:max-w-[180px]">
+                      <Field label="Cantidad">
+                        <Input
+                          type="number"
+                          min="0.001"
+                          step="0.001"
+                          value={editingQuantity}
+                          onChange={(event) =>
+                            setEditingQuantity(
+                              event.target.value,
+                            )
+                          }
+                          disabled={isSaving}
+                          autoFocus
+                        />
+                      </Field>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="sm"
+                        onClick={cancelEditingComponent}
+                        disabled={isSaving}
+                      >
+                        Cancelar
+                      </Button>
+
+                      <Button
+                        type="button"
+                        size="sm"
+                        onClick={() =>
+                          void handleUpdateComponent(
+                            component,
+                          )
+                        }
+                        loading={isSaving}
+                        loadingText="Guardando…"
+                      >
+                        Guardar
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </Card>
+            );
+          })}
         </div>
       )}
     </div>
