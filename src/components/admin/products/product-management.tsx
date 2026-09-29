@@ -1,744 +1,592 @@
+"use client";
 
-  "use client";
+import { useCallback, useEffect, useState } from "react";
+import {
+  Boxes,
+  CircleCheck,
+  ImageIcon,
+  PackageCheck,
+  Plus,
+  X,
+} from "lucide-react";
 
-  import { useCallback, useEffect, useState } from "react";
-  import {
-    Boxes,
-    CircleCheck,
-    ImageIcon,
-    PackageCheck,
-    X,
-  } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
 
-  import { Button } from "@/components/ui/button";
-  import { Card } from "@/components/ui/card";
-  import {
-    Modal,
-    ModalContent,
-    ModalDescription,
-    ModalHeader,
-    ModalTitle,
-  } from "@/components/ui/modal";
+import ProductForm, {
+  type Product,
+} from "@/components/admin/products/product-form";
+import ProductList from "@/components/admin/products/product-list";
+import ProductImageManagement from "@/components/admin/products/product-image-management";
+import ProductInventoryManagement from "@/components/admin/products/product-inventory-management";
+import ProductComponentManagement from "@/components/admin/products/product-component-management";
 
-  import ProductForm, {
-    type Product,
-  } from "./product-form";
-  import ProductList from "./product-list";
-  import ProductComponentManagement from "./product-component-management";
-  import ProductImageManagement from "./product-image-management";
-  import ProductInventoryManagement from "./product-inventory-management";
+type Category = {
+  id: string;
+  name: string;
+  is_active: boolean;
+};
 
-  type Category = {
-    id: string;
-    name: string;
-    is_active: boolean;
-  };
+type Season = {
+  id: string;
+  name: string;
+  is_active: boolean;
+};
 
-  type Season = {
-    id: string;
-    name: string;
-    is_active: boolean;
-  };
+type ProductTab = "info" | "images" | "inventory" | "components";
 
-  type ProductTab =
-    | "info"
-    | "images"
-    | "inventory"
-    | "components";
+type Filters = {
+  search: string;
+  categoryId: string;
+  seasonId: string;
+  status: string;
+  availability: string;
+  soldOut: string;
+  featured: string;
+};
 
-  const PAGE_SIZE = 20;
+const PAGE_SIZE = 20;
 
-  type ProductFilters = {
-    search: string;
-    categoryId: string;
-    seasonId: string;
-    status: "" | "active" | "inactive";
-    availability: "" | "available" | "unavailable";
-    soldOut: "" | "sold" | "not_sold";
-    featured: "" | "featured" | "not_featured";
-  };
+const initialFilters: Filters = {
+  search: "",
+  categoryId: "",
+  seasonId: "",
+  status: "",
+  availability: "",
+  soldOut: "",
+  featured: "",
+};
 
-  const initialFilters: ProductFilters = {
-    search: "",
-    categoryId: "",
-    seasonId: "",
-    status: "",
-    availability: "",
-    soldOut: "",
-    featured: "",
-  };
+export default function ProductManagement() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [seasons, setSeasons] = useState<Season[]>([]);
 
-  export default function ProductManagement() {
-    const [products, setProducts] = useState<Product[]>([]);
-    const [categories, setCategories] = useState<Category[]>([]);
-    const [seasons, setSeasons] = useState<Season[]>([]);
+  const [filters, setFilters] = useState<Filters>(initialFilters);
+  const [page, setPage] = useState(1);
 
-    const [editingProduct, setEditingProduct] =
-      useState<Product | null>(null);
+  const [total, setTotal] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [catalogLoading, setCatalogLoading] = useState(true);
 
-    const [activeTab, setActiveTab] =
-      useState<ProductTab>("info");
+  const [createMode, setCreateMode] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+  const [activeTab, setActiveTab] = useState<ProductTab>("info");
 
-    const [filters, setFilters] =
-      useState<ProductFilters>(initialFilters);
+  const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
-    const [page, setPage] = useState(1);
-    const [total, setTotal] = useState(0);
+  const loadCatalogData = useCallback(async () => {
+    setCatalogLoading(true);
 
-    const [loading, setLoading] = useState(true);
-    const [message, setMessage] = useState("");
+    try {
+      const [categoriesResponse, seasonsResponse] = await Promise.all([
+        fetch("/api/admin/categories?limit=100"),
+        fetch("/api/admin/seasons?limit=100"),
+      ]);
 
-    const loadCatalogData = useCallback(async () => {
-      try {
-        const [
-          categoriesResponse,
-          seasonsResponse,
-        ] = await Promise.all([
-          fetch("/api/admin/categories"),
-          fetch("/api/admin/seasons"),
-        ]);
+      const categoriesResult = await categoriesResponse.json();
+      const seasonsResult = await seasonsResponse.json();
 
-        const categoriesData =
-          await categoriesResponse.json();
+      if (categoriesResponse.ok && categoriesResult.success) {
+        setCategories(categoriesResult.categories ?? []);
+      }
 
-        const seasonsData =
-          await seasonsResponse.json();
+      if (seasonsResponse.ok && seasonsResult.success) {
+        setSeasons(seasonsResult.seasons ?? []);
+      }
+    } catch (error) {
+      console.error("Error cargando categorías y temporadas:", error);
+    } finally {
+      setCatalogLoading(false);
+    }
+  }, []);
 
-        if (
-          !categoriesResponse.ok ||
-          !categoriesData.success
-        ) {
-          throw new Error(
-            categoriesData.message ||
-              categoriesData.error ||
-              "No se pudieron cargar las categorías.",
-          );
-        }
+  const loadProducts = useCallback(async () => {
+    setLoading(true);
 
-        if (
-          !seasonsResponse.ok ||
-          !seasonsData.success
-        ) {
-          throw new Error(
-            seasonsData.message ||
-              seasonsData.error ||
-              "No se pudieron cargar las temporadas.",
-          );
-        }
+    try {
+      const params = new URLSearchParams();
 
-        setCategories(categoriesData.categories ?? []);
-        setSeasons(seasonsData.seasons ?? []);
-      } catch (error) {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "No se pudieron cargar los filtros.",
+      if (filters.search.trim()) {
+        params.set("search", filters.search.trim());
+      }
+
+      if (filters.categoryId) {
+        params.set("category_id", filters.categoryId);
+      }
+
+      if (filters.seasonId) {
+        params.set("season_id", filters.seasonId);
+      }
+
+      if (filters.status) {
+        params.set("is_active", filters.status);
+      }
+
+      if (filters.availability) {
+        params.set("is_available", filters.availability);
+      }
+
+      if (filters.soldOut) {
+        params.set("is_sold_out", filters.soldOut);
+      }
+
+      if (filters.featured) {
+        params.set("is_featured", filters.featured);
+      }
+
+      params.set("page", String(page));
+      params.set("limit", String(PAGE_SIZE));
+
+      const response = await fetch(`/api/admin/products?${params.toString()}`);
+      const result = await response.json();
+
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "No se pudieron cargar los productos.",
         );
       }
-    }, []);
 
-    const loadProducts = useCallback(async () => {
-      try {
-        setLoading(true);
-        setMessage("");
-
-        const params = new URLSearchParams();
-
-        if (filters.search.trim()) {
-          params.set(
-            "search",
-            filters.search.trim(),
-          );
-        }
-
-        if (filters.categoryId) {
-          params.set(
-            "category_id",
-            filters.categoryId,
-          );
-        }
-
-        if (filters.seasonId) {
-          params.set(
-            "season_id",
-            filters.seasonId,
-          );
-        }
-
-        if (filters.status === "active") {
-          params.set("is_active", "true");
-        }
-
-        if (filters.status === "inactive") {
-          params.set("is_active", "false");
-        }
-
-        if (filters.availability === "available") {
-          params.set("is_available", "true");
-        }
-
-        if (filters.availability === "unavailable") {
-          params.set("is_available", "false");
-        }
-
-        if (filters.soldOut === "sold") {
-          params.set("is_sold_out", "true");
-        }
-
-        if (filters.soldOut === "not_sold") {
-          params.set("is_sold_out", "false");
-        }
-
-        if (filters.featured === "featured") {
-          params.set("is_featured", "true");
-        }
-
-        if (filters.featured === "not_featured") {
-          params.set("is_featured", "false");
-        }
-
-        params.set("page", String(page));
-        params.set("limit", String(PAGE_SIZE));
-
-        const response = await fetch(
-          `/api/admin/products?${params.toString()}`,
-        );
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.message ||
-              data.error ||
-              "No se pudieron cargar los productos.",
-          );
-        }
-
-        setProducts(data.products ?? []);
-        setTotal(Number(data.total ?? 0));
-      } catch (error) {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error al cargar los productos.",
-        );
-      } finally {
-        setLoading(false);
-      }
-    }, [filters, page]);
+      setProducts(result.products ?? []);
+      setTotal(result.total ?? 0);
+    } catch (error) {
+      console.error("Error cargando productos:", error);
+      setProducts([]);
+      setTotal(0);
+    } finally {
+      setLoading(false);
+    }
+  }, [filters, page]);
 
   useEffect(() => {
-  const timer = window.setTimeout(() => {
-    void loadCatalogData();
-  }, 0);
+    const timer = window.setTimeout(() => {
+      void loadCatalogData();
+    }, 0);
 
-  return () => window.clearTimeout(timer);
-}, [loadCatalogData]);
+    return () => window.clearTimeout(timer);
+  }, [loadCatalogData]);
 
-    useEffect(() => {
-      const timeoutId = window.setTimeout(() => {
-        void loadProducts();
-      }, 250);
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void loadProducts();
+    }, 0);
 
-      return () => {
-        window.clearTimeout(timeoutId);
-      };
-    }, [loadProducts]);
+    return () => window.clearTimeout(timer);
+  }, [loadProducts]);
 
-    function updateFilter<K extends keyof ProductFilters>(
-      field: K,
-      value: ProductFilters[K],
-    ) {
-      setPage(1);
+  function updateFilter<K extends keyof Filters>(
+    field: K,
+    value: Filters[K],
+  ) {
+    setFilters((current) => ({
+      ...current,
+      [field]: value,
+    }));
 
-      setFilters((current) => ({
-        ...current,
-        [field]: value,
-      }));
-    }
+    setPage(1);
+  }
 
-    function clearFilters() {
-      setPage(1);
-      setFilters(initialFilters);
-    }
+  function clearFilters() {
+    setFilters(initialFilters);
+    setPage(1);
+  }
 
-    function handleEdit(product: Product) {
-      setEditingProduct(product);
-      setActiveTab("info");
-    }
+  function handleEdit(product: Product) {
+    setCreateMode(false);
+    setEditingProduct(product);
+    setActiveTab("info");
+  }
 
-    function handleCancelEdit() {
+  function handleCreate() {
+    setCreateMode(true);
+    setEditingProduct(null);
+    setActiveTab("info");
+  }
+
+  function handleCancelEdit() {
+    setCreateMode(false);
+    setEditingProduct(null);
+    setActiveTab("info");
+  }
+
+  async function handleProductSaved(
+    product: Product,
+    wasEditing: boolean,
+  ) {
+    await loadProducts();
+
+    if (wasEditing) {
+      setCreateMode(false);
       setEditingProduct(null);
       setActiveTab("info");
+      return;
     }
 
-    async function handleProductSaved() {
-      setEditingProduct(null);
-      setActiveTab("info");
-      await loadProducts();
-    }
+    setEditingProduct(product);
+    setCreateMode(true);
+    setActiveTab("info");
+  }
 
-    async function toggleProduct(
-      product: Product,
-      field:
-        | "is_active"
-        | "is_available"
-        | "is_sold_out"
-        | "is_featured",
-    ) {
-      setMessage("");
+  async function handleToggle(
+    product: Product,
+    field:
+      | "is_active"
+      | "is_available"
+      | "is_sold_out"
+      | "is_featured",
+  ) {
+    try {
+      const response = await fetch(`/api/admin/products/${product.id}`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          [field]: !product[field],
+        }),
+      });
 
-      const newValue = !product[field];
+      const result = await response.json();
 
-      try {
-        const response = await fetch(
-          `/api/admin/products/${product.id}`,
-          {
-            method: "PATCH",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              [field]: newValue,
-            }),
-          },
-        );
-
-        const data = await response.json();
-
-        if (!response.ok || !data.success) {
-          throw new Error(
-            data.message ||
-              data.error ||
-              "No se pudo actualizar el producto.",
-          );
-        }
-
-        await loadProducts();
-      } catch (error) {
-        setMessage(
-          error instanceof Error
-            ? error.message
-            : "Ocurrió un error al actualizar el producto.",
+      if (!response.ok || !result.success) {
+        throw new Error(
+          result.message || "No se pudo actualizar el producto.",
         );
       }
+
+      await loadProducts();
+    } catch (error) {
+      console.error("Error actualizando producto:", error);
     }
+  }
 
-    const totalPages = Math.max(
-      1,
-      Math.ceil(total / PAGE_SIZE),
-    );
+  const hasFilters =
+    Boolean(filters.search) ||
+    Boolean(filters.categoryId) ||
+    Boolean(filters.seasonId) ||
+    Boolean(filters.status) ||
+    Boolean(filters.availability) ||
+    Boolean(filters.soldOut) ||
+    Boolean(filters.featured);
 
-    const hasFilters =
-      filters.search.trim() !== "" ||
-      filters.categoryId !== "" ||
-      filters.seasonId !== "" ||
-      filters.status !== "" ||
-      filters.availability !== "" ||
-      filters.soldOut !== "" ||
-      filters.featured !== "";
+  return (
+    <div className="space-y-6">
+      {/* ENCABEZADO */}
+      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h2 className="text-xl font-semibold text-text">
+            Gestión de productos
+          </h2>
 
-    return (
-      <div className="flex flex-col gap-6">
-        {message && (
-          <div className="flex items-start gap-3 rounded-xl border border-brand/20 bg-brand-soft px-4 py-3 text-sm text-text">
-            <CircleCheck
-              aria-hidden="true"
-              className="mt-0.5 size-4 shrink-0 text-brand"
-            />
+          <p className="text-sm text-text-secondary">
+            Busca, filtra y administra los productos del catálogo.
+          </p>
+        </div>
 
-            <p className="flex-1">{message}</p>
+        <Button
+          type="button"
+          onClick={handleCreate}
+          className="shrink-0"
+        >
+          <Plus aria-hidden="true" />
+          Nuevo producto
+        </Button>
+      </div>
 
+      {/* FILTROS */}
+      <Card>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle>Filtros</CardTitle>
+
+          {hasFilters && (
             <Button
               type="button"
               variant="ghost"
-              size="icon"
-              onClick={() => setMessage("")}
-              aria-label="Cerrar mensaje"
+              onClick={clearFilters}
+              className="self-start sm:self-auto"
             >
               <X aria-hidden="true" />
+              Limpiar
             </Button>
+          )}
+        </CardHeader>
+
+        <CardContent>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
+            <input
+              value={filters.search}
+              onChange={(event) =>
+                updateFilter("search", event.target.value)
+              }
+              placeholder="Buscar producto..."
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            />
+
+            <select
+              value={filters.categoryId}
+              onChange={(event) =>
+                updateFilter("categoryId", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Todas las categorías</option>
+
+              {categories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filters.seasonId}
+              onChange={(event) =>
+                updateFilter("seasonId", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Todas las temporadas</option>
+
+              {seasons.map((season) => (
+                <option key={season.id} value={season.id}>
+                  {season.name}
+                </option>
+              ))}
+            </select>
+
+            <select
+              value={filters.status}
+              onChange={(event) =>
+                updateFilter("status", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Todos los estados</option>
+              <option value="true">Activos</option>
+              <option value="false">Inactivos</option>
+            </select>
+
+            <select
+              value={filters.availability}
+              onChange={(event) =>
+                updateFilter("availability", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Toda disponibilidad</option>
+              <option value="true">Disponibles</option>
+              <option value="false">No disponibles</option>
+            </select>
+
+            <select
+              value={filters.soldOut}
+              onChange={(event) =>
+                updateFilter("soldOut", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Agotado: todos</option>
+              <option value="true">Agotados</option>
+              <option value="false">No agotados</option>
+            </select>
+
+            <select
+              value={filters.featured}
+              onChange={(event) =>
+                updateFilter("featured", event.target.value)
+              }
+              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
+            >
+              <option value="">Destacados: todos</option>
+              <option value="true">Destacados</option>
+              <option value="false">No destacados</option>
+            </select>
           </div>
-        )}
+        </CardContent>
+      </Card>
 
-        <Card className="p-5">
-          <ProductForm
-            categories={categories}
-            seasons={seasons}
-            editingProduct={null}
-            onSaved={handleProductSaved}
-            onCancel={handleCancelEdit}
-          />
-        </Card>
+      {/* LISTADO */}
+      <Card className="overflow-visible">
+        <CardHeader>
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <CardTitle>Productos</CardTitle>
 
-        <Card className="gap-0 overflow-hidden p-0">
-          <div className="border-b border-border-decorative p-4 sm:p-5">
-            <div className="flex flex-col gap-1">
-              <h2 className="text-xl font-semibold text-text">
-                Gestión de productos
-              </h2>
-
-              <p className="text-sm text-text-secondary">
-                Busca, filtra y administra los productos del
-                catálogo.
+              <p className="mt-1 text-sm text-text-secondary">
+                {loading
+                  ? "Cargando productos..."
+                  : `${total} producto${total === 1 ? "" : "s"} encontrado${total === 1 ? "" : "s"}`}
               </p>
             </div>
 
-            <div className="mt-5 grid gap-3 lg:grid-cols-[minmax(240px,1.5fr)_repeat(3,minmax(150px,1fr))]">
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-search"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Buscar
-                </label>
-
-                <input
-                  id="product-search"
-                  value={filters.search}
-                  onChange={(event) =>
-                    updateFilter(
-                      "search",
-                      event.target.value,
-                    )
-                  }
-                  placeholder="Buscar por nombre..."
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none transition-colors focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                />
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-category-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Categoría
-                </label>
-
-                <select
-                  id="product-category-filter"
-                  value={filters.categoryId}
-                  onChange={(event) =>
-                    updateFilter(
-                      "categoryId",
-                      event.target.value,
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todas</option>
-
-                  {categories.map((category) => (
-                    <option
-                      key={category.id}
-                      value={category.id}
-                    >
-                      {category.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-season-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Temporada
-                </label>
-
-                <select
-                  id="product-season-filter"
-                  value={filters.seasonId}
-                  onChange={(event) =>
-                    updateFilter(
-                      "seasonId",
-                      event.target.value,
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todas</option>
-
-                  {seasons.map((season) => (
-                    <option
-                      key={season.id}
-                      value={season.id}
-                    >
-                      {season.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-status-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Estado
-                </label>
-
-                <select
-                  id="product-status-filter"
-                  value={filters.status}
-                  onChange={(event) =>
-                    updateFilter(
-                      "status",
-                      event.target.value as ProductFilters["status"],
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todos</option>
-                  <option value="active">Activos</option>
-                  <option value="inactive">Inactivos</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="mt-3 grid gap-3 sm:grid-cols-3">
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-availability-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Disponibilidad
-                </label>
-
-                <select
-                  id="product-availability-filter"
-                  value={filters.availability}
-                  onChange={(event) =>
-                    updateFilter(
-                      "availability",
-                      event.target.value as ProductFilters["availability"],
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todas</option>
-                  <option value="available">
-                    Disponibles
-                  </option>
-                  <option value="unavailable">
-                    No disponibles
-                  </option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-sold-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Inventario
-                </label>
-
-                <select
-                  id="product-sold-filter"
-                  value={filters.soldOut}
-                  onChange={(event) =>
-                    updateFilter(
-                      "soldOut",
-                      event.target.value as ProductFilters["soldOut"],
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todos</option>
-                  <option value="sold">Agotados</option>
-                  <option value="not_sold">
-                    No agotados
-                  </option>
-                </select>
-              </div>
-
-              <div className="flex flex-col gap-1.5">
-                <label
-                  htmlFor="product-featured-filter"
-                  className="text-xs font-medium uppercase tracking-wide text-text-secondary"
-                >
-                  Destacado
-                </label>
-
-                <select
-                  id="product-featured-filter"
-                  value={filters.featured}
-                  onChange={(event) =>
-                    updateFilter(
-                      "featured",
-                      event.target.value as ProductFilters["featured"],
-                    )
-                  }
-                  className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-                >
-                  <option value="">Todos</option>
-                  <option value="featured">
-                    Destacados
-                  </option>
-                  <option value="not_featured">
-                    No destacados
-                  </option>
-                </select>
-              </div>
-            </div>
-
-            {hasFilters && (
-              <div className="mt-4 flex justify-end">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={clearFilters}
-                >
-                  Limpiar filtros
-                </Button>
-              </div>
+            {catalogLoading && (
+              <span className="text-xs text-text-secondary">
+                Actualizando filtros...
+              </span>
             )}
           </div>
+        </CardHeader>
 
-          <ProductList
-            products={products}
-            categories={categories}
-            seasons={seasons}
-            total={total}
-            page={page}
-            totalPages={totalPages}
-            loading={loading}
-            onPageChange={setPage}
-            onEdit={handleEdit}
-            onToggle={toggleProduct}
-          />
-        </Card>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <ProductList
+              products={products}
+              categories={categories}
+              seasons={seasons}
+              total={total}
+              page={page}
+              totalPages={totalPages}
+              loading={loading}
+              onPageChange={setPage}
+              onEdit={handleEdit}
+              onToggle={handleToggle}
+            />
+          </div>
+        </CardContent>
+      </Card>
 
-        <Modal
-          open={Boolean(editingProduct)}
-          onOpenChange={(open) => {
-            if (!open) {
-              handleCancelEdit();
-            }
-          }}
+      {/* MODAL DE CREAR / EDITAR */}
+      <Modal
+        open={createMode || Boolean(editingProduct)}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelEdit();
+          }
+        }}
+      >
+        <ModalContent
+          className="max-h-[92vh] overflow-hidden md:max-w-5xl"
+          voice="admin"
         >
-          <ModalContent
-            className="md:max-w-5xl"
-            voice="admin"
-          >
-            {editingProduct && (
-              <>
-                <ModalHeader>
-                  <ModalTitle>
-                    Editar producto
-                  </ModalTitle>
+          <ModalHeader>
+            <ModalTitle>
+              {editingProduct ? "Gestionar producto" : "Nuevo producto"}
+            </ModalTitle>
 
-                  <ModalDescription>
-                    Administra la información, imágenes,
-                    inventario y componentes de{" "}
-                    <strong>
-                      {editingProduct.name}
-                    </strong>
-                    .
-                  </ModalDescription>
-                </ModalHeader>
+            <ModalDescription>
+              {editingProduct
+                ? `Administra la información, fotos, inventario y componentes de ${editingProduct.name}.`
+                : "Primero registra la información básica. Después podrás agregar fotos, items de inventario y componentes."}
+            </ModalDescription>
+          </ModalHeader>
 
-                <div className="border-b border-border-decorative">
-                  <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveTab("info")
-                      }
-                      className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "info"
-                          ? "border-brand text-brand"
-                          : "border-transparent text-text-secondary hover:text-text"
-                      }`}
-                    >
-                      <CircleCheck className="size-4" />
-                      Información
-                    </button>
+          {/* TABS */}
+          <div className="border-b border-border-decorative">
+            <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+              <button
+                type="button"
+                onClick={() => setActiveTab("info")}
+                className={`flex items-center justify-center gap-2 rounded-t-lg px-3 py-3 text-sm font-medium transition-colors ${
+                  activeTab === "info"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-text-secondary hover:bg-bg-admin hover:text-text"
+                }`}
+              >
+                <CircleCheck
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Información
+              </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveTab("images")
-                      }
-                      className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "images"
-                          ? "border-brand text-brand"
-                          : "border-transparent text-text-secondary hover:text-text"
-                      }`}
-                    >
-                      <ImageIcon className="size-4" />
-                      Imágenes
-                    </button>
+              <button
+                type="button"
+                disabled={!editingProduct}
+                onClick={() => setActiveTab("images")}
+                className={`flex items-center justify-center gap-2 rounded-t-lg px-3 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  activeTab === "images"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-text-secondary hover:bg-bg-admin hover:text-text"
+                }`}
+              >
+                <ImageIcon
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Fotos
+              </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveTab("inventory")
-                      }
-                      className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "inventory"
-                          ? "border-brand text-brand"
-                          : "border-transparent text-text-secondary hover:text-text"
-                      }`}
-                    >
-                      <PackageCheck className="size-4" />
-                      Inventario
-                    </button>
+              <button
+                type="button"
+                disabled={!editingProduct}
+                onClick={() => setActiveTab("inventory")}
+                className={`flex items-center justify-center gap-2 rounded-t-lg px-3 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  activeTab === "inventory"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-text-secondary hover:bg-bg-admin hover:text-text"
+                }`}
+              >
+                <PackageCheck
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Inventario
+              </button>
 
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setActiveTab("components")
-                      }
-                      className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
-                        activeTab === "components"
-                          ? "border-brand text-brand"
-                          : "border-transparent text-text-secondary hover:text-text"
-                      }`}
-                    >
-                      <Boxes className="size-4" />
-                      Componentes
-                    </button>
-                  </div>
-                </div>
+              <button
+                type="button"
+                disabled={!editingProduct}
+                onClick={() => setActiveTab("components")}
+                className={`flex items-center justify-center gap-2 rounded-t-lg px-3 py-3 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-40 ${
+                  activeTab === "components"
+                    ? "border-b-2 border-brand text-brand"
+                    : "text-text-secondary hover:bg-bg-admin hover:text-text"
+                }`}
+              >
+                <Boxes
+                  aria-hidden="true"
+                  className="size-4"
+                />
+                Componentes
+              </button>
+            </div>
+          </div>
 
-                <div className="min-h-[320px]">
-                  {activeTab === "info" && (
-                    <ProductForm
-                      categories={categories}
-                      seasons={seasons}
-                      editingProduct={editingProduct}
-                      onSaved={handleProductSaved}
-                      onCancel={handleCancelEdit}
-                    />
-                  )}
-
-                  {activeTab === "images" && (
-                    <ProductImageManagement
-                      productId={editingProduct.id}
-                      productName={editingProduct.name}
-                    />
-                  )}
-
-                  {activeTab === "inventory" && (
-                    <ProductInventoryManagement
-                      productId={editingProduct.id}
-                    />
-                  )}
-
-                  {activeTab === "components" && (
-                    <ProductComponentManagement
-                      productId={editingProduct.id}
-                    />
-                  )}
-                </div>
-              </>
+          {/* CONTENIDO */}
+          <div className="min-h-0 flex-1 overflow-y-auto py-4 pr-1">
+            {activeTab === "info" && (
+              <ProductForm
+                categories={categories}
+                seasons={seasons}
+                editingProduct={editingProduct}
+                onSaved={handleProductSaved}
+                onCancel={handleCancelEdit}
+              />
             )}
-          </ModalContent>
-        </Modal>
-      </div>
-    );
-  }
+
+            {activeTab === "images" && editingProduct && (
+              <ProductImageManagement
+                productId={editingProduct.id}
+                productName={editingProduct.name}
+              />
+            )}
+
+            {activeTab === "inventory" && editingProduct && (
+              <ProductInventoryManagement
+                productId={editingProduct.id}
+              />
+            )}
+
+            {activeTab === "components" && editingProduct && (
+              <ProductComponentManagement
+                productId={editingProduct.id}
+              />
+            )}
+          </div>
+        </ModalContent>
+      </Modal>
+    </div>
+  );
+}

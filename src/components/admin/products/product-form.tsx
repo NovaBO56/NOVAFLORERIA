@@ -52,7 +52,7 @@ type ProductFormProps = {
   categories: Category[];
   seasons: Season[];
   editingProduct: Product | null;
-  onSaved: () => void;
+  onSaved: (product: Product, wasEditing: boolean) => void;
   onCancel: () => void;
 };
 
@@ -173,14 +173,14 @@ export default function ProductForm({
 
       const result = await response.json();
 
-      if (!response.ok || !result.success) {
+      if (!response.ok || !result.success || !result.product) {
         throw new Error(
           result.message ||
             `No se pudo ${editingProduct ? "actualizar" : "crear"} el producto.`,
         );
       }
 
-      onSaved();
+      onSaved(result.product as Product, Boolean(editingProduct));
     } catch (error) {
       setError(
         error instanceof Error

@@ -13,6 +13,42 @@ export const createPromotionSchema = z.object({
   minimum_purchase: z.coerce.number().min(0).optional().nullable(),
 });
 
+export const createCustomerSchema = z.object({
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre es obligatorio.")
+    .max(200),
+
+  phone: z
+    .string()
+    .trim()
+    .max(30)
+    .nullable()
+    .optional(),
+
+  whatsapp: z
+    .string()
+    .trim()
+    .max(30)
+    .nullable()
+    .optional(),
+
+  email: z
+    .string()
+    .trim()
+    .email("Correo no válido.")
+    .nullable()
+    .optional(),
+
+  birthday: z
+    .string()
+    .nullable()
+    .optional(),
+
+  is_active: z.boolean().default(true),
+});
+
 export const updatePromotionSchema = z
   .object({
     name: z.string().trim().min(1).max(150),

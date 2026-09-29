@@ -1,8 +1,8 @@
 "use client";
 
+import { Fragment, useState } from "react";
 import {
   Ban,
-  ChevronDown,
   ChevronLeft,
   ChevronRight,
   CircleCheck,
@@ -11,6 +11,7 @@ import {
   Pencil,
   Star,
   TriangleAlert,
+  X,
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
@@ -54,7 +55,9 @@ function categoryName(
   categories: Category[],
   categoryId: string | null,
 ) {
-  if (!categoryId) return "Sin categoría";
+  if (!categoryId) {
+    return "Sin categoría";
+  }
 
   return (
     categories.find(
@@ -67,7 +70,9 @@ function seasonName(
   seasons: Season[],
   seasonId: string | null,
 ) {
-  if (!seasonId) return "Sin temporada";
+  if (!seasonId) {
+    return "Sin temporada";
+  }
 
   return (
     seasons.find(
@@ -88,6 +93,10 @@ export default function ProductList({
   onEdit,
   onToggle,
 }: ProductListProps) {
+  const [openActionsId, setOpenActionsId] = useState<string | null>(
+    null,
+  );
+
   if (loading && products.length === 0) {
     return (
       <div className="p-6">
@@ -109,8 +118,7 @@ export default function ProductList({
         </h3>
 
         <p className="mt-1 max-w-md text-sm text-text-secondary">
-          Prueba cambiando la búsqueda o los filtros
-          utilizados.
+          Prueba cambiando la búsqueda o los filtros utilizados.
         </p>
       </div>
     );
@@ -153,175 +161,221 @@ export default function ProductList({
           </thead>
 
           <tbody>
-            {products.map((product) => (
-              <tr
-                key={product.id}
-                className="border-b border-border-decorative last:border-b-0"
-              >
-                <td className="px-4 py-3">
-                  <div className="flex items-start gap-2">
-                    <div className="min-w-0">
-                      <p className="truncate font-medium text-text">
-                        {product.name}
-                      </p>
+            {products.map((product) => {
+              const actionsOpen = openActionsId === product.id;
 
-                      {product.occasion && (
-                        <p className="mt-0.5 truncate text-xs text-text-secondary">
-                          {product.occasion}
-                        </p>
+              return (
+                <Fragment key={product.id}>
+                  <tr className="border-b border-border-decorative">
+                    <td className="px-4 py-3">
+                      <div className="flex items-start gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate font-medium text-text">
+                            {product.name}
+                          </p>
+
+                          {product.occasion && (
+                            <p className="mt-0.5 truncate text-xs text-text-secondary">
+                              {product.occasion}
+                            </p>
+                          )}
+                        </div>
+
+                        {product.is_featured && (
+                          <Star
+                            aria-label="Producto destacado"
+                            className="mt-0.5 size-4 shrink-0 fill-current text-brand"
+                          />
+                        )}
+                      </div>
+                    </td>
+
+                    <td className="px-4 py-3 text-sm text-text-secondary">
+                      {categoryName(
+                        categories,
+                        product.category_id,
                       )}
-                    </div>
+                    </td>
 
-                    {product.is_featured && (
-                      <Star
-                        aria-label="Producto destacado"
-                        className="mt-0.5 size-4 shrink-0 fill-current text-brand"
-                      />
-                    )}
-                  </div>
-                </td>
+                    <td className="px-4 py-3 text-sm text-text-secondary">
+                      {seasonName(
+                        seasons,
+                        product.season_id,
+                      )}
+                    </td>
 
-                <td className="px-4 py-3 text-sm text-text-secondary">
-                  {categoryName(
-                    categories,
-                    product.category_id,
-                  )}
-                </td>
+                    <td className="px-4 py-3 text-right font-medium tabular-nums text-text">
+                      Bs {Number(product.price).toFixed(2)}
+                    </td>
 
-                <td className="px-4 py-3 text-sm text-text-secondary">
-                  {seasonName(
-                    seasons,
-                    product.season_id,
-                  )}
-                </td>
+                    <td className="px-4 py-3">
+                      {!product.is_active ? (
+                        <Badge variant="outline">
+                          <Ban aria-hidden="true" />
+                          Inactivo
+                        </Badge>
+                      ) : product.is_sold_out ? (
+                        <Badge variant="outline">
+                          <TriangleAlert aria-hidden="true" />
+                          Agotado
+                        </Badge>
+                      ) : (
+                        <Badge variant="brand">
+                          <CircleCheck aria-hidden="true" />
+                          Activo
+                        </Badge>
+                      )}
+                    </td>
 
-                <td className="px-4 py-3 text-right font-medium tabular-nums text-text">
-                  Bs {Number(product.price).toFixed(2)}
-                </td>
+                    <td className="px-4 py-3 text-sm">
+                      {product.is_available ? (
+                        <span className="text-leaf">
+                          Disponible
+                        </span>
+                      ) : (
+                        <span className="text-text-secondary">
+                          No disponible
+                        </span>
+                      )}
+                    </td>
 
-                <td className="px-4 py-3">
-                  {!product.is_active ? (
-                    <Badge variant="outline">
-                      <Ban aria-hidden="true" />
-                      Inactivo
-                    </Badge>
-                  ) : product.is_sold_out ? (
-                    <Badge variant="outline">
-                      <TriangleAlert aria-hidden="true" />
-                      Agotado
-                    </Badge>
-                  ) : (
-                    <Badge variant="brand">
-                      <CircleCheck aria-hidden="true" />
-                      Activo
-                    </Badge>
-                  )}
-                </td>
-
-                <td className="px-4 py-3 text-sm">
-                  {product.is_available ? (
-                    <span className="text-leaf">
-                      Disponible
-                    </span>
-                  ) : (
-                    <span className="text-text-secondary">
-                      No disponible
-                    </span>
-                  )}
-                </td>
-
-                <td className="px-4 py-3">
-                  <div className="flex justify-end">
-                    <details className="relative">
-                      <summary className="flex cursor-pointer list-none items-center gap-1.5 rounded-md border border-border-field bg-surface px-3 py-2 text-sm font-medium text-text transition-colors hover:bg-bg-admin [&::-webkit-details-marker]:hidden">
-                        <MoreHorizontal
-                          aria-hidden="true"
-                          className="size-4"
-                        />
-                        Acciones
-                        <ChevronDown
-                          aria-hidden="true"
-                          className="size-3.5"
-                        />
-                      </summary>
-
-                      <div className="absolute right-0 z-20 mt-2 w-56 rounded-lg border border-border-field bg-surface p-1 shadow-lg">
+                    <td className="px-4 py-3">
+                      <div className="flex justify-end">
                         <button
                           type="button"
-                          onClick={() => onEdit(product)}
-                          className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-left text-sm text-text hover:bg-bg-admin"
+                          onClick={() =>
+                            setOpenActionsId(
+                              actionsOpen ? null : product.id,
+                            )
+                          }
+                          aria-expanded={actionsOpen}
+                          aria-label={`Acciones para ${product.name}`}
+                          className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors ${
+                            actionsOpen
+                              ? "border-brand bg-brand/10 text-brand"
+                              : "border-border-field bg-surface text-text hover:bg-bg-admin"
+                          }`}
                         >
-                          <Pencil
+                          <MoreHorizontal
                             aria-hidden="true"
                             className="size-4"
                           />
-                          Editar producto
-                        </button>
 
-                        <div className="my-1 border-t border-border-decorative" />
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onToggle(product, "is_active")
-                          }
-                          className="w-full rounded-md px-3 py-2 text-left text-sm text-text hover:bg-bg-admin"
-                        >
-                          {product.is_active
-                            ? "Desactivar producto"
-                            : "Activar producto"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onToggle(
-                              product,
-                              "is_available",
-                            )
-                          }
-                          className="w-full rounded-md px-3 py-2 text-left text-sm text-text hover:bg-bg-admin"
-                        >
-                          {product.is_available
-                            ? "Marcar no disponible"
-                            : "Marcar disponible"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onToggle(
-                              product,
-                              "is_sold_out",
-                            )
-                          }
-                          className="w-full rounded-md px-3 py-2 text-left text-sm text-text hover:bg-bg-admin"
-                        >
-                          {product.is_sold_out
-                            ? "Quitar agotado"
-                            : "Marcar agotado"}
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() =>
-                            onToggle(
-                              product,
-                              "is_featured",
-                            )
-                          }
-                          className="w-full rounded-md px-3 py-2 text-left text-sm text-text hover:bg-bg-admin"
-                        >
-                          {product.is_featured
-                            ? "Quitar destacado"
-                            : "Marcar destacado"}
+                          <span>Acciones</span>
                         </button>
                       </div>
-                    </details>
-                  </div>
-                </td>
-              </tr>
-            ))}
+                    </td>
+                  </tr>
+
+                  {actionsOpen && (
+                    <tr className="border-b border-border-decorative bg-bg-admin">
+                      <td colSpan={7} className="px-4 py-3">
+                        <div className="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
+                          <div className="min-w-0">
+                            <p className="text-sm font-semibold text-text">
+                              Acciones para {product.name}
+                            </p>
+
+                            <p className="mt-0.5 text-xs text-text-secondary">
+                              Administra rápidamente este producto.
+                            </p>
+                          </div>
+
+                          <div className="flex flex-wrap items-center gap-2">
+                            <Button
+                              type="button"
+                              size="sm"
+                              onClick={() => {
+                                setOpenActionsId(null);
+                                onEdit(product);
+                              }}
+                            >
+                              <Pencil aria-hidden="true" />
+                              Editar
+                            </Button>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onToggle(product, "is_active")
+                              }
+                            >
+                              {product.is_active
+                                ? "Desactivar"
+                                : "Activar"}
+                            </Button>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onToggle(
+                                  product,
+                                  "is_available",
+                                )
+                              }
+                            >
+                              {product.is_available
+                                ? "No disponible"
+                                : "Disponible"}
+                            </Button>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onToggle(
+                                  product,
+                                  "is_sold_out",
+                                )
+                              }
+                            >
+                              {product.is_sold_out
+                                ? "Quitar agotado"
+                                : "Marcar agotado"}
+                            </Button>
+
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              onClick={() =>
+                                onToggle(
+                                  product,
+                                  "is_featured",
+                                )
+                              }
+                            >
+                              {product.is_featured
+                                ? "Quitar destacado"
+                                : "Destacar"}
+                            </Button>
+
+                            <button
+                              type="button"
+                              onClick={() =>
+                                setOpenActionsId(null)
+                              }
+                              aria-label="Cerrar acciones"
+                              className="flex h-9 w-9 items-center justify-center rounded-lg border border-border-field bg-surface text-text-secondary transition-colors hover:bg-bg-admin hover:text-text"
+                            >
+                              <X
+                                aria-hidden="true"
+                                className="size-4"
+                              />
+                            </button>
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -330,9 +384,7 @@ export default function ProductList({
         <p className="text-sm text-text-secondary">
           {total === 0
             ? "0 productos"
-            : `Mostrando ${
-                (page - 1) * 20 + 1
-              }–${Math.min(
+            : `Mostrando ${(page - 1) * 20 + 1}–${Math.min(
                 page * 20,
                 total,
               )} de ${total} productos`}
