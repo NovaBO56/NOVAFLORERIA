@@ -56,10 +56,18 @@ export async function updateSession(request: NextRequest) {
 
     return NextResponse.redirect(loginUrl);
   }
+if (isAuthenticated && isLoginPage) {
+  const redirect = request.nextUrl.searchParams.get("redirect");
 
-  if (isAuthenticated && isLoginPage) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
+  const destination =
+    redirect && redirect.startsWith("/")
+      ? redirect
+      : "/admin";
+
+  return NextResponse.redirect(
+    new URL(destination, request.url)
+  );
+}
 
   return response;
 }

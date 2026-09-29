@@ -68,8 +68,8 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
     id: "gestion",
     label: "Gestión",
     items: [
-      { label: "Clientes", href: "/admin/clientes", icon: "customers", roles: STAFF, available: false },
-      { label: "Reportes", href: "/admin/reportes", icon: "reports", roles: STAFF, available: false },
+      { label: "Clientes", href: "/admin/clientes", icon: "customers", roles: STAFF, available: true },
+      { label: "Reportes", href: "/admin/reportes", icon: "reports", roles: STAFF, available: true },
     ],
   },
   {

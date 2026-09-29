@@ -1,7 +1,8 @@
+
 // src/app/prueba-cliente/page.tsx
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Dancing_Script, Lato } from "next/font/google";
 import {
   ArrowRight,
@@ -15,13 +16,12 @@ import {
   X,
 } from "lucide-react";
 
-
-
 const lato = Lato({
   weight: ["400", "700", "900"],
   subsets: ["latin"],
   display: "swap",
 });
+
 const dancingScript = Dancing_Script({
   weight: "400",
   subsets: ["latin"],
@@ -29,54 +29,79 @@ const dancingScript = Dancing_Script({
 });
 
 const racingScript = dancingScript;
-const products = [
-  {
-    name: "Ramo de rosas rojas",
-    price: "Bs 150",
-    category: "Ramos",
-    image: "RO",
-    imageClass: "bg-[#ead9df]",
-  },
-  {
-    name: "Ramo de 20 rosas",
-    price: "Bs 200",
-    category: "Ramos",
-    image: "20",
-    imageClass: "bg-[#e5ddec]",
-  },
-  {
-    name: "Regalo Sorpresa",
-    price: "Bs 210",
-    category: "Regalos",
-    image: "RS",
-    imageClass: "bg-[#eee4d7]",
-  },
-  {
-    name: "Oso de 25 cm",
-    price: "Bs 45",
-    category: "Detalles",
-    image: "OS",
-    imageClass: "bg-[#e7e1d8]",
-  },
-];
 
-const categories = [
-  "Todos",
-  "Ramos",
-  "Rosas",
-  "Regalos",
-  "Detalles",
-];
+type PublicProduct = {
+  id: string;
+  name: string;
+  price: number;
+  category_id: string | null;
+  occasion: string | null;
+  season_id: string | null;
+  is_featured: boolean;
+  is_available: boolean;
+  is_sold_out: boolean;
+  catalog_order: number | null;
+  images: {
+    id: string;
+    public_url: string;
+    alt_text: string | null;
+    sort_order: number;
+  }[];
+};
+
+type ProductsResponse = {
+  success: boolean;
+  products: PublicProduct[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    total_pages: number;
+  };
+  message?: string;
+};
 
 export default function PruebaClientePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
-  const [activeCategory, setActiveCategory] = useState("Todos");
 
-  const visibleProducts =
-    activeCategory === "Todos"
-      ? products
-      : products.filter((product) => product.category === activeCategory);
+  const [products, setProducts] = useState<PublicProduct[]>([]);
+  const [loadingProducts, setLoadingProducts] = useState(true);
+  const [productsError, setProductsError] = useState(false);
+
+  useEffect(() => {
+    const loadProducts = async () => {
+      try {
+        setLoadingProducts(true);
+        setProductsError(false);
+const response = await fetch(
+  "/api/products?limit=4&page=1&sort=catalog_order&order=asc",
+);
+
+        const data = (await response.json()) as ProductsResponse;
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message ?? "No se pudieron cargar los productos.",
+          );
+        }
+
+        setProducts(data.products ?? []);
+      } catch (error) {
+        console.error(
+          "Error cargando productos de la página principal:",
+          error,
+        );
+
+        setProducts([]);
+        setProductsError(true);
+      } finally {
+        setLoadingProducts(false);
+      }
+    };
+
+    void loadProducts();
+  }, []);
 
   return (
     <main
@@ -93,6 +118,7 @@ export default function PruebaClientePage() {
                 >
                   NOVA
                 </p>
+
                 <p className="mt-1 text-[8px] font-black tracking-[0.28em] text-[#87758d]">
                   FLORERÍA
                 </p>
@@ -149,6 +175,7 @@ export default function PruebaClientePage() {
               >
                 NOVA
               </div>
+
               <div className="mt-1 text-[8px] font-black tracking-[0.34em] text-[#817284]">
                 FLORERÍA
               </div>
@@ -197,6 +224,7 @@ export default function PruebaClientePage() {
               aria-label="Abrir carrito"
             >
               <ShoppingBag size={20} strokeWidth={1.8} />
+
               <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
                 2
               </span>
@@ -206,12 +234,16 @@ export default function PruebaClientePage() {
       </header>
 
       {/* HERO */}
-      <section id="inicio" className="border-b border-[#e8e0ea] bg-[#f6f0f8]">
+      <section
+        id="inicio"
+        className="border-b border-[#e8e0ea] bg-[#f6f0f8]"
+      >
         <div className="mx-auto grid max-w-[1280px] lg:grid-cols-[1fr_1fr]">
           <div className="flex items-center px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
             <div className="max-w-[580px]">
               <div className="mb-5 flex items-center gap-3">
                 <span className="h-px w-8 bg-[#9270a4]" />
+
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#735a7d]">
                   NOVA FLORERÍA
                 </span>
@@ -250,6 +282,7 @@ export default function PruebaClientePage() {
               <div className="mt-10 flex flex-wrap gap-6 border-t border-[#ded2e2] pt-6">
                 <div>
                   <p className="text-lg font-black text-[#403344]">+100</p>
+
                   <p className="mt-1 text-xs text-[#7c7080]">
                     arreglos creados
                   </p>
@@ -259,6 +292,7 @@ export default function PruebaClientePage() {
 
                 <div>
                   <p className="text-lg font-black text-[#403344]">100%</p>
+
                   <p className="mt-1 text-xs text-[#7c7080]">
                     dedicación
                   </p>
@@ -276,11 +310,13 @@ export default function PruebaClientePage() {
                 <div className="aspect-[4/5] overflow-hidden rounded-2xl bg-[#d9c9df] shadow-[0_25px_60px_rgba(65,39,75,.12)]">
                   <div className="flex h-full flex-col items-center justify-center">
                     <div className="text-[120px] opacity-80">✿</div>
+
                     <p
                       className={`${racingScript.className} mt-3 text-5xl text-[#694778]`}
                     >
                       Tu momento
                     </p>
+
                     <p className="mt-2 text-xs font-bold uppercase tracking-[0.18em] text-[#78627f]">
                       imagen principal
                     </p>
@@ -293,6 +329,7 @@ export default function PruebaClientePage() {
               <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#8b7a91]">
                 Detalles especiales
               </p>
+
               <p className="mt-1 text-sm font-black text-[#433548]">
                 Hechos para ti
               </p>
@@ -327,7 +364,9 @@ export default function PruebaClientePage() {
               <div
                 key={item.title}
                 className={`flex items-center gap-4 px-7 py-6 ${
-                  index > 0 ? "border-t border-[#eee7f0] sm:border-l sm:border-t-0" : ""
+                  index > 0
+                    ? "border-t border-[#eee7f0] sm:border-l sm:border-t-0"
+                    : ""
                 }`}
               >
                 <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#f3ebf6] text-[#65358e]">
@@ -338,6 +377,7 @@ export default function PruebaClientePage() {
                   <p className="text-sm font-black text-[#403344]">
                     {item.title}
                   </p>
+
                   <p className="mt-1 text-xs leading-5 text-[#7b707f]">
                     {item.text}
                   </p>
@@ -367,81 +407,117 @@ export default function PruebaClientePage() {
                 Encuentra flores y regalos para cada ocasión.
               </p>
             </div>
-
-            <div className="flex max-w-full gap-2 overflow-x-auto pb-1">
-              {categories.map((category) => (
-                <button
-                  key={category}
-                  type="button"
-                  onClick={() => setActiveCategory(category)}
-                  className={`shrink-0 rounded-full border px-4 py-2 text-xs font-black transition ${
-                    activeCategory === category
-                      ? "border-[#65358e] bg-[#65358e] text-white"
-                      : "border-[#ddd1e1] bg-white text-[#65576a] hover:border-[#bda8c5] hover:text-[#65358e]"
-                  }`}
-                >
-                  {category}
-                </button>
-              ))}
-            </div>
           </div>
 
-          <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-            {visibleProducts.map((product) => (
-              <article key={product.name} className="group min-w-0">
-                <div
-                  className={`relative aspect-[4/5] overflow-hidden rounded-2xl ${product.imageClass}`}
-                >
-                  <button
-                    type="button"
-                    className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-xl border border-white/70 bg-white text-[#66596b] shadow-sm transition hover:text-[#65358e]"
-                    aria-label={`Agregar ${product.name} a favoritos`}
-                  >
-                    <Heart size={16} strokeWidth={1.8} />
-                  </button>
+          <div className="mt-10">
+            {loadingProducts ? (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+                {Array.from({ length: 4 }).map((_, index) => (
+                  <div key={index} className="min-w-0">
+                    <div className="aspect-[4/5] animate-pulse rounded-2xl bg-[#eee5f0]" />
 
-                  <div className="flex h-full items-center justify-center transition duration-500 group-hover:scale-105">
-                    <div className="flex size-[62%] items-center justify-center rounded-full border border-white/50 bg-white/20">
-                      <span
-                        className={`${racingScript.className} text-5xl text-[#73547f]`}
-                      >
-                        {product.image}
-                      </span>
+                    <div className="space-y-3 pt-4">
+                      <div className="h-4 w-3/4 animate-pulse rounded bg-[#eee5f0]" />
+
+                      <div className="h-4 w-1/3 animate-pulse rounded bg-[#eee5f0]" />
                     </div>
                   </div>
+                ))}
+              </div>
+            ) : productsError ? (
+              <div className="rounded-2xl border border-[#eadfe9] bg-white px-6 py-10 text-center">
+                <p className="text-sm font-bold text-[#55485b]">
+                  No pudimos cargar el catálogo.
+                </p>
 
-                  <div className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6e6073] shadow-sm">
-                    {product.category}
-                  </div>
-                </div>
+                <p className="mt-2 text-xs text-[#8a7c8e]">
+                  Intenta nuevamente en unos momentos.
+                </p>
+              </div>
+            ) : products.length === 0 ? (
+              <div className="rounded-2xl border border-[#eadfe9] bg-white px-6 py-10 text-center">
+                <p className="text-sm font-bold text-[#55485b]">
+                  No hay productos destacados disponibles.
+                </p>
+              </div>
+            ) : (
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+                {products.map((product) => {
+                  const mainImage =
+                    product.images?.find(
+                      (image) => image.sort_order === 0,
+                    ) ?? product.images?.[0];
 
-                <div className="pt-4">
-                  <div className="flex items-start justify-between gap-2">
-                    <h3 className="text-sm font-black leading-5 text-[#403344]">
-                      {product.name}
-                    </h3>
-                    <button
-                      type="button"
-                      onClick={() => setCartOpen(true)}
-                      className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#ded2e2] text-[#65358e] transition hover:bg-[#f3ebf6]"
-                      aria-label={`Agregar ${product.name}`}
-                    >
-                      <ShoppingBag size={15} strokeWidth={1.8} />
-                    </button>
-                  </div>
+                  return (
+                    <article key={product.id} className="group min-w-0">
+                      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#eee5f0]">
+                        <button
+                          type="button"
+                          className="absolute right-3 top-3 z-10 flex size-9 items-center justify-center rounded-xl border border-white/70 bg-white text-[#66596b] shadow-sm transition hover:text-[#65358e]"
+                          aria-label={`Agregar ${product.name} a favoritos`}
+                        >
+                          <Heart size={16} strokeWidth={1.8} />
+                        </button>
 
-                  <p className="mt-2 text-sm font-black text-[#65358e]">
-                    {product.price}
-                  </p>
-                </div>
-              </article>
-            ))}
+                        {mainImage?.public_url ? (
+                          <img
+                            src={mainImage.public_url}
+                            alt={mainImage.alt_text ?? product.name}
+                            className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
+                          />
+                        ) : (
+                          <div className="flex h-full items-center justify-center">
+                            <span
+                              className={`${racingScript.className} text-5xl text-[#73547f]`}
+                            >
+                              NOVA
+                            </span>
+                          </div>
+                        )}
+
+                        {product.occasion ? (
+                          <div className="absolute bottom-3 left-3 rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6e6073] shadow-sm">
+                            {product.occasion}
+                          </div>
+                        ) : null}
+                      </div>
+
+                      <div className="pt-4">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h3 className="text-sm font-black leading-5 text-[#403344]">
+                              {product.name}
+                            </h3>
+
+                            <p className="mt-2 text-sm font-black text-[#65358e]">
+                              Bs {Number(product.price).toFixed(2)}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setCartOpen(true)}
+                            className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#ded2e2] text-[#65358e] transition hover:bg-[#f3ebf6]"
+                            aria-label={`Agregar ${product.name}`}
+                          >
+                            <ShoppingBag size={15} strokeWidth={1.8} />
+                          </button>
+                        </div>
+                      </div>
+                    </article>
+                  );
+                })}
+              </div>
+            )}
           </div>
         </div>
       </section>
 
       {/* PROMOTION */}
-      <section id="promociones" className="px-5 pb-16 sm:px-8 sm:pb-20">
+      <section
+        id="promociones"
+        className="px-5 pb-16 sm:px-8 sm:pb-20"
+      >
         <div className="mx-auto max-w-[1180px]">
           <div className="grid overflow-hidden rounded-2xl border border-[#e2d5e5] bg-white lg:grid-cols-[1.05fr_.95fr]">
             <div className="flex items-center bg-[#eee5f1] px-7 py-12 sm:px-12 lg:px-16">
@@ -477,11 +553,13 @@ export default function PruebaClientePage() {
               <div className="aspect-[4/5] w-[54%] rounded-2xl bg-[#e1d2e5] shadow-[0_20px_45px_rgba(65,39,75,.1)]">
                 <div className="flex h-full flex-col items-center justify-center">
                   <span className="text-7xl text-[#785682]">✿</span>
+
                   <p
                     className={`${racingScript.className} mt-4 text-4xl text-[#684572]`}
                   >
                     colección
                   </p>
+
                   <span className="mt-2 text-[9px] font-black uppercase tracking-[0.18em] text-[#806d86]">
                     imagen promocional
                   </span>
@@ -499,6 +577,7 @@ export default function PruebaClientePage() {
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#806a88]">
               Vista de producto
             </p>
+
             <h2
               className={`${racingScript.className} mt-2 text-[50px] leading-none text-[#4c285f]`}
             >
@@ -561,9 +640,11 @@ export default function PruebaClientePage() {
                   >
                     −
                   </button>
+
                   <span className="flex size-10 items-center justify-center border-x border-[#ded2e2] text-sm font-black">
                     1
                   </span>
+
                   <button
                     type="button"
                     className="flex size-10 items-center justify-center text-[#5c4e61]"
@@ -604,6 +685,7 @@ export default function PruebaClientePage() {
               <div className="mx-auto flex size-36 items-center justify-center rounded-full border border-[#d9c7df] bg-[#e8dceb]">
                 <span className="text-6xl text-[#704b7d]">✿</span>
               </div>
+
               <p
                 className={`${racingScript.className} mt-5 text-5xl text-[#5d3a69]`}
               >
@@ -645,7 +727,10 @@ export default function PruebaClientePage() {
       </section>
 
       {/* CONTACT */}
-      <section id="contacto" className="border-t border-[#e8e0ea] bg-[#f6f0f8] px-5 py-16 sm:px-8 sm:py-20">
+      <section
+        id="contacto"
+        className="border-t border-[#e8e0ea] bg-[#f6f0f8] px-5 py-16 sm:px-8 sm:py-20"
+      >
         <div className="mx-auto max-w-[700px] text-center">
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#806a88]">
             Mantente cerca
@@ -687,9 +772,11 @@ export default function PruebaClientePage() {
             >
               NOVA
             </p>
+
             <p className="mt-1 text-[8px] font-black tracking-[0.32em] text-white/45">
               FLORERÍA
             </p>
+
             <p className="mt-5 max-w-[260px] text-xs leading-6 text-white/50">
               Flores, regalos y detalles para acompañar tus momentos
               especiales.
@@ -700,13 +787,16 @@ export default function PruebaClientePage() {
             <p className="text-xs font-black uppercase tracking-wider text-white/80">
               Catálogo
             </p>
+
             <div className="mt-4 flex flex-col gap-3 text-xs text-white/50">
               <a href="#catalogo" className="hover:text-white">
                 Ramos
               </a>
+
               <a href="#catalogo" className="hover:text-white">
                 Rosas
               </a>
+
               <a href="#catalogo" className="hover:text-white">
                 Regalos
               </a>
@@ -717,6 +807,7 @@ export default function PruebaClientePage() {
             <p className="text-xs font-black uppercase tracking-wider text-white/80">
               Información
             </p>
+
             <div className="mt-4 flex flex-col gap-3 text-xs text-white/50">
               <span>Entregas</span>
               <span>Medios de pago</span>
@@ -728,6 +819,7 @@ export default function PruebaClientePage() {
             <p className="text-xs font-black uppercase tracking-wider text-white/80">
               Contacto
             </p>
+
             <div className="mt-4 flex flex-col gap-3 text-xs text-white/50">
               <span>WhatsApp</span>
               <span>Instagram</span>
@@ -750,6 +842,7 @@ export default function PruebaClientePage() {
                 <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#806a88]">
                   Tu compra
                 </p>
+
                 <h2
                   className={`${racingScript.className} mt-1 text-[46px] leading-none text-[#4c285f]`}
                 >
@@ -800,9 +893,11 @@ export default function PruebaClientePage() {
                     <p className="text-sm font-black text-[#403344]">
                       {item.name}
                     </p>
+
                     <p className="mt-1 text-xs text-[#837685]">
                       Cantidad: 1
                     </p>
+
                     <p className="mt-2 text-sm font-black text-[#65358e]">
                       {item.price}
                     </p>

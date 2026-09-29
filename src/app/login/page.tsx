@@ -1,11 +1,15 @@
+
 "use client";
 
 import { FormEvent, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
+
 export default function LoginPage() {
   const supabase = createClient();
-const router = useRouter();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
@@ -13,6 +17,7 @@ const router = useRouter();
 
   async function handleLogin(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
     setError("");
     setLoading(true);
 
@@ -27,7 +32,16 @@ const router = useRouter();
       return;
     }
 
-    router.push("/");
+    const redirect = searchParams.get("redirect");
+
+    // Solo permitimos redirecciones internas.
+    const destination =
+      redirect && redirect.startsWith("/")
+        ? redirect
+        : "/admin";
+
+    router.replace(destination);
+    router.refresh();
   }
 
   return (
@@ -45,10 +59,12 @@ const router = useRouter();
 
         <div className="space-y-2">
           <label htmlFor="email">Correo electrónico</label>
+
           <input
             id="email"
             type="email"
             required
+            autoComplete="email"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             className="w-full rounded-md border px-3 py-2"
@@ -57,10 +73,12 @@ const router = useRouter();
 
         <div className="space-y-2">
           <label htmlFor="password">Contraseña</label>
+
           <input
             id="password"
             type="password"
             required
+            autoComplete="current-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             className="w-full rounded-md border px-3 py-2"

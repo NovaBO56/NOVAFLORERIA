@@ -3,11 +3,11 @@ import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import CategoryManagement from "@/components/admin/products/category-management";
 
 export default async function AdminCategoriesPage() {
-  try {
-    await requireEmployeeOrAdmin();
-  } catch {
-    redirect("/");
-  }
+ try {
+  await requireEmployeeOrAdmin();
+} catch {
+  redirect("/login");
+}
 
   return (
     <div className="mx-auto flex max-w-5xl flex-col gap-6">
