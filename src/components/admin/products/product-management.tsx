@@ -1,14 +1,32 @@
+
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import { CircleCheck, X } from "lucide-react";
+import {
+  Boxes,
+  CircleCheck,
+  ImageIcon,
+  PackageCheck,
+  X,
+} from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import {
+  Modal,
+  ModalContent,
+  ModalDescription,
+  ModalHeader,
+  ModalTitle,
+} from "@/components/ui/modal";
+
 import ProductForm, {
   type Product,
 } from "./product-form";
 import ProductList from "./product-list";
+import ProductComponentManagement from "./product-component-management";
+import ProductImageManagement from "./product-image-management";
+import ProductInventoryManagement from "./product-inventory-management";
 
 type Category = {
   id: string;
@@ -21,6 +39,12 @@ type Season = {
   name: string;
   is_active: boolean;
 };
+
+type ProductTab =
+  | "info"
+  | "images"
+  | "inventory"
+  | "components";
 
 const PAGE_SIZE = 20;
 
@@ -52,6 +76,9 @@ export default function ProductManagement() {
   const [editingProduct, setEditingProduct] =
     useState<Product | null>(null);
 
+  const [activeTab, setActiveTab] =
+    useState<ProductTab>("info");
+
   const [filters, setFilters] =
     useState<ProductFilters>(initialFilters);
 
@@ -73,6 +100,7 @@ export default function ProductManagement() {
 
       const categoriesData =
         await categoriesResponse.json();
+
       const seasonsData =
         await seasonsResponse.json();
 
@@ -117,15 +145,24 @@ export default function ProductManagement() {
       const params = new URLSearchParams();
 
       if (filters.search.trim()) {
-        params.set("search", filters.search.trim());
+        params.set(
+          "search",
+          filters.search.trim(),
+        );
       }
 
       if (filters.categoryId) {
-        params.set("category_id", filters.categoryId);
+        params.set(
+          "category_id",
+          filters.categoryId,
+        );
       }
 
       if (filters.seasonId) {
-        params.set("season_id", filters.seasonId);
+        params.set(
+          "season_id",
+          filters.seasonId,
+        );
       }
 
       if (filters.status === "active") {
@@ -199,7 +236,9 @@ export default function ProductManagement() {
       void loadProducts();
     }, 250);
 
-    return () => window.clearTimeout(timeoutId);
+    return () => {
+      window.clearTimeout(timeoutId);
+    };
   }, [loadProducts]);
 
   function updateFilter<K extends keyof ProductFilters>(
@@ -221,19 +260,17 @@ export default function ProductManagement() {
 
   function handleEdit(product: Product) {
     setEditingProduct(product);
-
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+    setActiveTab("info");
   }
 
   function handleCancelEdit() {
     setEditingProduct(null);
+    setActiveTab("info");
   }
 
   async function handleProductSaved() {
     setEditingProduct(null);
+    setActiveTab("info");
     await loadProducts();
   }
 
@@ -320,13 +357,15 @@ export default function ProductManagement() {
         </div>
       )}
 
-      <ProductForm
-        categories={categories}
-        seasons={seasons}
-        editingProduct={editingProduct}
-        onSaved={handleProductSaved}
-        onCancel={handleCancelEdit}
-      />
+      <Card className="p-5">
+        <ProductForm
+          categories={categories}
+          seasons={seasons}
+          editingProduct={null}
+          onSaved={handleProductSaved}
+          onCancel={handleCancelEdit}
+        />
+      </Card>
 
       <Card className="gap-0 overflow-hidden p-0">
         <div className="border-b border-border-decorative p-4 sm:p-5">
@@ -531,7 +570,9 @@ export default function ProductManagement() {
                 className="h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
               >
                 <option value="">Todos</option>
-                <option value="featured">Destacados</option>
+                <option value="featured">
+                  Destacados
+                </option>
                 <option value="not_featured">
                   No destacados
                 </option>
@@ -566,6 +607,134 @@ export default function ProductManagement() {
           onToggle={toggleProduct}
         />
       </Card>
+
+      <Modal
+        open={Boolean(editingProduct)}
+        onOpenChange={(open) => {
+          if (!open) {
+            handleCancelEdit();
+          }
+        }}
+      >
+        <ModalContent
+          className="md:max-w-5xl"
+          voice="admin"
+        >
+          {editingProduct && (
+            <>
+              <ModalHeader>
+                <ModalTitle>
+                  Editar producto
+                </ModalTitle>
+
+                <ModalDescription>
+                  Administra la información, imágenes,
+                  inventario y componentes de{" "}
+                  <strong>
+                    {editingProduct.name}
+                  </strong>
+                  .
+                </ModalDescription>
+              </ModalHeader>
+
+              <div className="border-b border-border-decorative">
+                <div className="grid grid-cols-2 gap-1 sm:grid-cols-4">
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveTab("info")
+                    }
+                    className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "info"
+                        ? "border-brand text-brand"
+                        : "border-transparent text-text-secondary hover:text-text"
+                    }`}
+                  >
+                    <CircleCheck className="size-4" />
+                    Información
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveTab("images")
+                    }
+                    className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "images"
+                        ? "border-brand text-brand"
+                        : "border-transparent text-text-secondary hover:text-text"
+                    }`}
+                  >
+                    <ImageIcon className="size-4" />
+                    Imágenes
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveTab("inventory")
+                    }
+                    className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "inventory"
+                        ? "border-brand text-brand"
+                        : "border-transparent text-text-secondary hover:text-text"
+                    }`}
+                  >
+                    <PackageCheck className="size-4" />
+                    Inventario
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setActiveTab("components")
+                    }
+                    className={`flex items-center justify-center gap-2 border-b-2 px-3 py-3 text-sm font-medium transition-colors ${
+                      activeTab === "components"
+                        ? "border-brand text-brand"
+                        : "border-transparent text-text-secondary hover:text-text"
+                    }`}
+                  >
+                    <Boxes className="size-4" />
+                    Componentes
+                  </button>
+                </div>
+              </div>
+
+              <div className="min-h-[320px]">
+                {activeTab === "info" && (
+                  <ProductForm
+                    categories={categories}
+                    seasons={seasons}
+                    editingProduct={editingProduct}
+                    onSaved={handleProductSaved}
+                    onCancel={handleCancelEdit}
+                  />
+                )}
+
+                {activeTab === "images" && (
+                  <ProductImageManagement
+                    productId={editingProduct.id}
+                    productName={editingProduct.name}
+                  />
+                )}
+
+                {activeTab === "inventory" && (
+                  <ProductInventoryManagement
+                    productId={editingProduct.id}
+                  />
+                )}
+
+                {activeTab === "components" && (
+                  <ProductComponentManagement
+                    productId={editingProduct.id}
+                  />
+                )}
+              </div>
+            </>
+          )}
+        </ModalContent>
+      </Modal>
     </div>
   );
 }
