@@ -49,6 +49,16 @@ type PublicProduct = {
   }[];
 };
 
+type CartItem = PublicProduct & {
+  quantity: number;
+};
+
+type PublicCategory = {
+  id: string;
+  name: string;
+  description: string | null;
+};
+
 type ProductsResponse = {
   success: boolean;
   products: PublicProduct[];
@@ -65,18 +75,85 @@ export default function PruebaClientePage() {
   const [menuOpen, setMenuOpen] = useState(false);
   const [cartOpen, setCartOpen] = useState(false);
 
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
+
   const [products, setProducts] = useState<PublicProduct[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(true);
   const [productsError, setProductsError] = useState(false);
+
+  const [categories, setCategories] = useState<PublicCategory[]>([]);
+  const [loadingCategories, setLoadingCategories] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(
+    null,
+  );
+
+  const addToCart = (product: PublicProduct) => {
+    setCartItems((currentItems) => {
+      const existingItem = currentItems.find(
+        (item) => item.id === product.id,
+      );
+
+      if (existingItem) {
+        return currentItems.map((item) =>
+          item.id === product.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item,
+        );
+      }
+
+      return [...currentItems, { ...product, quantity: 1 }];
+    });
+
+    setCartOpen(true);
+  };
+
+  const increaseQuantity = (productId: string) => {
+    setCartItems((currentItems) =>
+      currentItems.map((item) =>
+        item.id === productId
+          ? { ...item, quantity: item.quantity + 1 }
+          : item,
+      ),
+    );
+  };
+
+  const decreaseQuantity = (productId: string) => {
+    setCartItems((currentItems) =>
+      currentItems
+        .map((item) =>
+          item.id === productId
+            ? { ...item, quantity: item.quantity - 1 }
+            : item,
+        )
+        .filter((item) => item.quantity > 0),
+    );
+  };
+
+  const removeFromCart = (productId: string) => {
+    setCartItems((currentItems) =>
+      currentItems.filter((item) => item.id !== productId),
+    );
+  };
+
+  const cartCount = cartItems.reduce(
+    (total, item) => total + item.quantity,
+    0,
+  );
+
+  const cartTotal = cartItems.reduce(
+    (total, item) => total + Number(item.price) * item.quantity,
+    0,
+  );
 
   useEffect(() => {
     const loadProducts = async () => {
       try {
         setLoadingProducts(true);
         setProductsError(false);
-const response = await fetch(
-  "/api/products?limit=4&page=1&sort=catalog_order&order=asc",
-);
+
+        const response = await fetch(
+          "/api/products?limit=4&page=1&sort=catalog_order&order=asc",
+        );
 
         const data = (await response.json()) as ProductsResponse;
 
@@ -102,6 +179,43 @@ const response = await fetch(
 
     void loadProducts();
   }, []);
+
+  useEffect(() => {
+    const loadCategories = async () => {
+      try {
+        setLoadingCategories(true);
+
+        const response = await fetch("/api/categories");
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(
+            data.message ?? "No se pudieron cargar las categorías.",
+          );
+        }
+
+        setCategories(data.categories ?? []);
+      } catch (error) {
+        console.error(
+          "Error cargando categorías de la página principal:",
+          error,
+        );
+
+        setCategories([]);
+      } finally {
+        setLoadingCategories(false);
+      }
+    };
+
+    void loadCategories();
+  }, []);
+
+  const filteredProducts =
+    selectedCategory === null
+      ? products
+      : products.filter(
+          (product) => product.category_id === selectedCategory,
+        );
 
   return (
     <main
@@ -225,9 +339,11 @@ const response = await fetch(
             >
               <ShoppingBag size={20} strokeWidth={1.8} />
 
-              <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
-                2
-              </span>
+              {cartCount > 0 ? (
+                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
+                  {cartCount}
+                </span>
+              ) : null}
             </button>
           </div>
         </div>
@@ -406,6 +522,46 @@ const response = await fetch(
               <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#756a79]">
                 Encuentra flores y regalos para cada ocasión.
               </p>
+
+              <div className="mt-6 flex flex-wrap gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCategory(null)}
+                  className={`rounded-full px-4 py-2 text-xs font-black transition ${
+                    selectedCategory === null
+                      ? "bg-[#65358e] text-white"
+                      : "border border-[#ded2e2] bg-white text-[#66596b] hover:border-[#65358e] hover:text-[#65358e]"
+                  }`}
+                >
+                  Todos
+                </button>
+
+                {loadingCategories ? (
+                  <>
+                    {Array.from({ length: 3 }).map((_, index) => (
+                      <div
+                        key={index}
+                        className="h-8 w-20 animate-pulse rounded-full bg-[#eee5f0]"
+                      />
+                    ))}
+                  </>
+                ) : (
+                  categories.map((category) => (
+                    <button
+                      key={category.id}
+                      type="button"
+                      onClick={() => setSelectedCategory(category.id)}
+                      className={`rounded-full px-4 py-2 text-xs font-black transition ${
+                        selectedCategory === category.id
+                          ? "bg-[#65358e] text-white"
+                          : "border border-[#ded2e2] bg-white text-[#66596b] hover:border-[#65358e] hover:text-[#65358e]"
+                      }`}
+                    >
+                      {category.name}
+                    </button>
+                  ))
+                )}
+              </div>
             </div>
           </div>
 
@@ -434,15 +590,15 @@ const response = await fetch(
                   Intenta nuevamente en unos momentos.
                 </p>
               </div>
-            ) : products.length === 0 ? (
+            ) : filteredProducts.length === 0 ? (
               <div className="rounded-2xl border border-[#eadfe9] bg-white px-6 py-10 text-center">
                 <p className="text-sm font-bold text-[#55485b]">
-                  No hay productos destacados disponibles.
+                  No hay productos disponibles.
                 </p>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
-                {products.map((product) => {
+                {filteredProducts.map((product) => {
                   const mainImage =
                     product.images?.find(
                       (image) => image.sort_order === 0,
@@ -496,7 +652,7 @@ const response = await fetch(
 
                           <button
                             type="button"
-                            onClick={() => setCartOpen(true)}
+                            onClick={() => addToCart(product)}
                             className="flex size-8 shrink-0 items-center justify-center rounded-lg border border-[#ded2e2] text-[#65358e] transition hover:bg-[#f3ebf6]"
                             aria-label={`Agregar ${product.name}`}
                           >
@@ -861,65 +1017,124 @@ const response = await fetch(
             </div>
 
             <div className="flex-1 overflow-y-auto px-6 py-6">
-              {[
-                {
-                  name: "Ramo de rosas rojas",
-                  price: "Bs 150",
-                  tone: "bg-[#ead9df]",
-                  label: "RO",
-                },
-                {
-                  name: "Regalo Sorpresa",
-                  price: "Bs 210",
-                  tone: "bg-[#eee4d7]",
-                  label: "RS",
-                },
-              ].map((item) => (
-                <div
-                  key={item.name}
-                  className="flex gap-4 border-b border-[#eee7f0] py-5 first:pt-0"
-                >
-                  <div
-                    className={`flex size-[76px] shrink-0 items-center justify-center rounded-xl ${item.tone}`}
+              {cartItems.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <div className="flex size-16 items-center justify-center rounded-full bg-[#f3ebf6] text-[#65358e]">
+                    <ShoppingBag size={26} strokeWidth={1.5} />
+                  </div>
+
+                  <h3
+                    className={`${racingScript.className} mt-5 text-4xl text-[#4c285f]`}
                   >
-                    <span
-                      className={`${racingScript.className} text-3xl text-[#76547f]`}
-                    >
-                      {item.label}
-                    </span>
-                  </div>
+                    Tu carrito está vacío
+                  </h3>
 
-                  <div className="min-w-0 flex-1">
-                    <p className="text-sm font-black text-[#403344]">
-                      {item.name}
-                    </p>
+                  <p className="mt-2 max-w-[260px] text-xs leading-5 text-[#837685]">
+                    Agrega algún detalle del catálogo para comenzar tu compra.
+                  </p>
 
-                    <p className="mt-1 text-xs text-[#837685]">
-                      Cantidad: 1
-                    </p>
-
-                    <p className="mt-2 text-sm font-black text-[#65358e]">
-                      {item.price}
-                    </p>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setCartOpen(false)}
+                    className="mt-6 rounded-xl bg-[#65358e] px-5 py-3 text-xs font-black text-white transition hover:bg-[#572d7a]"
+                  >
+                    Ver catálogo
+                  </button>
                 </div>
-              ))}
+              ) : (
+                cartItems.map((item) => {
+                  const mainImage =
+                    item.images?.find(
+                      (image) => image.sort_order === 0,
+                    ) ?? item.images?.[0];
+
+                  return (
+                    <div
+                      key={item.id}
+                      className="border-b border-[#eee7f0] py-5 first:pt-0"
+                    >
+                      <div className="flex gap-4">
+                        <div className="flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eee5f0]">
+                          {mainImage?.public_url ? (
+                            <img
+                              src={mainImage.public_url}
+                              alt={mainImage.alt_text ?? item.name}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <span
+                              className={`${racingScript.className} text-3xl text-[#76547f]`}
+                            >
+                              NOVA
+                            </span>
+                          )}
+                        </div>
+
+                        <div className="min-w-0 flex-1">
+                          <p className="text-sm font-black text-[#403344]">
+                            {item.name}
+                          </p>
+
+                          <p className="mt-1 text-sm font-black text-[#65358e]">
+                            Bs {Number(item.price).toFixed(2)}
+                          </p>
+
+                          <div className="mt-3 flex items-center justify-between">
+                            <div className="inline-flex items-center rounded-lg border border-[#ded2e2]">
+                              <button
+                                type="button"
+                                onClick={() => decreaseQuantity(item.id)}
+                                className="flex size-8 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
+                                aria-label={`Disminuir cantidad de ${item.name}`}
+                              >
+                                −
+                              </button>
+
+                              <span className="flex size-8 items-center justify-center border-x border-[#ded2e2] text-xs font-black">
+                                {item.quantity}
+                              </span>
+
+                              <button
+                                type="button"
+                                onClick={() => increaseQuantity(item.id)}
+                                className="flex size-8 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
+                                aria-label={`Aumentar cantidad de ${item.name}`}
+                              >
+                                +
+                              </button>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => removeFromCart(item.id)}
+                              className="text-[11px] font-bold text-[#917f95] transition hover:text-[#65358e]"
+                            >
+                              Eliminar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
             </div>
 
             <div className="border-t border-[#e7dfe9] px-6 py-6">
               <div className="flex items-center justify-between text-sm text-[#706474]">
                 <span>Subtotal</span>
-                <span>Bs 360</span>
+                <span>Bs {cartTotal.toFixed(2)}</span>
               </div>
 
               <div className="mt-2 flex items-center justify-between text-lg font-black text-[#403344]">
                 <span>Total</span>
-                <span>Bs 360</span>
+                <span>Bs {cartTotal.toFixed(2)}</span>
               </div>
 
               <button
                 type="button"
-                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white transition hover:bg-[#572d7a]"
+                disabled={cartItems.length === 0}
+                className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Continuar compra
                 <ArrowRight size={16} />

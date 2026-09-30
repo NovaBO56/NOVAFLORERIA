@@ -22,6 +22,7 @@ export const createOrderSchema = z.object({
   items: z.array(orderItemSchema).min(1, "El pedido debe tener al menos un producto."),
   customer_message: z.string().trim().max(1000).optional().nullable(),
   idempotency_key: z.string().trim().min(1, "Falta la clave de idempotencia.").max(100),
+  promotion_id: z.string().uuid("La promoción no es válida.").optional().nullable(),
 });
 
 export const cancelOrderSchema = z.object({

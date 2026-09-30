@@ -2,11 +2,15 @@ import { z } from "zod";
 
 export const addRequirementSchema = z.object({
   inventory_item_id: z.string().uuid("El ítem de inventario no es válido."),
-  quantity: z.coerce.number().positive("La cantidad debe ser mayor que cero."),
+  quantity: z.coerce
+    .number()
+    .positive("La cantidad debe ser mayor que cero."),
 });
 
 export const updateRequirementSchema = z.object({
-  quantity: z.coerce.number().positive("La cantidad debe ser mayor que cero."),
+  quantity: z.coerce
+    .number()
+    .positive("La cantidad debe ser mayor que cero."),
 });
 
 export const createCustomizationOptionSchema = z.object({
@@ -14,9 +18,17 @@ export const createCustomizationOptionSchema = z.object({
     ["cantidad_rosas", "color", "tipo_flor", "oso", "decoracion", "otro"],
     { message: "Tipo de personalización no válido." },
   ),
-  name: z.string().trim().min(1, "El nombre de la opción es obligatorio.").max(120),
+  name: z
+    .string()
+    .trim()
+    .min(1, "El nombre de la opción es obligatorio.")
+    .max(120),
   value: z.string().trim().max(200).optional().nullable(),
-  extra_price: z.coerce.number().min(0, "El precio extra no puede ser negativo.").optional().default(0),
+  extra_price: z.coerce
+    .number()
+    .min(0, "El precio extra no puede ser negativo.")
+    .optional()
+    .default(0),
 });
 
 export const updateCustomizationOptionSchema = z
@@ -30,3 +42,23 @@ export const updateCustomizationOptionSchema = z
   .refine((data) => Object.keys(data).length > 0, {
     message: "No hay cambios para actualizar.",
   });
+
+// ============================================================
+// INVENTARIO DE OPCIONES DE PERSONALIZACIÓN
+// ============================================================
+
+// Qué inventario consume una opción seleccionada
+// en "Arma tu ramo".
+export const addOptionRequirementSchema = z.object({
+  inventory_item_id: z.string().uuid("El ítem de inventario no es válido."),
+  quantity: z.coerce
+    .number()
+    .positive("La cantidad debe ser mayor que cero."),
+});
+
+// Modificación de la cantidad consumida.
+export const updateOptionRequirementSchema = z.object({
+  quantity: z.coerce
+    .number()
+    .positive("La cantidad debe ser mayor que cero."),
+});
