@@ -61,7 +61,7 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
       { label: "Productos", href: "/admin/productos", icon: "products", roles: STAFF, available: true },
       { label: "Categorías", href: "/admin/categorias", icon: "categories", roles: STAFF, available: true },
       { label: "Temporadas", href: "/admin/temporadas", icon: "seasons", roles: STAFF, available: true },
-      { label: "Promociones", href: "/admin/promociones", icon: "promotions", roles: STAFF, available: false },
+      { label: "Promociones", href: "/admin/promociones", icon: "promotions", roles: STAFF, available: true },
     ],
   },
   {

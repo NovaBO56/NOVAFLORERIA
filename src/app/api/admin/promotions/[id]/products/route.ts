@@ -13,7 +13,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const { data, error } = await supabase
       .from("promotion_products")
-      .select("product_id, product:products(id, name, price)")
+      .select("product_id, quantity, product:products(id, name, price)")
       .eq("promotion_id", id);
 
     if (error) {
@@ -46,7 +46,7 @@ export async function POST(request: Request, context: RouteContext) {
     const supabase = await createClient();
     const { error } = await supabase
       .from("promotion_products")
-      .insert({ promotion_id: id, product_id: result.data.product_id });
+      .insert({ promotion_id: id, product_id: result.data.product_id, quantity: result.data.quantity });
 
     if (error) {
       if (error.code === "23505") {
