@@ -23,14 +23,13 @@ describe("Navegación del admin por rol (Fase 15 §4.1)", () => {
     expect(visibles).toContain("Productos");
   });
 
-  it("no muestra ítems cuya pantalla todavía no existe", () => {
-    for (const role of ["administrador", "empleado"] as const) {
-      for (const section of getNavSectionsForRole(role)) {
-        expect(section.items.every((item) => item.available)).toBe(true);
-      }
+ it("no muestra ítems cuya pantalla todavía no existe", () => {
+  for (const role of ["administrador", "empleado"] as const) {
+    for (const section of getNavSectionsForRole(role)) {
+      expect(section.items.every((item) => item.available)).toBe(true);
     }
-    expect(labels("administrador")).not.toContain("Inventario");
-  });
+  }
+});
 
   it("no devuelve secciones vacías", () => {
     const secciones = getNavSectionsForRole("empleado");

@@ -17,7 +17,13 @@ export async function GET(request: Request) {
     const status = searchParams.get("status");
 
     const supabase = await createClient();
-    let query = supabase.from("orders").select(ORDER_SELECT).order("created_at", { ascending: false });
+    // Un pedido con deleted_at ya fue eliminado lógicamente (solicitud de
+    // eliminación aprobada por un admin) y no debe aparecer como activo.
+    let query = supabase
+      .from("orders")
+      .select(ORDER_SELECT)
+      .is("deleted_at", null)
+      .order("created_at", { ascending: false });
 
     if (status) {
       query = query.eq("status", status);

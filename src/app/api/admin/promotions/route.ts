@@ -9,68 +9,73 @@ import { createPromotionSchema } from "@/validations/promotions";
 const PROMOTION_SELECT =
   "id, name, description, promotion_type, discount_type, discount_value, combo_price, starts_at, ends_at, minimum_purchase, is_active, created_at, updated_at";
 
+// El listado incluye los productos de cada promoción (con su cantidad)
+// para mostrarlos en la pantalla sin pedir cada promoción por separado.
+const PROMOTION_LIST_SELECT = `${PROMOTION_SELECT}, items:promotion_products(product_id, quantity, product:products(id, name, price))`;
+
+function fail(message: string, status: number) {
+  return NextResponse.json({ success: false, message }, { status });
+}
+
 export async function GET() {
   try {
     // Cualquier miembro del personal puede VER las promociones (para aplicarlas).
     await requireEmployeeOrAdmin();
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Acceso no autorizado.",
+      403,
+    );
+  }
 
+  try {
     const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("promotions")
-      .select(PROMOTION_SELECT)
+      .select(PROMOTION_LIST_SELECT)
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error obteniendo promociones:", error);
 
-      return NextResponse.json(
-        {
-          success: false,
-          message: "No se pudieron obtener las promociones.",
-        },
-        { status: 500 },
-      );
+      return fail("No se pudieron obtener las promociones.", 500);
     }
 
-    return NextResponse.json({
-      success: true,
-      promotions: data,
-    });
+    return NextResponse.json({ success: true, promotions: data });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Acceso no autorizado.";
+    console.error("Error inesperado obteniendo promociones:", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message,
-      },
-      { status: 403 },
-    );
+    return fail("No se pudieron obtener las promociones.", 500);
   }
 }
 
 export async function POST(request: Request) {
+  // Solo el ADMINISTRADOR crea/configura promociones.
   try {
-    // Solo el ADMINISTRADOR crea/configura promociones.
     await requireAdmin();
+  } catch (error) {
+    return fail(
+      error instanceof Error ? error.message : "Acceso no autorizado.",
+      403,
+    );
+  }
 
-    const body = await request.json();
+  try {
+    let body: unknown;
+
+    try {
+      body = await request.json();
+    } catch {
+      return fail("El cuerpo de la solicitud no es JSON válido.", 400);
+    }
 
     const result = createPromotionSchema.safeParse(body);
 
     if (!result.success) {
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            result.error.issues[0]?.message ??
-            "Datos de promoción inválidos.",
-        },
-        { status: 400 },
+      return fail(
+        result.error.issues[0]?.message ?? "Datos de promoción inválidos.",
+        400,
       );
     }
 
@@ -81,10 +86,7 @@ export async function POST(request: Request) {
       name: string;
       description: string | null;
       promotion_type: "producto" | "combo";
-      discount_type:
-        | "porcentaje"
-        | "monto_fijo"
-        | null;
+      discount_type: "porcentaje" | "monto_fijo" | null;
       discount_value: number | null;
       combo_price: number | null;
       starts_at: string | null;
@@ -99,10 +101,9 @@ export async function POST(request: Request) {
             discount_type: data.discount_type,
             discount_value: data.discount_value,
             combo_price: null,
-            starts_at: data.starts_at || null,
-            ends_at: data.ends_at || null,
-            minimum_purchase:
-              data.minimum_purchase ?? null,
+            starts_at: data.starts_at ?? null,
+            ends_at: data.ends_at ?? null,
+            minimum_purchase: data.minimum_purchase ?? null,
           }
         : {
             name: data.name,
@@ -111,10 +112,9 @@ export async function POST(request: Request) {
             discount_type: null,
             discount_value: null,
             combo_price: data.combo_price,
-            starts_at: data.starts_at || null,
-            ends_at: data.ends_at || null,
-            minimum_purchase:
-              data.minimum_purchase ?? null,
+            starts_at: data.starts_at ?? null,
+            ends_at: data.ends_at ?? null,
+            minimum_purchase: data.minimum_purchase ?? null,
           };
 
     const { data: promotion, error } = await supabase
@@ -124,40 +124,19 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
-      console.error(
-        "Error creando promoción:",
-        error,
-      );
+      console.error("Error creando promoción:", error);
 
-      return NextResponse.json(
-        {
-          success: false,
-          message:
-            "No se pudo crear la promoción.",
-        },
-        { status: 500 },
-      );
+      if (error.code === "23514") {
+        return fail("Los datos no cumplen las reglas de la promoción.", 400);
+      }
+
+      return fail("No se pudo crear la promoción.", 500);
     }
 
-    return NextResponse.json(
-      {
-        success: true,
-        promotion,
-      },
-      { status: 201 },
-    );
+    return NextResponse.json({ success: true, promotion }, { status: 201 });
   } catch (error) {
-    const message =
-      error instanceof Error
-        ? error.message
-        : "Acceso no autorizado.";
+    console.error("Error inesperado creando promoción:", error);
 
-    return NextResponse.json(
-      {
-        success: false,
-        message,
-      },
-      { status: 403 },
-    );
+    return fail("No se pudo crear la promoción.", 500);
   }
 }

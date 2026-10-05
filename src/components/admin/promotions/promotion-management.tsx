@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
+import type { FormEvent } from "react";
+import { X } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -10,10 +12,24 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Field, Input, Textarea } from "@/components/ui/field";
+import {
+  findCheapestProduct,
+  findFixedDiscountViolation,
+  fixedDiscountMessage,
+} from "@/lib/promotions/fixed-discount";
+
+/* ============================================================
+   TIPOS
+   ============================================================ */
 
 type PromotionType = "producto" | "combo";
-
 type DiscountType = "porcentaje" | "monto_fijo";
+
+type PromotionItem = {
+  product_id: string;
+  quantity: number;
+  product: { id: string; name: string; price: number } | null;
+};
 
 type Promotion = {
   id: string;
@@ -29,34 +45,20 @@ type Promotion = {
   is_active: boolean;
   created_at: string;
   updated_at: string;
+  items?: PromotionItem[] | null;
 };
 
-type Product = {
+type CatalogProduct = {
   id: string;
   name: string;
   price: number;
-  is_available?: boolean;
   is_sold_out?: boolean;
-  images?: {
-    id: string;
-    public_url: string;
-    alt_text: string | null;
-    sort_order?: number;
-  }[];
-};
-
-type PromotionProduct = {
-  product_id: string;
-  quantity: number;
-  product: {
-    id: string;
-    name: string;
-    price: number;
-  } | null;
 };
 
 type SelectedProduct = {
   productId: string;
+  name: string;
+  price: number;
   quantity: string;
 };
 
@@ -89,38 +91,91 @@ const promotionTypeLabels: Record<PromotionType, string> = {
   combo: "Combo",
 };
 
+const selectClassName =
+  "flex h-11 w-full rounded-xl border border-border-field bg-surface px-3.5 text-base text-text outline-none transition-all focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-1 focus-visible:outline-brand/40 disabled:cursor-not-allowed disabled:opacity-50 md:text-sm";
+
+const JSON_HEADERS = { "Content-Type": "application/json" };
+
+/* ============================================================
+   UTILIDADES
+   ============================================================ */
+
+type ApiResponse = {
+  success?: boolean;
+  message?: string;
+};
+
+/**
+ * fetch + JSON + manejo de error en un solo lugar.
+ * Lanza Error(message) si la respuesta no es exitosa.
+ */
+async function request<T extends object>(
+  url: string,
+  init: RequestInit | undefined,
+  fallbackMessage: string,
+): Promise<T> {
+  const response = await fetch(url, { cache: "no-store", ...init });
+
+  let result: (T & ApiResponse) | null = null;
+
+  try {
+    result = (await response.json()) as T & ApiResponse;
+  } catch {
+    result = null;
+  }
+
+  if (!response.ok || !result?.success) {
+    throw new Error(result?.message || fallbackMessage);
+  }
+
+  return result;
+}
+
+function errorMessage(error: unknown, fallback: string) {
+  return error instanceof Error ? error.message : fallback;
+}
+
 function formatMoney(value: number) {
   return `Bs ${Number(value).toFixed(2)}`;
 }
 
-function formatDiscount(promotion: Promotion) {
+function formatPercent(value: number) {
+  return `${Number(value)}%`;
+}
+
+function formatDate(value: string) {
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) return value;
+
+  return date.toLocaleString("es-BO", {
+    dateStyle: "short",
+    timeStyle: "short",
+  });
+}
+
+function formatValidity(promotion: Promotion) {
+  const { starts_at: start, ends_at: end } = promotion;
+
+  if (!start && !end) return "Sin límite de fechas";
+  if (start && !end) return `Desde ${formatDate(start)}`;
+  if (!start && end) return `Hasta ${formatDate(end)}`;
+
+  return `${formatDate(start as string)} — ${formatDate(end as string)}`;
+}
+
+function formatBenefit(promotion: Promotion) {
   if (promotion.promotion_type === "combo") {
     return promotion.combo_price !== null
-      ? formatMoney(Number(promotion.combo_price))
+      ? formatMoney(promotion.combo_price)
       : "Sin precio";
   }
 
   if (promotion.discount_type === "porcentaje") {
-    return `${Number(promotion.discount_value ?? 0).toFixed(0)}%`;
+    return `${formatPercent(promotion.discount_value ?? 0)} de descuento`;
   }
 
-  return formatMoney(Number(promotion.discount_value ?? 0));
-}
-
-function formatDate(value: string | null) {
-  if (!value) return "Sin límite";
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return value;
-  }
-
-  return date.toLocaleDateString("es-BO", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-  });
+  return formatMoney(promotion.discount_value ?? 0);
 }
 
 function toDateTimeLocal(value: string | null) {
@@ -130,8 +185,9 @@ function toDateTimeLocal(value: string | null) {
 
   if (Number.isNaN(date.getTime())) return "";
 
-  const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60_000);
+  const localDate = new Date(
+    date.getTime() - date.getTimezoneOffset() * 60_000,
+  );
 
   return localDate.toISOString().slice(0, 16);
 }
@@ -141,215 +197,244 @@ function toISOStringOrNull(value: string) {
 
   const date = new Date(value);
 
-  if (Number.isNaN(date.getTime())) return null;
-
-  return date.toISOString();
+  return Number.isNaN(date.getTime()) ? null : date.toISOString();
 }
 
-export default function PromotionManagement() {
-  const [promotions, setPromotions] = useState<Promotion[]>([]);
-  const [products, setProducts] = useState<Product[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<
-    SelectedProduct[]
-  >([]);
+/**
+ * Estado real de la promoción. "Activa" solo dice que el interruptor
+ * está encendido: una promoción puede estar encendida y ya vencida.
+ */
+function getStatus(promotion: Promotion, now: number) {
+  if (!promotion.is_active) {
+    return { label: "Inactiva", variant: "outline" as const };
+  }
 
+  if (promotion.starts_at && Date.parse(promotion.starts_at) > now) {
+    return { label: "Programada", variant: "outline" as const };
+  }
+
+  if (promotion.ends_at && Date.parse(promotion.ends_at) < now) {
+    return { label: "Vencida", variant: "outline" as const };
+  }
+
+  return { label: "Vigente", variant: "brand" as const };
+}
+
+function describeItems(promotion: Promotion) {
+  const items = promotion.items ?? [];
+
+  if (items.length === 0) return null;
+
+  const names = items.map((item) => {
+    const name = item.product?.name ?? "Producto";
+
+    return promotion.promotion_type === "combo"
+      ? `${Number(item.quantity)}× ${name}`
+      : name;
+  });
+
+  const visible = names.slice(0, 4).join(
+    promotion.promotion_type === "combo" ? " + " : ", ",
+  );
+
+  return names.length > 4
+    ? `${visible} y ${names.length - 4} más`
+    : visible;
+}
+
+/* ============================================================
+   COMPONENTE
+   ============================================================ */
+
+export default function PromotionManagement({
+  isAdmin,
+}: {
+  isAdmin: boolean;
+}) {
+  // Lista de promociones
+  const [promotions, setPromotions] = useState<Promotion[]>([]);
+  const [now, setNow] = useState(0);
+  const [listLoading, setListLoading] = useState(true);
+  const [listError, setListError] = useState("");
+
+  // Catálogo para elegir productos
+  const [catalog, setCatalog] = useState<CatalogProduct[]>([]);
+  const [catalogTotal, setCatalogTotal] = useState(0);
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [catalogError, setCatalogError] = useState("");
+  const [search, setSearch] = useState("");
+
+  // Formulario
   const [form, setForm] = useState<PromotionForm>(initialForm);
+  const [selected, setSelected] = useState<SelectedProduct[]>([]);
   const [editingPromotion, setEditingPromotion] =
     useState<Promotion | null>(null);
-
-  const [loading, setLoading] = useState(true);
-  const [productsLoading, setProductsLoading] = useState(true);
-  const [associationLoading, setAssociationLoading] = useState(false);
   const [saving, setSaving] = useState(false);
-
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  async function loadPromotions() {
+  // Mensaje del botón Activar/Desactivar: aparece junto a la lista.
+  const [notice, setNotice] = useState<{
+    kind: "success" | "error";
+    text: string;
+  } | null>(null);
+
+  const formRef = useRef<HTMLDivElement>(null);
+  const nameRef = useRef<HTMLInputElement>(null);
+
+  /* ----------------------------- carga ----------------------------- */
+
+  const loadPromotions = useCallback(async () => {
     try {
-      setLoading(true);
-      setError("");
-
-      const response = await fetch("/api/admin/promotions", {
-        cache: "no-store",
-      });
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            "No se pudieron cargar las promociones.",
-        );
-      }
+      const result = await request<{ promotions: Promotion[] }>(
+        "/api/admin/promotions",
+        undefined,
+        "No se pudieron cargar las promociones.",
+      );
 
       setPromotions(result.promotions ?? []);
+      setNow(Date.now());
+      setListError("");
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar las promociones.",
+      setListError(
+        errorMessage(error, "No se pudieron cargar las promociones."),
       );
     } finally {
-      setLoading(false);
+      setListLoading(false);
     }
-  }
-
-  async function loadProducts() {
-    try {
-      setProductsLoading(true);
-
-      const response = await fetch(
-        "/api/products?limit=60&page=1&sort=name&order=asc",
-        {
-          cache: "no-store",
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            "No se pudieron cargar los productos.",
-        );
-      }
-
-      setProducts(result.products ?? []);
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar los productos.",
-      );
-    } finally {
-      setProductsLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadPromotions();
-    void loadProducts();
   }, []);
 
-  function updateForm(
-    field: keyof PromotionForm,
-    value: string,
-  ) {
-    setForm((current) => ({
-      ...current,
-      [field]: value,
-    }));
+  useEffect(() => {
+    void (async () => {
+      await loadPromotions();
+    })();
+  }, [loadPromotions]);
+
+  // Búsqueda de productos en el servidor (con espera de 300 ms al escribir).
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    const term = search.trim();
+    let cancelled = false;
+
+    const timer = setTimeout(
+      async () => {
+        try {
+          const params = new URLSearchParams({
+            limit: "60",
+            page: "1",
+            sort: "name",
+            order: "asc",
+          });
+
+          if (term) params.set("search", term);
+
+          const result = await request<{
+            products: CatalogProduct[];
+            pagination?: { total?: number };
+          }>(
+            `/api/products?${params.toString()}`,
+            undefined,
+            "No se pudieron cargar los productos.",
+          );
+
+          if (cancelled) return;
+
+          setCatalog(result.products ?? []);
+          setCatalogTotal(
+            result.pagination?.total ?? result.products?.length ?? 0,
+          );
+          setCatalogError("");
+        } catch (error) {
+          if (cancelled) return;
+
+          setCatalogError(
+            errorMessage(error, "No se pudieron cargar los productos."),
+          );
+        } finally {
+          if (!cancelled) setCatalogLoading(false);
+        }
+      },
+      term ? 300 : 0,
+    );
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [search, isAdmin]);
+
+  /* ---------------------------- formulario ---------------------------- */
+
+  function updateForm(field: keyof PromotionForm, value: string) {
+    // Al corregir un campo, el mensaje de error anterior ya no aplica.
+    setError("");
+    setForm((current) => ({ ...current, [field]: value }));
   }
 
   function resetForm() {
     setForm(initialForm);
-    setSelectedProducts([]);
+    setSelected([]);
     setEditingPromotion(null);
     setError("");
   }
 
-  function toggleProduct(productId: string) {
-    setSelectedProducts((current) => {
-      const exists = current.some(
-        (item) => item.productId === productId,
-      );
+  function changeType(value: PromotionType) {
+    updateForm("promotion_type", value);
 
-      if (exists) {
-        return current.filter(
-          (item) => item.productId !== productId,
-        );
-      }
-
-      return [
-        ...current,
-        {
-          productId,
-          quantity: "1",
-        },
-      ];
-    });
+    // Las cantidades solo tienen sentido en combos.
+    setSelected((current) =>
+      current.map((item) => ({ ...item, quantity: "1" })),
+    );
   }
 
-  function updateProductQuantity(
-    productId: string,
-    quantity: string,
-  ) {
-    setSelectedProducts((current) =>
+  function toggleProduct(product: CatalogProduct) {
+    setError("");
+    setSelected((current) =>
+      current.some((item) => item.productId === product.id)
+        ? current.filter((item) => item.productId !== product.id)
+        : [
+            ...current,
+            {
+              productId: product.id,
+              name: product.name,
+              price: Number(product.price),
+              quantity: "1",
+            },
+          ],
+    );
+  }
+
+  function removeProduct(productId: string) {
+    setError("");
+    setSelected((current) =>
+      current.filter((item) => item.productId !== productId),
+    );
+  }
+
+  function updateQuantity(productId: string, quantity: string) {
+    setError("");
+    setSelected((current) =>
       current.map((item) =>
-        item.productId === productId
-          ? {
-              ...item,
-              quantity,
-            }
-          : item,
+        item.productId === productId ? { ...item, quantity } : item,
       ),
     );
   }
 
-  async function loadPromotionProducts(
-    promotionId: string,
-  ) {
-    try {
-      setAssociationLoading(true);
-      setError("");
-
-      const response = await fetch(
-        `/api/admin/promotions/${promotionId}/products`,
-        {
-          cache: "no-store",
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            "No se pudieron cargar los productos de la promoción.",
-        );
-      }
-
-      const associations: PromotionProduct[] =
-        result.products ?? result.promotion_products ?? [];
-
-      setSelectedProducts(
-        associations.map((item) => ({
-          productId: item.product_id,
-          quantity: String(item.quantity ?? 1),
-        })),
-      );
-    } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudieron cargar los productos de la promoción.",
-      );
-    } finally {
-      setAssociationLoading(false);
-    }
-  }
-
-  async function startEditing(promotion: Promotion) {
+  function startEditing(promotion: Promotion) {
     setEditingPromotion(promotion);
 
     setForm({
       name: promotion.name,
       description: promotion.description ?? "",
       promotion_type: promotion.promotion_type,
-      discount_type:
-        promotion.discount_type ?? "porcentaje",
+      discount_type: promotion.discount_type ?? "porcentaje",
       discount_value:
         promotion.discount_value !== null
           ? String(promotion.discount_value)
           : "",
       combo_price:
-        promotion.combo_price !== null
-          ? String(promotion.combo_price)
-          : "",
+        promotion.combo_price !== null ? String(promotion.combo_price) : "",
       starts_at: toDateTimeLocal(promotion.starts_at),
       ends_at: toDateTimeLocal(promotion.ends_at),
       minimum_purchase:
@@ -358,181 +443,122 @@ export default function PromotionManagement() {
           : "",
     });
 
-    setSelectedProducts([]);
+    setSelected(
+      (promotion.items ?? []).map((item) => ({
+        productId: item.product_id,
+        name: item.product?.name ?? "Producto",
+        price: Number(item.product?.price ?? 0),
+        quantity: String(Number(item.quantity)),
+      })),
+    );
+
     setError("");
     setSuccess("");
+    setNotice(null);
 
-    await loadPromotionProducts(promotion.id);
+    // La lista queda debajo del formulario: se sube a él para que
+    // el clic en "Editar" tenga un efecto visible.
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    formRef.current?.scrollIntoView({
+      behavior: reduceMotion ? "auto" : "smooth",
+      block: "start",
+    });
+    nameRef.current?.focus({ preventScroll: true });
   }
+
+  /* --------------------- sincronizar productos --------------------- */
 
   async function syncPromotionProducts(
     promotionId: string,
+    items: SelectedProduct[],
+    type: PromotionType,
   ) {
-    const response = await fetch(
-      `/api/admin/promotions/${promotionId}/products`,
-      {
-        cache: "no-store",
-      },
+    const base = `/api/admin/promotions/${promotionId}/products`;
+
+    const current = await request<{
+      products: { product_id: string; quantity: number }[];
+    }>(
+      base,
+      undefined,
+      "No se pudieron consultar los productos de la promoción.",
     );
 
-    const result = await response.json();
-
-    if (!response.ok || !result.success) {
-      throw new Error(
-        result.message ||
-          result.error ||
-          "No se pudieron consultar los productos de la promoción.",
-      );
-    }
-
-    const currentProducts: PromotionProduct[] =
-      result.products ?? result.promotion_products ?? [];
-
-    const currentMap = new Map(
-      currentProducts.map((item) => [
+    const currentQuantities = new Map(
+      (current.products ?? []).map((item) => [
         item.product_id,
-        item,
+        Number(item.quantity),
       ]),
     );
 
-    const selectedIds = new Set(
-      selectedProducts.map((item) => item.productId),
-    );
+    // 1) Agregar y actualizar primero: si algo falla, la promoción
+    //    sigue teniendo los productos que ya tenía.
+    for (const item of items) {
+      const quantity = type === "combo" ? Number(item.quantity) : 1;
+      const existing = currentQuantities.get(item.productId);
 
-    for (const current of currentProducts) {
-      if (!selectedIds.has(current.product_id)) {
-        const deleteResponse = await fetch(
-          `/api/admin/promotions/${promotionId}/products/${current.product_id}`,
+      if (existing === undefined) {
+        await request(
+          base,
           {
-            method: "DELETE",
+            method: "POST",
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ product_id: item.productId, quantity }),
           },
+          `No se pudo agregar «${item.name}» a la promoción.`,
         );
-
-        const deleteResult = await deleteResponse.json();
-
-        if (!deleteResponse.ok || !deleteResult.success) {
-          throw new Error(
-            deleteResult.message ||
-              deleteResult.error ||
-              "No se pudo quitar un producto de la promoción.",
-          );
-        }
+      } else if (existing !== quantity) {
+        await request(
+          `${base}/${item.productId}`,
+          {
+            method: "PATCH",
+            headers: JSON_HEADERS,
+            body: JSON.stringify({ quantity }),
+          },
+          `No se pudo actualizar la cantidad de «${item.name}».`,
+        );
       }
     }
 
-    for (const selected of selectedProducts) {
-      const quantity =
-        form.promotion_type === "combo"
-          ? Number(selected.quantity)
-          : 1;
+    // 2) Quitar al final los que ya no están seleccionados.
+    const selectedIds = new Set(items.map((item) => item.productId));
 
-      if (!Number.isFinite(quantity) || quantity <= 0) {
-        throw new Error(
-          "Todas las cantidades de los productos deben ser mayores que cero.",
+    for (const productId of currentQuantities.keys()) {
+      if (!selectedIds.has(productId)) {
+        await request(
+          `${base}/${productId}`,
+          { method: "DELETE" },
+          "No se pudo quitar un producto de la promoción.",
         );
-      }
-
-      const existing = currentMap.get(
-        selected.productId,
-      );
-
-      if (existing) {
-        if (
-          Number(existing.quantity) !== quantity
-        ) {
-          const patchResponse = await fetch(
-            `/api/admin/promotions/${promotionId}/products/${selected.productId}`,
-            {
-              method: "PATCH",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({
-                quantity,
-              }),
-            },
-          );
-
-          const patchResult =
-            await patchResponse.json();
-
-          if (
-            !patchResponse.ok ||
-            !patchResult.success
-          ) {
-            throw new Error(
-              patchResult.message ||
-                patchResult.error ||
-                "No se pudo actualizar la cantidad del producto.",
-            );
-          }
-        }
-      } else {
-        const postResponse = await fetch(
-          `/api/admin/promotions/${promotionId}/products`,
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              product_id: selected.productId,
-              quantity,
-            }),
-          },
-        );
-
-        const postResult = await postResponse.json();
-
-        if (
-          !postResponse.ok ||
-          !postResult.success
-        ) {
-          throw new Error(
-            postResult.message ||
-              postResult.error ||
-              "No se pudo agregar un producto a la promoción.",
-          );
-        }
       }
     }
   }
 
-  async function handleSubmit(
-    event: React.FormEvent<HTMLFormElement>,
-  ) {
+  /* ----------------------------- guardar ----------------------------- */
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
     setError("");
     setSuccess("");
+    setNotice(null);
 
     const name = form.name.trim();
     const description = form.description.trim();
+    const isCombo = form.promotion_type === "combo";
 
     if (!name) {
-      setError(
-        "El nombre de la promoción es obligatorio.",
-      );
+      setError("El nombre de la promoción es obligatorio.");
       return;
     }
 
-    if (name.length > 150) {
+    if (selected.length === 0) {
       setError(
-        "El nombre de la promoción es demasiado largo.",
-      );
-      return;
-    }
-
-    if (description.length > 500) {
-      setError("La descripción es demasiado larga.");
-      return;
-    }
-
-    if (selectedProducts.length === 0) {
-      setError(
-        form.promotion_type === "combo"
-          ? "Debes seleccionar al menos un producto para el combo."
-          : "Debes seleccionar al menos un producto para la promoción.",
+        isCombo
+          ? "Selecciona al menos un producto para el combo."
+          : "Selecciona al menos un producto para la promoción.",
       );
       return;
     }
@@ -540,66 +566,57 @@ export default function PromotionManagement() {
     let discountValue: number | null = null;
     let comboPrice: number | null = null;
 
-    if (form.promotion_type === "producto") {
+    if (isCombo) {
+      comboPrice = Number(form.combo_price);
+
+      if (!form.combo_price.trim() || !Number.isFinite(comboPrice) || comboPrice <= 0) {
+        setError("El precio del combo debe ser mayor que cero.");
+        return;
+      }
+
+      for (const item of selected) {
+        const quantity = Number(item.quantity);
+
+        if (!Number.isFinite(quantity) || quantity <= 0) {
+          setError(`La cantidad de «${item.name}» debe ser mayor que cero.`);
+          return;
+        }
+      }
+    } else {
       discountValue = Number(form.discount_value);
 
       if (
-        !form.discount_value ||
+        !form.discount_value.trim() ||
         !Number.isFinite(discountValue) ||
-        discountValue < 0
+        discountValue <= 0
       ) {
-        setError(
-          "El valor del descuento no es válido.",
-        );
+        setError("El valor del descuento debe ser mayor que cero.");
         return;
       }
 
-      if (
-        form.discount_type === "porcentaje" &&
-        discountValue > 100
-      ) {
-        setError(
-          "El porcentaje de descuento no puede superar el 100%.",
-        );
-        return;
-      }
-    } else {
-      comboPrice = Number(form.combo_price);
-
-      if (
-        !form.combo_price ||
-        !Number.isFinite(comboPrice) ||
-        comboPrice < 0
-      ) {
-        setError(
-          "El precio del combo no es válido.",
-        );
+      if (form.discount_type === "porcentaje" && discountValue > 100) {
+        setError("El porcentaje de descuento no puede superar el 100%.");
         return;
       }
 
-      for (const item of selectedProducts) {
-        const quantity = Number(item.quantity);
+      // Monto fijo: no puede superar el precio del producto más barato.
+      if (form.discount_type === "monto_fijo") {
+        const violation = findFixedDiscountViolation(discountValue, selected);
 
-        if (
-          !Number.isFinite(quantity) ||
-          quantity <= 0
-        ) {
-          setError(
-            "Todas las cantidades del combo deben ser mayores que cero.",
-          );
+        if (violation) {
+          setError(fixedDiscountMessage(discountValue, violation));
           return;
         }
       }
     }
 
-    const minimumPurchase = form.minimum_purchase
+    const minimumPurchase = form.minimum_purchase.trim()
       ? Number(form.minimum_purchase)
       : null;
 
     if (
       minimumPurchase !== null &&
-      (!Number.isFinite(minimumPurchase) ||
-        minimumPurchase < 0)
+      (!Number.isFinite(minimumPurchase) || minimumPurchase < 0)
     ) {
       setError("La compra mínima no es válida.");
       return;
@@ -608,8 +625,7 @@ export default function PromotionManagement() {
     if (
       form.starts_at &&
       form.ends_at &&
-      new Date(form.starts_at) >=
-        new Date(form.ends_at)
+      new Date(form.starts_at) >= new Date(form.ends_at)
     ) {
       setError(
         "La fecha de finalización debe ser posterior a la fecha de inicio.",
@@ -617,420 +633,361 @@ export default function PromotionManagement() {
       return;
     }
 
+    const common = {
+      name,
+      description: description || null,
+      starts_at: toISOStringOrNull(form.starts_at),
+      ends_at: toISOStringOrNull(form.ends_at),
+      minimum_purchase: minimumPurchase,
+    };
+
+    const benefit = isCombo
+      ? { combo_price: comboPrice }
+      : { discount_type: form.discount_type, discount_value: discountValue };
+
+    const wasEditing = Boolean(editingPromotion);
+    let createdNow = false;
+
     try {
       setSaving(true);
 
-      const isEditing = Boolean(editingPromotion);
+      let promotionId: string;
 
-      const body =
-        form.promotion_type === "producto"
-          ? {
-              name,
-              description: description || null,
-              promotion_type: "producto",
-              discount_type: form.discount_type,
-              discount_value: discountValue,
-              combo_price: null,
-              starts_at: toISOStringOrNull(
-                form.starts_at,
-              ),
-              ends_at: toISOStringOrNull(
-                form.ends_at,
-              ),
-              minimum_purchase: minimumPurchase,
-            }
-          : {
-              name,
-              description: description || null,
-              promotion_type: "combo",
-              combo_price: comboPrice,
-              discount_type: null,
-              discount_value: null,
-              starts_at: toISOStringOrNull(
-                form.starts_at,
-              ),
-              ends_at: toISOStringOrNull(
-                form.ends_at,
-              ),
-              minimum_purchase: minimumPurchase,
-            };
+      if (editingPromotion) {
+        promotionId = editingPromotion.id;
 
-      const response = await fetch(
-        isEditing
-          ? `/api/admin/promotions/${editingPromotion?.id}`
-          : "/api/admin/promotions",
-        {
-          method: isEditing ? "PATCH" : "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        },
-      );
-
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            result.error ||
+        // El tipo no se envía: es permanente.
+        const savePromotion = () =>
+          request(
+            `/api/admin/promotions/${promotionId}`,
+            {
+              method: "PATCH",
+              headers: JSON_HEADERS,
+              body: JSON.stringify({ ...common, ...benefit }),
+            },
             "No se pudo guardar la promoción.",
+          );
+
+        // El servidor comprueba que el monto fijo no supere el precio de
+        // los productos que la promoción tiene en ese momento. Si el monto
+        // SUBE, primero se actualizan los productos (así ya no están los
+        // que quedarían por debajo); si baja o no cambia, primero el monto.
+        const raisesFixedDiscount =
+          !isCombo &&
+          form.discount_type === "monto_fijo" &&
+          (editingPromotion.discount_type !== "monto_fijo" ||
+            (discountValue ?? 0) > Number(editingPromotion.discount_value ?? 0));
+
+        if (raisesFixedDiscount) {
+          await syncPromotionProducts(promotionId, selected, form.promotion_type);
+          await savePromotion();
+        } else {
+          await savePromotion();
+          await syncPromotionProducts(promotionId, selected, form.promotion_type);
+        }
+      } else {
+        const created = await request<{ promotion: Promotion }>(
+          "/api/admin/promotions",
+          {
+            method: "POST",
+            headers: JSON_HEADERS,
+            body: JSON.stringify({
+              ...common,
+              ...benefit,
+              promotion_type: form.promotion_type,
+            }),
+          },
+          "No se pudo crear la promoción.",
         );
+
+        promotionId = created.promotion.id;
+        createdNow = true;
+
+        // Desde aquí el formulario pasa a "editar": si guardar los
+        // productos falla, reintentar NO crea una promoción duplicada.
+        setEditingPromotion({ ...created.promotion, items: [] });
+
+        await syncPromotionProducts(promotionId, selected, form.promotion_type);
       }
-
-      const promotionId =
-        editingPromotion?.id ?? result.promotion?.id;
-
-      if (!promotionId) {
-        throw new Error(
-          "La promoción se guardó, pero no se recibió su identificador.",
-        );
-      }
-
-      await syncPromotionProducts(promotionId);
 
       setSuccess(
-        isEditing
+        wasEditing
           ? "Promoción actualizada correctamente."
           : "Promoción creada correctamente.",
       );
 
       setForm(initialForm);
-      setSelectedProducts([]);
+      setSelected([]);
       setEditingPromotion(null);
 
       await loadPromotions();
     } catch (error) {
+      const message = errorMessage(error, "No se pudo guardar la promoción.");
+
       setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo guardar la promoción.",
+        createdNow
+          ? `La promoción se creó, pero no se pudieron guardar sus productos: ${message} Revisa la selección y pulsa «Guardar cambios» para reintentar.`
+          : message,
       );
+
+      if (createdNow) await loadPromotions();
     } finally {
       setSaving(false);
     }
   }
 
-  async function togglePromotion(
-    promotion: Promotion,
-  ) {
-    setError("");
-    setSuccess("");
+  async function togglePromotion(promotion: Promotion) {
+    setNotice(null);
 
     try {
-      const response = await fetch(
+      await request(
         `/api/admin/promotions/${promotion.id}`,
         {
           method: "PATCH",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            is_active: !promotion.is_active,
-          }),
+          headers: JSON_HEADERS,
+          body: JSON.stringify({ is_active: !promotion.is_active }),
         },
+        "No se pudo cambiar el estado de la promoción.",
       );
 
-      const result = await response.json();
-
-      if (!response.ok || !result.success) {
-        throw new Error(
-          result.message ||
-            result.error ||
-            "No se pudo cambiar el estado de la promoción.",
-        );
-      }
-
-      setSuccess(
-        promotion.is_active
-          ? "Promoción desactivada correctamente."
-          : "Promoción activada correctamente.",
-      );
+      setNotice({
+        kind: "success",
+        text: promotion.is_active
+          ? `«${promotion.name}» se desactivó correctamente.`
+          : `«${promotion.name}» se activó correctamente.`,
+      });
 
       await loadPromotions();
     } catch (error) {
-      setError(
-        error instanceof Error
-          ? error.message
-          : "No se pudo cambiar el estado de la promoción.",
-      );
+      setNotice({
+        kind: "error",
+        text: errorMessage(
+          error,
+          "No se pudo cambiar el estado de la promoción.",
+        ),
+      });
     }
   }
 
-  const selectedProductIds = new Set(
-    selectedProducts.map((item) => item.productId),
+  /* ------------------------------ vista ------------------------------ */
+
+  const isCombo = form.promotion_type === "combo";
+  const selectedIds = new Set(selected.map((item) => item.productId));
+
+  const comboNormalPrice = selected.reduce(
+    (sum, item) => sum + item.price * (Number(item.quantity) || 0),
+    0,
   );
+  const comboPriceNumber = Number(form.combo_price);
+
+  // Monto fijo: máximo permitido = precio del producto más barato elegido.
+  const isFixedDiscount = !isCombo && form.discount_type === "monto_fijo";
+  const cheapestSelected = isFixedDiscount
+    ? findCheapestProduct(selected)
+    : null;
+  const fixedDiscountNumber = Number(form.discount_value);
+  const fixedDiscountViolation =
+    isFixedDiscount &&
+    form.discount_value.trim() !== "" &&
+    Number.isFinite(fixedDiscountNumber)
+      ? findFixedDiscountViolation(fixedDiscountNumber, selected)
+      : null;
+  const showComboSummary =
+    isCombo && selected.length > 0 && comboNormalPrice > 0;
 
   return (
     <div className="flex flex-col gap-6">
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {editingPromotion
-              ? "Editar promoción"
-              : "Nueva promoción"}
-          </CardTitle>
+      {isAdmin && (
+        <div ref={formRef} className="scroll-mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {editingPromotion ? "Editar promoción" : "Nueva promoción"}
+              </CardTitle>
 
-          <p className="text-text-secondary">
-            Configura promociones directamente sobre productos
-            o crea combos con un precio final.
-          </p>
-        </CardHeader>
+              <p className="text-text-secondary">
+                Configura promociones directamente sobre productos o crea
+                combos con un precio final.
+              </p>
+            </CardHeader>
 
-        <CardContent>
-          <form
-            onSubmit={handleSubmit}
-            className="flex flex-col gap-6"
-          >
-            <div className="grid gap-5 md:grid-cols-2">
-              <Field label="Nombre">
-                <Input
-                  value={form.name}
-                  onChange={(event) =>
-                    updateForm(
-                      "name",
-                      event.target.value,
-                    )
-                  }
-                  maxLength={150}
-                  disabled={saving}
-                  required
-                  placeholder="Ej. 20% en rosas rojas"
-                />
-              </Field>
+            <CardContent>
+              <form
+                onSubmit={handleSubmit}
+                noValidate
+                className="flex flex-col gap-6"
+              >
+                <div className="grid gap-5 md:grid-cols-2">
+                  <Field label="Nombre">
+                    <Input
+                      ref={nameRef}
+                      value={form.name}
+                      onChange={(event) =>
+                        updateForm("name", event.target.value)
+                      }
+                      maxLength={150}
+                      disabled={saving}
+                      required
+                      placeholder="Ej. 20% en rosas rojas"
+                    />
+                  </Field>
 
-              <Field label="Tipo de promoción">
-                <select
-                  value={form.promotion_type}
-                  onChange={(event) => {
-                    const value =
-                      event.target.value as PromotionType;
-
-                    updateForm(
-                      "promotion_type",
-                      value,
-                    );
-
-                    setSelectedProducts(
-                      (current) =>
-                        current.map((item) => ({
-                          ...item,
-                          quantity: "1",
-                        })),
-                    );
-                  }}
-                  disabled={saving}
-                  className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text outline-none focus:ring-2 focus:ring-brand"
-                >
-                  <option value="producto">
-                    Promoción de producto
-                  </option>
-                  <option value="combo">
-                    Combo
-                  </option>
-                </select>
-              </Field>
-            </div>
-
-            <Field label="Descripción" optional>
-              <Textarea
-                value={form.description}
-                onChange={(event) =>
-                  updateForm(
-                    "description",
-                    event.target.value,
-                  )
-                }
-                maxLength={500}
-                disabled={saving}
-                rows={3}
-                placeholder="Describe brevemente la promoción."
-              />
-            </Field>
-
-            {form.promotion_type === "producto" ? (
-              <div className="grid gap-5 md:grid-cols-2">
-                <Field label="Tipo de beneficio">
-                  <select
-                    value={form.discount_type}
-                    onChange={(event) =>
-                      updateForm(
-                        "discount_type",
-                        event.target.value,
-                      )
-                    }
-                    disabled={saving}
-                    className="flex h-10 w-full rounded-md border border-border bg-background px-3 text-sm text-text outline-none focus:ring-2 focus:ring-brand"
-                  >
-                    <option value="porcentaje">
-                      Porcentaje
-                    </option>
-                    <option value="monto_fijo">
-                      Monto fijo
-                    </option>
-                  </select>
-                </Field>
-
-                <Field
-                  label={
-                    form.discount_type ===
-                    "porcentaje"
-                      ? "Porcentaje de descuento"
-                      : "Monto de descuento"
-                  }
-                >
-                  <Input
-                    type="number"
-                    min="0"
-                    step={
-                      form.discount_type ===
-                      "porcentaje"
-                        ? "1"
-                        : "0.01"
-                    }
-                    max={
-                      form.discount_type ===
-                      "porcentaje"
-                        ? "100"
+                  <Field
+                    label="Tipo de promoción"
+                    hint={
+                      editingPromotion
+                        ? "El tipo no se puede cambiar después de crear la promoción."
                         : undefined
                     }
-                    value={form.discount_value}
+                  >
+                    <select
+                      value={form.promotion_type}
+                      onChange={(event) =>
+                        changeType(event.target.value as PromotionType)
+                      }
+                      disabled={saving || Boolean(editingPromotion)}
+                      className={selectClassName}
+                    >
+                      <option value="producto">Promoción de producto</option>
+                      <option value="combo">Combo</option>
+                    </select>
+                  </Field>
+                </div>
+
+                <Field label="Descripción" optional>
+                  <Textarea
+                    value={form.description}
                     onChange={(event) =>
-                      updateForm(
-                        "discount_value",
-                        event.target.value,
-                      )
+                      updateForm("description", event.target.value)
                     }
+                    maxLength={500}
                     disabled={saving}
-                    required
-                    placeholder={
-                      form.discount_type ===
-                      "porcentaje"
-                        ? "20"
-                        : "10.00"
-                    }
+                    rows={3}
+                    placeholder="Describe brevemente la promoción."
                   />
                 </Field>
-              </div>
-            ) : (
-              <div>
-  <Field label="Precio final del combo">
-    <Input
-      type="number"
-      min="0"
-      step="0.01"
-      value={form.combo_price}
-      onChange={(event) =>
-        updateForm(
-          "combo_price",
-          event.target.value,
-        )
-      }
-      disabled={saving}
-      required
-      placeholder="Ej. 250.00"
-    />
-  </Field>
 
-  <p className="mt-1 text-sm text-text-secondary">
-    Este es el precio total que pagará el cliente por cada combo completo.
-  </p>
-</div>
-            )}
-
-            <Card className="border border-border-decorative shadow-none">
-              <CardHeader>
-                <CardTitle className="text-base">
-                  Productos de la promoción
-                </CardTitle>
-
-                <p className="text-sm text-text-secondary">
-                  {form.promotion_type === "combo"
-                    ? "Selecciona los productos y define cuántas unidades de cada uno forman el combo."
-                    : "Selecciona los productos a los que se aplicará esta promoción."}
-                </p>
-              </CardHeader>
-
-              <CardContent>
-                {productsLoading ? (
-                  <p className="text-sm text-text-secondary">
-                    Cargando productos...
-                  </p>
-                ) : products.length === 0 ? (
-                  <p className="text-sm text-text-secondary">
-                    No hay productos disponibles.
-                  </p>
+                {isCombo ? (
+                  <Field
+                    label="Precio final del combo"
+                    hint="Es el precio total que pagará el cliente por cada combo completo."
+                  >
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      value={form.combo_price}
+                      onChange={(event) =>
+                        updateForm("combo_price", event.target.value)
+                      }
+                      disabled={saving}
+                      required
+                      placeholder="Ej. 250.00"
+                    />
+                  </Field>
                 ) : (
-                  <div className="flex flex-col gap-3">
-                    {products.map((product) => {
-                      const selected =
-                        selectedProductIds.has(
-                          product.id,
-                        );
+                  <div className="grid gap-5 md:grid-cols-2">
+                    <Field label="Tipo de beneficio">
+                      <select
+                        value={form.discount_type}
+                        onChange={(event) =>
+                          updateForm("discount_type", event.target.value)
+                        }
+                        disabled={saving}
+                        className={selectClassName}
+                      >
+                        <option value="porcentaje">Porcentaje</option>
+                        <option value="monto_fijo">Monto fijo</option>
+                      </select>
+                    </Field>
 
-                      const selectedItem =
-                        selectedProducts.find(
-                          (item) =>
-                            item.productId ===
-                            product.id,
-                        );
+                    <Field
+                      label={
+                        form.discount_type === "porcentaje"
+                          ? "Porcentaje de descuento"
+                          : "Monto de descuento"
+                      }
+                      hint={
+                        isFixedDiscount
+                          ? cheapestSelected
+                            ? `Máximo permitido: ${formatMoney(cheapestSelected.price)} (precio de «${cheapestSelected.name}», el producto más barato seleccionado).`
+                            : "Selecciona productos para ver el máximo permitido."
+                          : undefined
+                      }
+                      error={
+                        fixedDiscountViolation
+                          ? fixedDiscountMessage(
+                              fixedDiscountNumber,
+                              fixedDiscountViolation,
+                            )
+                          : undefined
+                      }
+                    >
+                      <Input
+                        type="number"
+                        inputMode="decimal"
+                        min="0"
+                        step="0.01"
+                        max={form.discount_type === "porcentaje" ? "100" : undefined}
+                        value={form.discount_value}
+                        onChange={(event) =>
+                          updateForm("discount_value", event.target.value)
+                        }
+                        disabled={saving}
+                        required
+                        placeholder={
+                          form.discount_type === "porcentaje" ? "20" : "10.00"
+                        }
+                      />
+                    </Field>
+                  </div>
+                )}
 
-                      return (
-                        <div
-                          key={product.id}
-                          className={`flex flex-col gap-3 rounded-lg border p-4 md:flex-row md:items-center md:justify-between ${
-                            selected
-                              ? "border-brand bg-brand/5"
-                              : "border-border-decorative"
-                          }`}
-                        >
-                          <label className="flex min-w-0 cursor-pointer items-center gap-3">
-                            <input
-                              type="checkbox"
-                              checked={selected}
-                              onChange={() =>
-                                toggleProduct(
-                                  product.id,
-                                )
-                              }
-                              disabled={saving}
-                              className="size-4 accent-brand"
-                            />
+                {/* ------------------ Productos ------------------ */}
 
-                            <div className="min-w-0">
-                              <p className="font-medium text-text">
-                                {product.name}
+                <Card className="border border-border-decorative shadow-none">
+                  <CardHeader>
+                    <CardTitle className="text-base">
+                      Productos de la promoción
+                    </CardTitle>
+
+                    <p className="text-sm text-text-secondary">
+                      {isCombo
+                        ? "Elige los productos y cuántas unidades de cada uno forman el combo."
+                        : "Elige los productos a los que se aplicará esta promoción."}
+                    </p>
+                  </CardHeader>
+
+                  <CardContent className="flex flex-col gap-4">
+                    {selected.length > 0 && (
+                      <ul className="flex flex-col gap-2">
+                        {selected.map((item) => (
+                          <li
+                            key={item.productId}
+                            className="flex flex-wrap items-center gap-3 rounded-lg border border-brand bg-brand/5 p-3"
+                          >
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate font-medium text-text">
+                                {item.name}
                               </p>
-
                               <p className="text-sm text-text-secondary">
-                                {formatMoney(
-                                  Number(
-                                    product.price,
-                                  ),
-                                )}
+                                {formatMoney(item.price)}
                               </p>
                             </div>
-                          </label>
 
-                          {selected &&
-                            form.promotion_type ===
-                              "combo" && (
-                              <div className="w-full md:w-32">
-                                <label className="mb-1 block text-xs font-medium text-text-secondary">
-                                  Cantidad
-                                </label>
-
+                            {isCombo && (
+                              <div className="w-28">
                                 <Input
                                   type="number"
+                                  inputMode="decimal"
+                                  aria-label={`Cantidad de ${item.name} en el combo`}
                                   min="0.001"
                                   step="0.001"
-                                  value={
-                                    selectedItem
-                                      ?.quantity ?? "1"
-                                  }
+                                  value={item.quantity}
                                   onChange={(event) =>
-                                    updateProductQuantity(
-                                      product.id,
+                                    updateQuantity(
+                                      item.productId,
                                       event.target.value,
                                     )
                                   }
@@ -1038,120 +995,220 @@ export default function PromotionManagement() {
                                 />
                               </div>
                             )}
-                        </div>
-                      );
-                    })}
-                  </div>
+
+                            <Button
+                              type="button"
+                              variant="outline"
+                              size="icon"
+                              aria-label={`Quitar ${item.name}`}
+                              onClick={() => removeProduct(item.productId)}
+                              disabled={saving}
+                            >
+                              <X aria-hidden="true" />
+                            </Button>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
+                    {showComboSummary && (
+                      <p
+                        className={`text-sm ${
+                          Number.isFinite(comboPriceNumber) &&
+                          comboPriceNumber >= comboNormalPrice &&
+                          form.combo_price !== ""
+                            ? "text-danger"
+                            : "text-text-secondary"
+                        }`}
+                      >
+                        Precio normal del combo: {formatMoney(comboNormalPrice)}
+                        {form.combo_price !== "" &&
+                          Number.isFinite(comboPriceNumber) &&
+                          (comboPriceNumber < comboNormalPrice
+                            ? ` · El cliente ahorra ${formatMoney(
+                                comboNormalPrice - comboPriceNumber,
+                              )} por combo.`
+                            : " · El precio del combo no es menor que comprar por separado: no habrá descuento.")}
+                      </p>
+                    )}
+
+                    <Field label="Buscar productos" optional>
+                      <Input
+                        type="search"
+                        value={search}
+                        onChange={(event) => {
+                          setCatalogLoading(true);
+                          setSearch(event.target.value);
+                        }}
+                        placeholder="Escribe parte del nombre"
+                        disabled={saving}
+                      />
+                    </Field>
+
+                    {catalogError ? (
+                      <p role="alert" className="text-sm text-danger">
+                        {catalogError}
+                      </p>
+                    ) : catalogLoading ? (
+                      <p className="text-sm text-text-secondary">
+                        Cargando productos...
+                      </p>
+                    ) : catalog.length === 0 ? (
+                      <p className="text-sm text-text-secondary">
+                        {search.trim()
+                          ? "Ningún producto coincide con la búsqueda."
+                          : "No hay productos disponibles."}
+                      </p>
+                    ) : (
+                      <>
+                        <ul
+                          className="max-h-72 divide-y divide-border-decorative overflow-y-auto rounded-lg border border-border-decorative"
+                          aria-label="Resultados de productos"
+                        >
+                          {catalog.map((product) => (
+                            <li key={product.id}>
+                              <label className="flex cursor-pointer items-center gap-3 p-3 hover:bg-brand/5">
+                                <input
+                                  type="checkbox"
+                                  checked={selectedIds.has(product.id)}
+                                  onChange={() => toggleProduct(product)}
+                                  disabled={saving}
+                                  className="size-5 shrink-0 accent-brand"
+                                />
+
+                                <span className="min-w-0 flex-1">
+                                  <span className="block truncate font-medium text-text">
+                                    {product.name}
+                                  </span>
+                                  <span className="block text-sm text-text-secondary">
+                                    {formatMoney(Number(product.price))}
+                                    {product.is_sold_out ? " · Agotado" : ""}
+                                  </span>
+                                </span>
+                              </label>
+                            </li>
+                          ))}
+                        </ul>
+
+                        {catalogTotal > catalog.length && (
+                          <p className="text-sm text-text-secondary">
+                            Mostrando {catalog.length} de {catalogTotal}{" "}
+                            productos. Usa el buscador para encontrar otros.
+                          </p>
+                        )}
+                      </>
+                    )}
+                  </CardContent>
+                </Card>
+
+                <div className="grid gap-5 md:grid-cols-3">
+                  <Field label="Inicio" optional>
+                    <Input
+                      type="datetime-local"
+                      value={form.starts_at}
+                      onChange={(event) =>
+                        updateForm("starts_at", event.target.value)
+                      }
+                      disabled={saving}
+                    />
+                  </Field>
+
+                  <Field label="Finalización" optional>
+                    <Input
+                      type="datetime-local"
+                      value={form.ends_at}
+                      onChange={(event) =>
+                        updateForm("ends_at", event.target.value)
+                      }
+                      disabled={saving}
+                    />
+                  </Field>
+
+                  <Field label="Compra mínima" optional>
+                    <Input
+                      type="number"
+                      inputMode="decimal"
+                      min="0"
+                      step="0.01"
+                      value={form.minimum_purchase}
+                      onChange={(event) =>
+                        updateForm("minimum_purchase", event.target.value)
+                      }
+                      disabled={saving}
+                      placeholder="Ej. 100.00"
+                    />
+                  </Field>
+                </div>
+
+                {error && (
+                  <p role="alert" className="text-sm text-danger">
+                    {error}
+                  </p>
                 )}
-              </CardContent>
-            </Card>
 
-            <div className="grid gap-5 md:grid-cols-3">
-              <Field label="Inicio" optional>
-                <Input
-                  type="datetime-local"
-                  value={form.starts_at}
-                  onChange={(event) =>
-                    updateForm(
-                      "starts_at",
-                      event.target.value,
-                    )
-                  }
-                  disabled={saving}
-                />
-              </Field>
+                {success && (
+                  <p role="status" className="text-sm text-leaf">
+                    {success}
+                  </p>
+                )}
 
-              <Field
-                label="Finalización"
-                optional
-              >
-                <Input
-                  type="datetime-local"
-                  value={form.ends_at}
-                  onChange={(event) =>
-                    updateForm(
-                      "ends_at",
-                      event.target.value,
-                    )
-                  }
-                  disabled={saving}
-                />
-              </Field>
+                <div className="flex flex-wrap gap-3">
+                  <Button
+                    type="submit"
+                    loading={saving}
+                    loadingText="Guardando…"
+                  >
+                    {editingPromotion ? "Guardar cambios" : "Crear promoción"}
+                  </Button>
 
-              <Field
-                label="Compra mínima"
-                optional
-              >
-                <Input
-                  type="number"
-                  min="0"
-                  step="0.01"
-                  value={form.minimum_purchase}
-                  onChange={(event) =>
-                    updateForm(
-                      "minimum_purchase",
-                      event.target.value,
-                    )
-                  }
-                  disabled={saving}
-                  placeholder="Ej. 100.00"
-                />
-              </Field>
-            </div>
+                  {editingPromotion && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={resetForm}
+                      disabled={saving}
+                    >
+                      Cancelar
+                    </Button>
+                  )}
+                </div>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
-            {error && (
-              <p className="text-sm text-danger">
-                {error}
-              </p>
-            )}
-
-            {success && (
-              <p className="text-sm text-leaf">
-                {success}
-              </p>
-            )}
-
-            <div className="flex flex-wrap gap-3">
-              <Button
-                type="submit"
-                loading={saving}
-                loadingText="Guardando…"
-              >
-                {editingPromotion
-                  ? "Guardar cambios"
-                  : "Crear promoción"}
-              </Button>
-
-              {editingPromotion && (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={resetForm}
-                  disabled={saving}
-                >
-                  Cancelar
-                </Button>
-              )}
-            </div>
-          </form>
-        </CardContent>
-      </Card>
+      {/* ------------------------ Lista ------------------------ */}
 
       <Card className="gap-0 p-0">
         <div className="border-b border-border-decorative p-4">
-          <h2 className="text-xl font-semibold text-text">
-            Promociones
-          </h2>
+          <h2 className="text-xl font-semibold text-text">Promociones</h2>
 
           <p className="text-text-secondary">
-            Administra las promociones existentes y su
-            estado.
+            {isAdmin
+              ? "Administra las promociones existentes y su estado."
+              : "Promociones registradas en el sistema."}
           </p>
         </div>
 
-        {loading ? (
+        {notice && (
+          <p
+            role={notice.kind === "error" ? "alert" : "status"}
+            className={`px-4 pt-4 text-sm ${
+              notice.kind === "error" ? "text-danger" : "text-leaf"
+            }`}
+          >
+            {notice.text}
+          </p>
+        )}
+
+        {listLoading ? (
           <p className="p-6 text-center text-text-secondary">
             Cargando promociones...
+          </p>
+        ) : listError ? (
+          <p role="alert" className="p-6 text-center text-danger">
+            {listError}
           </p>
         ) : promotions.length === 0 ? (
           <p className="p-6 text-center text-text-secondary">
@@ -1159,129 +1216,108 @@ export default function PromotionManagement() {
           </p>
         ) : (
           <div className="divide-y divide-border-decorative">
-            {promotions.map((promotion) => (
-              <div
-                key={promotion.id}
-                className="flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-semibold text-text">
-                      {promotion.name}
-                    </h3>
+            {promotions.map((promotion) => {
+              const status = getStatus(promotion, now);
+              const itemsText = describeItems(promotion);
 
-                    <Badge
-                      variant={
-                        promotion.is_active
-                          ? "brand"
-                          : "outline"
-                      }
-                    >
-                      {promotion.is_active
-                        ? "Activa"
-                        : "Inactiva"}
-                    </Badge>
+              return (
+                <div
+                  key={promotion.id}
+                  className="flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between"
+                >
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h3 className="font-semibold text-text">
+                        {promotion.name}
+                      </h3>
 
-                    <Badge variant="outline">
-                      {
-                        promotionTypeLabels[
-                          promotion.promotion_type
-                        ]
-                      }
-                    </Badge>
-                  </div>
+                      <Badge variant={status.variant}>{status.label}</Badge>
 
-                  {promotion.description && (
-                    <p className="mt-2 text-sm text-text-secondary">
-                      {promotion.description}
-                    </p>
-                  )}
+                      <Badge variant="outline">
+                        {promotionTypeLabels[promotion.promotion_type]}
+                      </Badge>
+                    </div>
 
-                  <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
-                    <span>
-                      <strong className="text-text">
-                        {promotion.promotion_type ===
-                        "combo"
-                          ? "Precio del combo:"
-                          : "Beneficio:"}
-                      </strong>{" "}
-                      <span className="text-text-secondary">
-                        {formatDiscount(promotion)}
-                        {promotion.promotion_type ===
-                          "producto" &&
-                          promotion.discount_type ===
-                            "porcentaje" &&
-                          " de descuento"}
-                      </span>
-                    </span>
+                    {promotion.description && (
+                      <p className="mt-2 text-sm text-text-secondary">
+                        {promotion.description}
+                      </p>
+                    )}
 
-                    <span>
-                      <strong className="text-text">
-                        Vigencia:
-                      </strong>{" "}
-                      <span className="text-text-secondary">
-                        {formatDate(
-                          promotion.starts_at,
-                        )}{" "}
-                        —{" "}
-                        {formatDate(
-                          promotion.ends_at,
-                        )}
-                      </span>
-                    </span>
-
-                    {promotion.minimum_purchase !==
-                      null && (
+                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
                       <span>
                         <strong className="text-text">
-                          Compra mínima:
+                          {promotion.promotion_type === "combo"
+                            ? "Precio del combo:"
+                            : "Beneficio:"}
                         </strong>{" "}
                         <span className="text-text-secondary">
-                          {formatMoney(
-                            Number(
-                              promotion.minimum_purchase,
-                            ),
-                          )}
+                          {formatBenefit(promotion)}
                         </span>
                       </span>
-                    )}
+
+                      <span>
+                        <strong className="text-text">Vigencia:</strong>{" "}
+                        <span className="text-text-secondary">
+                          {formatValidity(promotion)}
+                        </span>
+                      </span>
+
+                      {promotion.minimum_purchase !== null && (
+                        <span>
+                          <strong className="text-text">Compra mínima:</strong>{" "}
+                          <span className="text-text-secondary">
+                            {formatMoney(promotion.minimum_purchase)}
+                          </span>
+                        </span>
+                      )}
+                    </div>
+
+                    <p className="mt-2 text-sm">
+                      <strong className="text-text">
+                        {promotion.promotion_type === "combo"
+                          ? "Incluye:"
+                          : "Aplica a:"}
+                      </strong>{" "}
+                      {itemsText ? (
+                        <span className="text-text-secondary">{itemsText}</span>
+                      ) : (
+                        <span className="text-danger">
+                          Sin productos: no se podrá aplicar hasta que agregues
+                          al menos uno.
+                        </span>
+                      )}
+                    </p>
                   </div>
-                </div>
 
-                <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      void startEditing(
-                        promotion,
-                      )
-                    }
-                    disabled={
-                      associationLoading ||
-                      saving
-                    }
-                  >
-                    Editar
-                  </Button>
+                  {isAdmin && (
+                    <div className="flex shrink-0 flex-wrap gap-2 xl:justify-end">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => startEditing(promotion)}
+                        disabled={saving}
+                      >
+                        Editar
+                      </Button>
 
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    onClick={() =>
-                      void togglePromotion(
-                        promotion,
-                      )
-                    }
-                    disabled={saving}
-                  >
-                    {promotion.is_active
-                      ? "Desactivar"
-                      : "Activar"}
-                  </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => void togglePromotion(promotion)}
+                        disabled={
+                          saving ||
+                          (!promotion.is_active &&
+                            (promotion.items ?? []).length === 0)
+                        }
+                      >
+                        {promotion.is_active ? "Desactivar" : "Activar"}
+                      </Button>
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </Card>

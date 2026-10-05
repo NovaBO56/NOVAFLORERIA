@@ -41,12 +41,21 @@ type OrderRow = {
   customer: OneOrMany<CustomerRef>;
 };
 
+type PersonalizationOption = {
+  id: string;
+  option_type: string;
+  name: string;
+  value: string | null;
+  extra_price: number;
+};
+
 type OrderItem = {
   id: string;
   product_name_snapshot: string;
   unit_price_snapshot: number;
   quantity: number;
   line_total: number;
+  personalization: PersonalizationOption[] | null;
   message: string | null;
   note: string | null;
 };
@@ -89,7 +98,7 @@ const NEXT_STATUS: Partial<Record<OrderStatus, { value: "en_preparacion" | "list
   {
     confirmado: { value: "en_preparacion", label: "Marcar en preparación" },
     en_preparacion: { value: "listo", label: "Marcar listo" },
-    listo: { value: "finalizado", label: "Marcar entregado" },
+    listo: { value: "finalizado", label: "Finalizar pedido" },
   };
 
 type OrdersPanelProps = {
@@ -406,7 +415,10 @@ function OrderDetailModal({
   }
 
   const canCancelPaid = role === "administrador";
-  const next = order ? NEXT_STATUS[order.status] : undefined;
+  // Una venta física ya está pagada y entregada en el momento: no pasa
+  // por confirmación de pago ni por los pasos de preparación. Esos
+  // botones son exclusivos de pedidos online.
+  const next = order && order.order_type === "online" ? NEXT_STATUS[order.status] : undefined;
 
   return (
     <Modal open={Boolean(orderId)} onOpenChange={(open) => !open && onClose()}>
@@ -434,13 +446,35 @@ function OrderDetailModal({
               {first(order.customer)?.phone && <p>{first(order.customer)?.phone}</p>}
             </div>
 
-            <div className="flex flex-col gap-1 border-t border-border-decorative pt-3">
+            <div className="flex flex-col gap-3 border-t border-border-decorative pt-3">
               {order.order_items.map((item) => (
-                <div key={item.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="text-text">
-                    {item.quantity} × {item.product_name_snapshot}
-                  </span>
-                  <span className="tabular-nums text-text-secondary">{formatMoney(item.line_total)}</span>
+                <div key={item.id} className="flex flex-col gap-1 text-sm">
+                  <div className="flex items-center justify-between gap-2">
+                    <span className="text-text">
+                      {item.quantity} × {item.product_name_snapshot}
+                    </span>
+                    <span className="tabular-nums text-text-secondary">{formatMoney(item.line_total)}</span>
+                  </div>
+
+                  {item.personalization && item.personalization.length > 0 && (
+                    <p className="text-xs text-text-secondary">
+                      {item.personalization
+                        .map((option) => (option.extra_price > 0 ? `${option.name} (+${formatMoney(option.extra_price)})` : option.name))
+                        .join(", ")}
+                    </p>
+                  )}
+
+                  {item.message && (
+                    <p className="text-xs text-text-secondary">
+                      <span className="font-medium text-text">Mensaje:</span> {item.message}
+                    </p>
+                  )}
+
+                  {item.note && (
+                    <p className="text-xs text-text-secondary">
+                      <span className="font-medium text-text">Nota:</span> {item.note}
+                    </p>
+                  )}
                 </div>
               ))}
             </div>
@@ -461,6 +495,21 @@ function OrderDetailModal({
                 <span className="tabular-nums">{formatMoney(order.total)}</span>
               </div>
             </div>
+
+            {(order.customer_message || order.internal_note) && (
+              <div className="flex flex-col gap-1 border-t border-border-decorative pt-3 text-sm">
+                {order.customer_message && (
+                  <p className="text-text-secondary">
+                    <span className="font-medium text-text">Mensaje del cliente:</span> {order.customer_message}
+                  </p>
+                )}
+                {order.internal_note && (
+                  <p className="text-text-secondary">
+                    <span className="font-medium text-text">Nota interna:</span> {order.internal_note}
+                  </p>
+                )}
+              </div>
+            )}
 
             {order.cancellation_reason && (
               <p className="text-sm text-text-secondary">Motivo: {order.cancellation_reason}</p>
@@ -519,7 +568,7 @@ function OrderDetailModal({
                   </Button>
                 )}
 
-                {order.status === "pendiente_pago" && pendingPayment && (
+                {order.order_type === "online" && order.status === "pendiente_pago" && pendingPayment && (
                   <>
                     <Button
                       variant="outline"

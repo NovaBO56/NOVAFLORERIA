@@ -1,10 +1,17 @@
 import { redirect } from "next/navigation";
-import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
+import {
+  canUseAdminFunctions,
+  requireEmployeeOrAdmin,
+} from "@/lib/auth/permissions";
 import PromotionManagement from "@/components/admin/promotions/promotion-management";
 
 export default async function AdminPromotionsPage() {
+  let isAdmin = false;
+
   try {
-    await requireEmployeeOrAdmin();
+    const profile = await requireEmployeeOrAdmin();
+
+    isAdmin = canUseAdminFunctions(profile);
   } catch {
     redirect("/login");
   }
@@ -14,12 +21,13 @@ export default async function AdminPromotionsPage() {
       <div>
         <h1>Gestión de promociones</h1>
         <p className="text-text-secondary">
-          Crea y administra las promociones, descuentos y beneficios para tus
-          clientes.
+          {isAdmin
+            ? "Crea y administra las promociones, descuentos y beneficios para tus clientes."
+            : "Consulta las promociones disponibles. Solo un administrador puede crearlas o modificarlas."}
         </p>
       </div>
 
-      <PromotionManagement />
+      <PromotionManagement isAdmin={isAdmin} />
     </div>
   );
 }

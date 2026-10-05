@@ -47,8 +47,6 @@ export async function POST(request: Request) {
     });
 
     if (error) {
-      // P0001 = excepción controlada de la función (stock insuficiente,
-      // producto no disponible, etc.) — el mensaje ya es claro para el cliente.
       if (error.code === "P0001") {
         return NextResponse.json(
           { success: false, message: error.message },
