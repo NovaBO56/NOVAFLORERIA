@@ -1,5 +1,12 @@
-import PruebaClientePage from "./prueba-cliente/page";
+import type { Metadata } from "next";
+import HomePage from "@/components/public/home/home-page";
 
-export default function HomePage() {
-  return <PruebaClientePage />;
+export const metadata: Metadata = {
+  title: "NOVA Florería — Flores que hablan",
+  description:
+    "Arreglos florales, regalos y detalles diseñados para acompañar los momentos que quieres recordar.",
+};
+
+export default function Page() {
+  return <HomePage year={new Date().getFullYear()} />;
 }

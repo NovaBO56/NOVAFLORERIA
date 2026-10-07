@@ -7,7 +7,7 @@ const PRODUCT_DETAIL_SELECT = `
   id, name, description, price, category_id, occasion, season_id,
   is_featured, is_available, is_sold_out, catalog_order,
   images:product_images(id, public_url, alt_text, sort_order),
-  components:product_components(
+  components:product_components!product_components_parent_product_id_fkey(
     id, quantity,
     component_product:products!product_components_component_product_id_fkey(
       id, name, price, is_available, is_sold_out
