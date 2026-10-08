@@ -19,6 +19,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { UserRole } from "@/lib/auth/permissions";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { whatsappLink } from "@/lib/public/format";
 
 type OneOrMany<T> = T | T[] | null;
 
@@ -26,9 +27,10 @@ function first<T>(value: OneOrMany<T>): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-type CustomerRef = { id: string; name: string; phone: string | null; whatsapp: string | null };
+type CustomerRef = { id: string | null; name: string; phone: string | null; whatsapp: string | null };
 
 type OrderRow = {
+  receipt_token: string | null;
   id: string;
   order_number: number;
   order_type: "online" | "fisica";
@@ -570,13 +572,19 @@ function OrderDetailModal({
               </div>
             ) : (
               <ModalFooter className="flex-wrap">
-                {order.status === "finalizado" && (
+                {order.receipt_token && (
                   <Button asChild variant="outline">
                     <Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer">
-                      Ver recibo
+                      Ver / descargar recibo
                     </Link>
                   </Button>
                 )}
+                {order.receipt_token && whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null) ? <Button variant="outline" onClick={() => {
+                  const phone = first(order.customer)?.whatsapp || first(order.customer)?.phone || null;
+                  const url = new URL(`/api/orders/receipt/${order.receipt_token}`, window.location.origin).href;
+                  const link = whatsappLink(phone, `Floristería Anabelle · Pago confirmado del pedido #${order.order_number}. Tu recibo: ${url}`);
+                  if (link) window.open(link, "_blank", "noopener,noreferrer");
+                }}>Enviar recibo por WhatsApp</Button> : null}
 
                 {order.status === "cancelado" && (
                   <Button variant="outline" onClick={() => setPendingAction("request-deletion")}>

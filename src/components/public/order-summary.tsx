@@ -3,7 +3,7 @@ import { formatMoney } from "@/lib/public/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/public/checkout";
 import type { PublicOrder } from "@/lib/public/types";
 
-export function OrderSummary({ order }: { order: PublicOrder }) {
+export function OrderSummary({ order, showReceipt = true }: { order: PublicOrder; showReceipt?: boolean }) {
   return <section className="nova-enter min-w-0 space-y-4 break-words rounded-2xl border bg-white p-5" aria-live="polite">
     <h2 key={order.order_number} className="nova-value text-xl font-bold">Pedido #{order.order_number}</h2>
     <p key={order.status} className="nova-fade border-l-2 border-purple-300 pl-3">Estado: <strong>{orderStatusLabels[order.status] ?? "Consulta con la tienda"}</strong></p>
@@ -17,6 +17,7 @@ export function OrderSummary({ order }: { order: PublicOrder }) {
     <p>Subtotal: {formatMoney(order.subtotal)}</p>
     <p>Descuento: {formatMoney(order.discount_total)}</p>
     <p className="text-xl font-bold">Total del pedido: {formatMoney(order.total)}</p>
+    {showReceipt && order.receipt_token ? <a className="inline-flex min-h-12 items-center rounded-xl border border-purple-300 p-3 font-bold" href={`/api/orders/receipt/${order.receipt_token}`} target="_blank" rel="noopener noreferrer">Ver / descargar recibo</a> : null}
     {order.customer_message ? <p className="whitespace-pre-wrap text-sm">{order.customer_message}</p> : null}
     {order.status === "pendiente_pago" && order.reserved_until ? <p className="text-sm">Reserva hasta {new Date(order.reserved_until).toLocaleString("es-BO", { timeZone: "America/La_Paz" })}. La tienda revisará tu pago antes de confirmarlo.</p> : null}
   </section>;

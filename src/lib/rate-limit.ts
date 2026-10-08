@@ -12,6 +12,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  */
 export const RATE_LIMITS = {
   trackOrder: { maxAttempts: 20, windowSeconds: 5 * 60 },
+  orderReceipt: { maxAttempts: 10, windowSeconds: 5 * 60 },
   createOrder: { maxAttempts: 10, windowSeconds: 5 * 60 },
   reportPayment: { maxAttempts: 5, windowSeconds: 5 * 60 },
   getPaymentQr: { maxAttempts: 30, windowSeconds: 60 },
@@ -66,7 +67,7 @@ export async function checkRateLimit(
 
   if (error) {
     console.error(`Error verificando rate limit para "${route}":`, error);
-    return route !== "createOrder" && route !== "reportPayment";
+    return route !== "createOrder" && route !== "reportPayment" && route !== "orderReceipt";
   }
 
   return data === true;

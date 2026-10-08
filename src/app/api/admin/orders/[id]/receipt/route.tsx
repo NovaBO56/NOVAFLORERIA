@@ -11,12 +11,15 @@ type RawOrderReceipt = {
   order_type: string;
   status: string;
   created_at: string;
+  customer_message: string | null;
+  guest_name: string | null;
+  guest_phone: string | null;
   subtotal: number;
   discount_total: number;
   total: number;
   customer: { name: string; phone: string | null } | { name: string; phone: string | null }[] | null;
   order_items: { product_name_snapshot: string; quantity: number; unit_price_snapshot: number; line_total: number }[];
-  payments: { method: string; status: string }[] | null;
+  payments: { method: string; status: string; confirmed_at: string | null }[] | null;
 };
 
 async function renderReceiptPdf(order: OrderReceiptData) {
@@ -32,10 +35,10 @@ export async function GET(_request: Request, context: RouteContext) {
     const { data, error } = await supabase
       .from("orders")
       .select(
-        `order_number, order_type, status, created_at, subtotal, discount_total, total,
+        `order_number, order_type, status, created_at, customer_message, guest_name, guest_phone, subtotal, discount_total, total,
          customer:customers(name, phone),
          order_items(product_name_snapshot, quantity, unit_price_snapshot, line_total),
-         payments(method, status)`,
+         payments(method, status, confirmed_at)`,
       )
       .eq("id", id)
       .maybeSingle();
@@ -51,15 +54,18 @@ export async function GET(_request: Request, context: RouteContext) {
 
     const raw = data as RawOrderReceipt;
     const customer = Array.isArray(raw.customer) ? raw.customer[0] : raw.customer;
-    const confirmedPayment = (raw.payments ?? []).find((p) => p.status === "confirmado") ?? raw.payments?.[0] ?? null;
+    const confirmedPayment = (raw.payments ?? []).find((p) => p.status === "confirmado" && p.confirmed_at);
+    if (!confirmedPayment) return NextResponse.json({ success: false, message: "El recibo estará disponible después de confirmar el pago." }, { status: 409 });
 
     const order: OrderReceiptData = {
       order_number: raw.order_number,
       order_type: raw.order_type,
       status: raw.status,
       created_at: raw.created_at,
-      customer_name: customer?.name ?? null,
-      customer_phone: customer?.phone ?? null,
+      paid_at: confirmedPayment.confirmed_at!,
+      customer_message: raw.customer_message,
+      customer_name: raw.guest_name ?? customer?.name ?? null,
+      customer_phone: raw.guest_phone ?? customer?.phone ?? null,
       items: raw.order_items.map((item) => ({
         product_name: item.product_name_snapshot,
         quantity: Number(item.quantity),
@@ -80,6 +86,9 @@ export async function GET(_request: Request, context: RouteContext) {
       headers: {
         "Content-Type": "application/pdf",
         "Content-Disposition": `inline; filename="comprobante-pedido-${order.order_number}.pdf"`,
+        "Cache-Control": "private, no-store",
+        "Referrer-Policy": "no-referrer",
+        "X-Content-Type-Options": "nosniff",
       },
     });
   } catch (error) {
