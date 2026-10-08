@@ -52,6 +52,18 @@ export default function SystemSettings() {
   }, []);
 
   async function updateSetting(setting: SystemSetting) {
+    if (setting.key === "accept_orders_outside_hours") {
+      const current = typeof setting.value === "object" && setting.value !== null && "enabled" in setting.value && setting.value.enabled === true;
+      try {
+        const response = await fetch("/api/admin/system-settings/accept-orders-outside-hours", {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: !current }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "No se pudo actualizar.");
+        await loadSettings();
+      } catch (error) { setError(error instanceof Error ? error.message : "No se pudo actualizar."); }
+      return;
+    }
     const value = window.prompt(
       `Nuevo valor para "${setting.key}"`,
       typeof setting.value === "string"
@@ -72,7 +84,7 @@ export default function SystemSettings() {
     }
 
     const response = await fetch(
-      `/api/admin/system-settings/${encodeURIComponent(setting.key)}`,
+      `/api/admin/system-settings?key=${encodeURIComponent(setting.key)}`,
       {
         method: "PATCH",
         headers: {
@@ -124,7 +136,7 @@ export default function SystemSettings() {
             className="flex-col gap-4 md:flex-row md:items-center md:justify-between"
           >
             <div>
-              <p className="font-semibold text-text">{setting.key}</p>
+              <p className="font-semibold text-text">{setting.key === "accept_orders_outside_hours" ? "Aceptar pedidos fuera de horario" : setting.key}</p>
               <p className="text-text-secondary">
                 Valor:{" "}
                 {typeof setting.value === "string"
@@ -139,7 +151,7 @@ export default function SystemSettings() {
             </div>
 
             <Button size="sm" variant="outline" onClick={() => void updateSetting(setting)}>
-              Modificar
+              {setting.key === "accept_orders_outside_hours" ? "Cambiar permitido/cerrado" : "Modificar"}
             </Button>
           </Card>
         ))

@@ -77,8 +77,8 @@ export const ADMIN_NAV_SECTIONS: readonly AdminNavSection[] = [
     label: "Administración",
     items: [
       { label: "Usuarios", href: "/admin/usuarios", icon: "users", roles: ADMIN_ONLY, available: true },
-      { label: "Configuración", href: "/admin/configuracion", icon: "settings", roles: ADMIN_ONLY, available: false },
-      { label: "Auditoría", href: "/admin/auditoria", icon: "audit", roles: ADMIN_ONLY, available: false },
+      { label: "Configuración", href: "/admin/configuracion", icon: "settings", roles: ADMIN_ONLY, available: true },
+      { label: "Auditoría", href: "/admin/auditoria", icon: "audit", roles: ADMIN_ONLY, available: true },
     ],
   },
 ];

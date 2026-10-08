@@ -1,7 +1,6 @@
 import { requireAdmin } from "@/lib/auth/permissions";
 import { AccessDenied } from "@/components/admin/layout/access-denied";
 import CreateUserForm from "@/components/admin/create-user-form";
-import SystemSettings from "@/components/admin/system-settings";
 import UserManagement from "@/components/admin/user-management";
 
 export default async function AdminUsersPage() {
@@ -26,11 +25,6 @@ export default async function AdminUsersPage() {
       <section className="flex flex-col gap-4">
         <h2>Usuarios registrados</h2>
         <UserManagement />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2>Configuración crítica</h2>
-        <SystemSettings />
       </section>
     </div>
   );

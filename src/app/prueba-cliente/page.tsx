@@ -3,6 +3,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Image from "next/image";
 import { Dancing_Script, Lato } from "next/font/google";
 import {
   ArrowRight,
@@ -616,7 +617,7 @@ export default function PruebaClientePage() {
                         </button>
 
                         {mainImage?.public_url ? (
-                          <img
+                          <Image width={600} height={600} unoptimized
                             src={mainImage.public_url}
                             alt={mainImage.alt_text ?? product.name}
                             className="h-full w-full object-cover transition duration-500 group-hover:scale-105"
@@ -1056,7 +1057,7 @@ export default function PruebaClientePage() {
                       <div className="flex gap-4">
                         <div className="flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eee5f0]">
                           {mainImage?.public_url ? (
-                            <img
+                            <Image width={76} height={76} unoptimized
                               src={mainImage.public_url}
                               alt={mainImage.alt_text ?? item.name}
                               className="h-full w-full object-cover"

@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Notifications } from "@/components/admin/notifications";
 import { LogOut } from "lucide-react";
 import { cn } from "cn";
 import { Badge } from "@/components/ui/badge";
@@ -48,6 +49,7 @@ export function AdminHeader({ name, role, sections }: AdminHeaderProps) {
         <div className="hidden text-right sm:block">
           <p className="text-sm leading-tight font-medium text-text">{name ?? "Sin nombre"}</p>
         </div>
+        <Notifications />
         <Badge variant="outline">{ROLE_LABEL[role]}</Badge>
         <Button variant="ghost" size="sm" onClick={signOut} loading={pending} loadingText="Saliendo…">
           <LogOut aria-hidden="true" />
