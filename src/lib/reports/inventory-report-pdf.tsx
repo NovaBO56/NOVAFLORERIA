@@ -27,7 +27,7 @@ export function InventoryReportDocument({ rows }: { rows: InventoryReportRow[] }
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Reporte de Inventario</Text>
+        <Text style={styles.title}>Floristería Anabelle — Reporte de Inventario</Text>
         <Text style={styles.subtitle}>Estado actual, al momento de generar el reporte</Text>
 
         <View style={styles.summaryBox}>

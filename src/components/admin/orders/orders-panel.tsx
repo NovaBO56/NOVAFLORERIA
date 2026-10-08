@@ -75,7 +75,7 @@ type PendingPayment = {
   reference: string | null;
 };
 
-const STATUS_CHIPS: { value: "activos" | "todos" | OrderStatus; label: string }[] = [
+const STATUS_CHIPS: { value: "activos" | "todos" | "expirados" | OrderStatus; label: string }[] = [
   { value: "activos", label: "Activos" },
   { value: "todos", label: "Todos" },
   { value: "pendiente_pago", label: "Pendiente de pago" },
@@ -84,6 +84,7 @@ const STATUS_CHIPS: { value: "activos" | "todos" | OrderStatus; label: string }[
   { value: "listo", label: "Listo" },
   { value: "finalizado", label: "Finalizado" },
   { value: "cancelado", label: "Cancelado" },
+  { value: "expirados", label: "Expirados" },
   { value: "rechazado", label: "Pago rechazado" },
 ];
 
@@ -115,7 +116,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
   const [error, setError] = useState("");
 
   const initialChip = STATUS_CHIPS.find((chip) => chip.value === initialStatus)?.value;
-  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | OrderStatus>(initialChip ?? "activos");
+  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | "expirados" | OrderStatus>(initialChip ?? "activos");
   const [typeFilter, setTypeFilter] = useState<"todos" | "online" | "fisica">("todos");
   const [pendingOnly, setPendingOnly] = useState(Boolean(initialPendingPaymentOnly));
   const [search, setSearch] = useState("");
@@ -167,7 +168,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
 
     return orders.filter((order) => {
       if (statusFilter === "activos" && !ACTIVE_STATUSES.includes(order.status)) return false;
-      if (statusFilter !== "activos" && statusFilter !== "todos" && order.status !== statusFilter) return false;
+      if (statusFilter === "expirados" && !(order.status === "cancelado" && order.cancellation_reason === "Reserva de inventario vencida.")) return false;
+      if (statusFilter !== "activos" && statusFilter !== "todos" && statusFilter !== "expirados" && order.status !== statusFilter) return false;
       if (typeFilter !== "todos" && order.order_type !== typeFilter) return false;
       if (pendingOnly && !pendingPaymentByOrder.has(order.id)) return false;
 

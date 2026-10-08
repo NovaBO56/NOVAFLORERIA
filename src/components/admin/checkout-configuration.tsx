@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { StoreLocationConfiguration } from "./store-location";
 import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -74,6 +75,7 @@ export function CheckoutConfiguration() {
   if (error && hours.length === 0) return <Card><p role="alert" className="text-danger">{error}</p><Button variant="outline" onClick={() => void reload()}>Reintentar</Button></Card>;
 
   return <>
+    <StoreLocationConfiguration />
     {error && <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-4 text-danger">{error}</p>}
     {message && <p role="status" className="rounded-xl border border-leaf/30 bg-leaf/5 p-4 text-leaf">{message}</p>}
     <div className="grid min-w-0 gap-6 xl:grid-cols-2">

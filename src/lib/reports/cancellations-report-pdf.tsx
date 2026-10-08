@@ -33,7 +33,7 @@ export function CancellationsReportDocument({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Reporte de Cancelaciones</Text>
+        <Text style={styles.title}>Floristería Anabelle — Reporte de Cancelaciones</Text>
         <Text style={styles.subtitle}>
           Periodo: {from} a {to}
         </Text>

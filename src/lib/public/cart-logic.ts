@@ -159,7 +159,7 @@ export function buildOrderMessage(items: CartItem[]) {
   );
 
   return [
-    "Hola NOVA Florería, quiero hacer este pedido:",
+    "Hola Floristería Anabelle, quiero hacer este pedido:",
     "",
     ...lines,
     "",

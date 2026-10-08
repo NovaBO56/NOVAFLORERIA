@@ -25,7 +25,7 @@ export function WasteReportDocument({ from, to, rows }: { from: string; to: stri
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Reporte de Mermas</Text>
+        <Text style={styles.title}>Floristería Anabelle — Reporte de Mermas</Text>
         <Text style={styles.subtitle}>
           Periodo: {from} a {to}
         </Text>

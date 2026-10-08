@@ -40,7 +40,7 @@ export function SalesReportDocument({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Reporte de Ventas</Text>
+        <Text style={styles.title}>Floristería Anabelle — Reporte de Ventas</Text>
         <Text style={styles.subtitle}>
           Periodo: {summary.from} a {summary.to}
         </Text>

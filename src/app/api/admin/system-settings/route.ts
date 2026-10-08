@@ -3,6 +3,7 @@ import { NextResponse } from "next/server";
 import { requireAdmin } from "@/lib/auth/permissions";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { updateSystemSettingSchema } from "@/config/system-settings";
+import { storeLocationSchema } from "@/validations/store-location";
 
 export async function GET() {
   try {
@@ -78,6 +79,11 @@ export async function PATCH(
 
     const supabase = createAdminClient();
 
+    if (key === "store_location") {
+      const location = storeLocationSchema.safeParse(parsed.data.value);
+      if (!location.success) return NextResponse.json({ success: false, message: location.error.issues[0]?.message }, { status: 400 });
+      parsed.data.value = location.data;
+    }
     if (key === "accept_orders_outside_hours" && (!parsed.data.value || typeof parsed.data.value !== "object" || typeof (parsed.data.value as Record<string, unknown>).enabled !== "boolean")) {
       return NextResponse.json({ success: false, message: "enabled debe ser booleano." }, { status: 400 });
     }

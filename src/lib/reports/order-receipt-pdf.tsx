@@ -43,7 +43,7 @@ export function OrderReceiptDocument({ order }: { order: OrderReceiptData }) {
   return (
     <Document>
       <Page size="A5" style={styles.page}>
-        <Text style={styles.title}>Nova Florería</Text>
+        <Text style={styles.title}>Floristería Anabelle</Text>
         <Text style={styles.orderNumber}>Comprobante — Pedido #{order.order_number}</Text>
 
         <View style={styles.section}>
@@ -108,7 +108,7 @@ export function OrderReceiptDocument({ order }: { order: OrderReceiptData }) {
           )}
         </View>
 
-        <Text style={styles.footer}>Gracias por su compra — Nova Florería</Text>
+        <Text style={styles.footer}>Gracias por su compra — Floristería Anabelle</Text>
       </Page>
     </Document>
   );

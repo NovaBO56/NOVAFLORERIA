@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo } from "react";
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/public/safe-image";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import {
@@ -266,7 +266,7 @@ export function CartDrawer({
                       <span
                         className={`${script.className} text-3xl text-[#76547f]`}
                       >
-                        NOVA
+                        Anabelle
                       </span>
                     )}
                   </div>

@@ -25,7 +25,7 @@ export function CustomersReportDocument({ rows }: { rows: CustomerReportRow[] })
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Reporte de Clientes</Text>
+        <Text style={styles.title}>Floristería Anabelle — Reporte de Clientes</Text>
         <Text style={styles.subtitle}>Ordenado por total gastado, de mayor a menor</Text>
 
         <View style={styles.summaryBox}>

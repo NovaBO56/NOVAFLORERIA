@@ -113,11 +113,11 @@ export function SiteHeader({
                 <p
                   className={`${script.className} text-[34px] leading-none text-[#65358e]`}
                 >
-                  NOVA
+                  Anabelle
                 </p>
 
                 <p className="mt-1 text-[8px] font-black tracking-[0.28em] text-[#76667b]">
-                  FLORERÍA
+                  FLORISTERÍA
                 </p>
               </div>
 
@@ -187,11 +187,11 @@ export function SiteHeader({
               <div
                 className={`${script.className} text-[36px] leading-none text-[#65358e]`}
               >
-                NOVA
+                Anabelle
               </div>
 
               <div className="mt-1 text-[8px] font-black tracking-[0.34em] text-[#756777]">
-                FLORERÍA
+                FLORISTERÍA
               </div>
             </div>
           </a>

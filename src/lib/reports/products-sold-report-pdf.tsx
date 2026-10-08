@@ -32,7 +32,7 @@ export function ProductsSoldReportDocument({
   return (
     <Document>
       <Page size="A4" style={styles.page}>
-        <Text style={styles.title}>Nova Florería — Productos Vendidos</Text>
+        <Text style={styles.title}>Floristería Anabelle — Productos Vendidos</Text>
         <Text style={styles.subtitle}>
           Periodo: {from} a {to}
         </Text>
