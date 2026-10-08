@@ -3,6 +3,7 @@ import sharp from "sharp";
 import { optimizeProductImage } from "@/lib/product-image-file";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET_NAME = "product-images";
 
@@ -358,9 +359,13 @@ export async function POST(
         imageError,
       );
 
-      await supabase.storage
+      // The staff Storage DELETE policy has no SELECT policy: remove() may
+      // silently see zero objects. Compensate with the private server client,
+      // only for the exact random path created by this authorized request.
+      const { error: cleanupError } = await createAdminClient().storage
         .from(BUCKET_NAME)
         .remove([storagePath]);
+      if (cleanupError) console.error("No se pudo compensar el upload de imagen.", { code: cleanupError.name });
 
       return NextResponse.json(
         {
