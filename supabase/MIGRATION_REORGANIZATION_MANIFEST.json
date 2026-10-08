@@ -1,0 +1,776 @@
+{
+  "date": "2026-10-08T02:30:19.250Z",
+  "authorization": "Adjunto da4f9755-902e-4123-b09e-53fe5c4e152e: solo repositorio local",
+  "backup": "C:\\Users\\carli\\OneDrive\\Desktop\\FLORERIA WEB\\NOVA-LOCAL-VALIDATION\\backups\\reorganization-2026-10-08T02-30-19-250Z",
+  "original": [
+    {
+      "file": "001_correccion_rls_fase2.sql",
+      "sha256": "929b4f2d8d0c2e167c20d4095bc302264b66e6d4535c1e0857f05ce0551c69c2"
+    },
+    {
+      "file": "002_correccion_rls_catalogo_empleado.sql",
+      "sha256": "5ffa61a15c27908a3d47596bc47cdbcf83614085d9afabb81e73b76ea1ed746f"
+    },
+    {
+      "file": "003_correccion_storage_product_images_empleado.sql",
+      "sha256": "5b61aa3419e2ae71fef52e2509a8f5a175dde4256eea6247f37cead28f5487eb"
+    },
+    {
+      "file": "004_correccion_rls_profiles.sql",
+      "sha256": "9dbd4aa03ae232388712671955b301bfbc742fc1fd9520e85180c8c419051d63"
+    },
+    {
+      "file": "005_fase3_inventario_tablas.sql",
+      "sha256": "ceddbd7e9e9a4159a6a9ed794ec7654373ccae2f0bd3d60677c6e4e73393b795"
+    },
+    {
+      "file": "006_fase3_inventario_triggers.sql",
+      "sha256": "103601057ff356a5d89d45f018c3438783b8828bd4573d180679dd5fa3e5522d"
+    },
+    {
+      "file": "007_fase4_arreglos_tablas.sql",
+      "sha256": "b48f16c3ed2ed2359ca235a47bbd60213e555ba0521ca34ff802d67e75db8d29"
+    },
+    {
+      "file": "008_fase4_consumo_fifo.sql",
+      "sha256": "6894dd916178d58573d76ed72f77f91c3b0ed26c8ed215537c3f65ff164adf40"
+    },
+    {
+      "file": "009_fase5_pedidos_tablas.sql",
+      "sha256": "8a83cf1c936a72e3e982f940e94c01c68f9a0cac76580ea8b60fd3c2c1a678bc"
+    },
+    {
+      "file": "010_fase5_funciones_pedidos.sql",
+      "sha256": "6d944d59058cf28ea58544b600437d10ac63545f32e0874a48a94fef16daeac4"
+    },
+    {
+      "file": "011_fase5_pedido_publico.sql",
+      "sha256": "9d9480654d21173bd2fba1ccc4f97c7d4fa26f066eaf3873cca92f94c2c1a8db"
+    },
+    {
+      "file": "012_fase6_pagos_qr_tablas.sql",
+      "sha256": "d21eea0441ed213e026e33de303768014c116b3592bc8b5a208d1f6e55a94a46"
+    },
+    {
+      "file": "013_fase6_funciones_pagos.sql",
+      "sha256": "7fbcdaa6131d8c3408926e780625869fab8ff4ce1fa64399e08bb2855bbbd1d0"
+    },
+    {
+      "file": "014_fase6_fix_create_payment_return.sql",
+      "sha256": "ba08b0440ed69ef3c8397ad9ce0d4c6c7bc84cbfe715ee560e2b4ff115dc7f5b"
+    },
+    {
+      "file": "015_fase7_whatsapp_config.sql",
+      "sha256": "eb1749e27a22202108124e48feb6d515f4196d9177f12a251296ba4faf8d1dad"
+    },
+    {
+      "file": "016_fase7_fix_create_payment_order_number.sql",
+      "sha256": "640514121525119ed42a189e09eefe44c20c9e306e9c0f521cac9505c503ba75"
+    },
+    {
+      "file": "017_fase8_venta_fisica.sql",
+      "sha256": "7658994a92923dad64c5ce84991b3e842c264e620234abca0aade9df5cfc39ad"
+    },
+    {
+      "file": "018_catalogo_publico_rls.sql",
+      "sha256": "f3815d7d6ff001eceb41017d704801b0da8c483e6135cf786d1136c825b6080b"
+    },
+    {
+      "file": "018_fase9_tablas.sql",
+      "sha256": "a9bd87302e1db8e0fc0e2f2951cac31e0478721fd4920fbdbfc8a5b1ce9da344"
+    },
+    {
+      "file": "019_fase9_funciones.sql",
+      "sha256": "e1cf7baf989f3432c340abdce1444b2b87eb2cf0a51fc87b06845b9f408c93c7"
+    },
+    {
+      "file": "019_seguimiento_pedido_publico.sql",
+      "sha256": "c544b6d8bd8ecfbb20c4bbed293818f1c8c3b373108bd7cf279760dafb2f16dd"
+    },
+    {
+      "file": "020_fase5_fix_extra_price_personalizacion.sql",
+      "sha256": "2bfac27c5873c2010da0346bcc60f12c3ee40f1887e66d130343d274fe272f38"
+    },
+    {
+      "file": "020_fase9_fix_cancel_order_overload.sql",
+      "sha256": "2f4cc258e0a91668c6bc761f77e2bfefc51298268f3f745aa007dc0dff95b419"
+    },
+    {
+      "file": "021_fase9_fix_can_delete_function.sql",
+      "sha256": "7520ebaadab66c6c38dc31269e1970a9655487ce998c776293f15fc03a745061"
+    },
+    {
+      "file": "022_fase10_caja_tablas.sql",
+      "sha256": "2785f5b82cdb4f134c9a440d3d5d256de817de886d2a5d0637e61e3506d2f52e"
+    },
+    {
+      "file": "023_fase10_funciones_caja.sql",
+      "sha256": "73c737eb63a26c39c610a2c59bb695386183c7c4afcc928f651429a30680cdc8"
+    },
+    {
+      "file": "024_fase11_clientes_promociones_tablas.sql",
+      "sha256": "ae9f4d143b418f2cf91d6c33eb79517e12e786f43354c05aeddbf3da13fea72f"
+    },
+    {
+      "file": "025_fase11_funciones_promociones.sql",
+      "sha256": "38754a5f90c857605a0ffa499789c96c3faf1568c4f01507902a5dcbbc92802f"
+    },
+    {
+      "file": "026_fase12_venta_fisica_cliente_opcional.sql",
+      "sha256": "a81b8bc34b80fa543072801bcb638b1a71da2b9121c61bc367aa525dd30d31a7"
+    },
+    {
+      "file": "027_fase13_tablas.sql",
+      "sha256": "bc0ae58d4d5412b7770e368121c0e3b4b568a8d2dd6a0aa45c3d2ca466b4d19f"
+    },
+    {
+      "file": "028_fase13_funciones_y_triggers.sql",
+      "sha256": "4c74b9cf8bb547de82835bf473e35fe430d66b7bfd0b3cfc0dd1830b1b57c7b9"
+    },
+    {
+      "file": "029_fase14_rate_limiting.sql",
+      "sha256": "d74fc034bb146b90cd00a0f6fe4724ab8396b71c24611e72ecfd9def75e1cde1"
+    },
+    {
+      "file": "030_fase14_auditoria.sql",
+      "sha256": "db39ab4c968c5e2ec6d6199b8581ec8f4e289f1d9f4a3f1214a8d2c66e129ec1"
+    },
+    {
+      "file": "031_arma_tu_ramo_opciones_inventario.sql",
+      "sha256": "c120772662da4680e8dfd8d0cd36079a7c90a1ac8c7a0017be178e6665805e31"
+    },
+    {
+      "file": "032_rediseno_promociones.sql",
+      "sha256": "8b9d2c090906383128419bdb4c94ec966eb39543bfcc59f4e42114f26ed2b883"
+    },
+    {
+      "file": "033_reparacion_promociones.sql",
+      "sha256": "1444db423884935ee3fbf35cd917e44d04e26c34c4a2383a21b7c0900d2b4c96"
+    },
+    {
+      "file": "034 fix modulo pedidos.sql",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "034_proteccion_monto_fijo.sql",
+      "sha256": "99dd4fda905075d02babe3eec786a45741ff8547fff982a46f6b807036ecd591"
+    },
+    {
+      "file": "035_checkout_public_summary.sql",
+      "sha256": "5c72b1099244e4ad6f9ab5fa01a47193f252999c7b2956140f97d83b6cf948bb"
+    }
+  ],
+  "after": [
+    {
+      "file": "001_correccion_rls_fase2.sql",
+      "sha256": "929b4f2d8d0c2e167c20d4095bc302264b66e6d4535c1e0857f05ce0551c69c2"
+    },
+    {
+      "file": "002_correccion_rls_catalogo_empleado.sql",
+      "sha256": "5ffa61a15c27908a3d47596bc47cdbcf83614085d9afabb81e73b76ea1ed746f"
+    },
+    {
+      "file": "003_correccion_storage_product_images_empleado.sql",
+      "sha256": "5b61aa3419e2ae71fef52e2509a8f5a175dde4256eea6247f37cead28f5487eb"
+    },
+    {
+      "file": "004_correccion_rls_profiles.sql",
+      "sha256": "9dbd4aa03ae232388712671955b301bfbc742fc1fd9520e85180c8c419051d63"
+    },
+    {
+      "file": "005_fase3_inventario_tablas.sql",
+      "sha256": "ceddbd7e9e9a4159a6a9ed794ec7654373ccae2f0bd3d60677c6e4e73393b795"
+    },
+    {
+      "file": "006_fase3_inventario_triggers.sql",
+      "sha256": "103601057ff356a5d89d45f018c3438783b8828bd4573d180679dd5fa3e5522d"
+    },
+    {
+      "file": "007_fase4_arreglos_tablas.sql",
+      "sha256": "b48f16c3ed2ed2359ca235a47bbd60213e555ba0521ca34ff802d67e75db8d29"
+    },
+    {
+      "file": "008_fase4_consumo_fifo.sql",
+      "sha256": "6894dd916178d58573d76ed72f77f91c3b0ed26c8ed215537c3f65ff164adf40"
+    },
+    {
+      "file": "009_fase5_pedidos_tablas.sql",
+      "sha256": "8a83cf1c936a72e3e982f940e94c01c68f9a0cac76580ea8b60fd3c2c1a678bc"
+    },
+    {
+      "file": "010_fase5_funciones_pedidos.sql",
+      "sha256": "6d944d59058cf28ea58544b600437d10ac63545f32e0874a48a94fef16daeac4"
+    },
+    {
+      "file": "011_fase5_pedido_publico.sql",
+      "sha256": "9d9480654d21173bd2fba1ccc4f97c7d4fa26f066eaf3873cca92f94c2c1a8db"
+    },
+    {
+      "file": "012_fase6_pagos_qr_tablas.sql",
+      "sha256": "d21eea0441ed213e026e33de303768014c116b3592bc8b5a208d1f6e55a94a46"
+    },
+    {
+      "file": "013_fase6_funciones_pagos.sql",
+      "sha256": "7fbcdaa6131d8c3408926e780625869fab8ff4ce1fa64399e08bb2855bbbd1d0"
+    },
+    {
+      "file": "014_fase6_fix_create_payment_return.sql",
+      "sha256": "ba08b0440ed69ef3c8397ad9ce0d4c6c7bc84cbfe715ee560e2b4ff115dc7f5b"
+    },
+    {
+      "file": "015_fase7_whatsapp_config.sql",
+      "sha256": "eb1749e27a22202108124e48feb6d515f4196d9177f12a251296ba4faf8d1dad"
+    },
+    {
+      "file": "016_fase7_fix_create_payment_order_number.sql",
+      "sha256": "640514121525119ed42a189e09eefe44c20c9e306e9c0f521cac9505c503ba75"
+    },
+    {
+      "file": "017_fase8_venta_fisica.sql",
+      "sha256": "7658994a92923dad64c5ce84991b3e842c264e620234abca0aade9df5cfc39ad"
+    },
+    {
+      "file": "018_catalogo_publico_rls.sql",
+      "sha256": "f3815d7d6ff001eceb41017d704801b0da8c483e6135cf786d1136c825b6080b"
+    },
+    {
+      "file": "018_fase9_tablas.sql",
+      "sha256": "a9bd87302e1db8e0fc0e2f2951cac31e0478721fd4920fbdbfc8a5b1ce9da344"
+    },
+    {
+      "file": "019_fase9_funciones.sql",
+      "sha256": "e1cf7baf989f3432c340abdce1444b2b87eb2cf0a51fc87b06845b9f408c93c7"
+    },
+    {
+      "file": "019_seguimiento_pedido_publico.sql",
+      "sha256": "c544b6d8bd8ecfbb20c4bbed293818f1c8c3b373108bd7cf279760dafb2f16dd"
+    },
+    {
+      "file": "020_fase5_fix_extra_price_personalizacion.sql",
+      "sha256": "2bfac27c5873c2010da0346bcc60f12c3ee40f1887e66d130343d274fe272f38"
+    },
+    {
+      "file": "020_fase9_fix_cancel_order_overload.sql",
+      "sha256": "2f4cc258e0a91668c6bc761f77e2bfefc51298268f3f745aa007dc0dff95b419"
+    },
+    {
+      "file": "021_fase9_fix_can_delete_function.sql",
+      "sha256": "7520ebaadab66c6c38dc31269e1970a9655487ce998c776293f15fc03a745061"
+    },
+    {
+      "file": "022_fase10_caja_tablas.sql",
+      "sha256": "2785f5b82cdb4f134c9a440d3d5d256de817de886d2a5d0637e61e3506d2f52e"
+    },
+    {
+      "file": "023_fase10_funciones_caja.sql",
+      "sha256": "73c737eb63a26c39c610a2c59bb695386183c7c4afcc928f651429a30680cdc8"
+    },
+    {
+      "file": "024_fase11_clientes_promociones_tablas.sql",
+      "sha256": "ae9f4d143b418f2cf91d6c33eb79517e12e786f43354c05aeddbf3da13fea72f"
+    },
+    {
+      "file": "025_fase11_funciones_promociones.sql",
+      "sha256": "38754a5f90c857605a0ffa499789c96c3faf1568c4f01507902a5dcbbc92802f"
+    },
+    {
+      "file": "026_fase12_venta_fisica_cliente_opcional.sql",
+      "sha256": "a81b8bc34b80fa543072801bcb638b1a71da2b9121c61bc367aa525dd30d31a7"
+    },
+    {
+      "file": "027_fase13_tablas.sql",
+      "sha256": "bc0ae58d4d5412b7770e368121c0e3b4b568a8d2dd6a0aa45c3d2ca466b4d19f"
+    },
+    {
+      "file": "028_fase13_funciones_y_triggers.sql",
+      "sha256": "4c74b9cf8bb547de82835bf473e35fe430d66b7bfd0b3cfc0dd1830b1b57c7b9"
+    },
+    {
+      "file": "029_fase14_rate_limiting.sql",
+      "sha256": "d74fc034bb146b90cd00a0f6fe4724ab8396b71c24611e72ecfd9def75e1cde1"
+    },
+    {
+      "file": "030_fase14_auditoria.sql",
+      "sha256": "db39ab4c968c5e2ec6d6199b8581ec8f4e289f1d9f4a3f1214a8d2c66e129ec1"
+    },
+    {
+      "file": "031_arma_tu_ramo_opciones_inventario.sql",
+      "sha256": "c120772662da4680e8dfd8d0cd36079a7c90a1ac8c7a0017be178e6665805e31"
+    },
+    {
+      "file": "032_rediseno_promociones.sql",
+      "sha256": "8b9d2c090906383128419bdb4c94ec966eb39543bfcc59f4e42114f26ed2b883"
+    },
+    {
+      "file": "033_reparacion_promociones.sql",
+      "sha256": "1444db423884935ee3fbf35cd917e44d04e26c34c4a2383a21b7c0900d2b4c96"
+    },
+    {
+      "file": "034 fix modulo pedidos.sql",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "034_proteccion_monto_fijo.sql",
+      "sha256": "99dd4fda905075d02babe3eec786a45741ff8547fff982a46f6b807036ecd591"
+    },
+    {
+      "file": "035_checkout_public_summary.sql",
+      "sha256": "5c72b1099244e4ad6f9ab5fa01a47193f252999c7b2956140f97d83b6cf948bb"
+    }
+  ],
+  "legacyIdentical": true,
+  "newFiles": [
+    {
+      "destination": "20261007000100_baseline_initial.sql",
+      "origin": "BASELINE_CANDIDATE.sql",
+      "sha256": "4cdaf2857d683c17b82f487d2209a7946d76fa00d972dcdfc44489e1ba160b32"
+    },
+    {
+      "destination": "20261007000200_checkout_public_summary.sql",
+      "origin": "035_checkout_public_summary.sql",
+      "sha256": "5c72b1099244e4ad6f9ab5fa01a47193f252999c7b2956140f97d83b6cf948bb"
+    },
+    {
+      "destination": "20261007000300_security_rpc_hardening.sql",
+      "origin": "036_security_rpc_hardening.sql",
+      "sha256": "61e1f355c871a98ab7c0c1758931af9d12c289d5624ad4a6a55d30d417b93765"
+    },
+    {
+      "destination": "20261007000400_backend_concurrency_zero_total.sql",
+      "origin": "037_backend_concurrency_zero_total.sql",
+      "sha256": "7fbaf68789188cf700e5325ebf12011700c8c1afdeabe557dae676c0f018b241"
+    }
+  ],
+  "seedSha256": "c00a87c5a0d78f20177f61dd0a3dbddd8c947ec1e467b91b236b7d432e0587f9",
+  "inventory": [
+    {
+      "file": ".gitignore",
+      "bytes": 72,
+      "sha256": "507699eb91144818edf61d3a079212cacf31d8db520eae428e3b48fcf0d6919c"
+    },
+    {
+      "file": ".temp/cli-latest",
+      "bytes": 8,
+      "sha256": "2f99ec07bad208b0108748390c2fe80fb0a91b1784a8f7bf1d303efda7deeaee"
+    },
+    {
+      "file": ".temp/gotrue-version",
+      "bytes": 8,
+      "sha256": "edd7ec89eb825b9b493b8d50c805d706111f50b26f5245657c9cd2cac643cb1d"
+    },
+    {
+      "file": ".temp/linked-project.json",
+      "bytes": 162,
+      "sha256": "ecc4c1cdf79c068fb21749008bcdaf8a065f39e5a56790035ff7f115a296f77b"
+    },
+    {
+      "file": ".temp/pooler-url",
+      "bytes": 92,
+      "sha256": "5116dcc652d1ac2f6007d9232765b2b579ac17b94d519cd9cce6ead2db44a332"
+    },
+    {
+      "file": ".temp/postgres-version",
+      "bytes": 10,
+      "sha256": "cbe206566a93239f1b817730ee61cd39782fe3e29fabb54b6412ea86139a529d"
+    },
+    {
+      "file": ".temp/project-ref",
+      "bytes": 20,
+      "sha256": "a9c9844c4448895c9f9b0caca97cacf846bfb4a4a62747b13a192dbea68e1192"
+    },
+    {
+      "file": ".temp/rest-version",
+      "bytes": 5,
+      "sha256": "b25de4a023eef82d4780a9f7816c5685ca35437308a9d457585eece9945485dc"
+    },
+    {
+      "file": ".temp/storage-migration",
+      "bytes": 26,
+      "sha256": "375641061775d66da619db893bace32ff83394ea2169f95af20f34c543be4f34"
+    },
+    {
+      "file": ".temp/storage-version",
+      "bytes": 7,
+      "sha256": "2ee3333d1edee9a6877adf71465d8ccdd8f29c91668a2bdc56da4a1c6c45a035"
+    },
+    {
+      "file": "baseline-candidate/036_security_rpc_hardening.sql",
+      "bytes": 41897,
+      "sha256": "61e1f355c871a98ab7c0c1758931af9d12c289d5624ad4a6a55d30d417b93765"
+    },
+    {
+      "file": "baseline-candidate/037_backend_concurrency_zero_total.sql",
+      "bytes": 49173,
+      "sha256": "7fbaf68789188cf700e5325ebf12011700c8c1afdeabe557dae676c0f018b241"
+    },
+    {
+      "file": "baseline-candidate/activate-local-migrations.mjs",
+      "bytes": 4783,
+      "sha256": "e927ca713e85f1a5ed479783339f89aa842872726ae8eecb2bae203cddbb6697"
+    },
+    {
+      "file": "baseline-candidate/BACKEND_037_DECISIONS.md",
+      "bytes": 6722,
+      "sha256": "517229fe5c5b197df590f52714123c040251cc76857566f0d4256182bcbc125b"
+    },
+    {
+      "file": "baseline-candidate/BACKEND_FINAL_DEFINITIONS.json",
+      "bytes": 49901,
+      "sha256": "59caaf838c3d2ae46e0f88b27e4dcc024ab2c89572495291c6689ce47e37e87e"
+    },
+    {
+      "file": "baseline-candidate/BACKEND_ORIGINAL_DEFINITIONS.json",
+      "bytes": 83758,
+      "sha256": "2e183aaef00c0b69e7495e3b5fffe108a2286ec3c25220fe4f83fc2b59edcb84"
+    },
+    {
+      "file": "baseline-candidate/BACKEND_SCHEMA_FINAL.sql",
+      "bytes": 337,
+      "sha256": "9c14e712c5028df8dbb01a57ad9bea7d3947f8d73a21d2b0680eadf993068bb5"
+    },
+    {
+      "file": "baseline-candidate/BACKEND_TRIGGER_FINAL.sql",
+      "bytes": 367,
+      "sha256": "991ce14f053ae65f93d964f5ca8d8eedea313ee6ae20f12598797aae7ad94072"
+    },
+    {
+      "file": "baseline-candidate/BASELINE_CANDIDATE.sql",
+      "bytes": 200285,
+      "sha256": "4cdaf2857d683c17b82f487d2209a7946d76fa00d972dcdfc44489e1ba160b32"
+    },
+    {
+      "file": "baseline-candidate/BASELINE_PLAN.md",
+      "bytes": 11851,
+      "sha256": "6a809650df2468b8f3d4f64e410ec13108deea8aeb6b7b8b11df81043180c2a4"
+    },
+    {
+      "file": "baseline-candidate/build-backend-037.mjs",
+      "bytes": 16417,
+      "sha256": "81b1005c2a33390cb9902ec769320899c1bcba165745c47783e779121251f3ce"
+    },
+    {
+      "file": "baseline-candidate/build-hardening.mjs",
+      "bytes": 9483,
+      "sha256": "d12b3b56498b5b91bda454c80cc398b8b1af092fd46c7e9c5208d297e27cbf3e"
+    },
+    {
+      "file": "baseline-candidate/candidate-manifest.json",
+      "bytes": 619,
+      "sha256": "0891d8c51aa3ba3d5f8990c0e279384c1a38efdbd047d1fe848d0dfb17105dfb"
+    },
+    {
+      "file": "baseline-candidate/CONFIRM_PAYMENT_FINAL.sql",
+      "bytes": 4979,
+      "sha256": "f70b63758814c84d12557fe51a444d2b0db6b05d44a21eb28c12e8791e2f46db"
+    },
+    {
+      "file": "baseline-candidate/CREATE_PAYMENT_FINAL.sql",
+      "bytes": 2938,
+      "sha256": "8f8f245327e1753579f01e05976cecb3f81413d505330356335a995b5e02a07f"
+    },
+    {
+      "file": "baseline-candidate/DRIFT_DECISIONS.md",
+      "bytes": 68997,
+      "sha256": "e19a448b6c65d3bf7f67152937fad79b1cd493c67b08df79922af97407518e60"
+    },
+    {
+      "file": "baseline-candidate/final-payment-retirement-tests.mjs",
+      "bytes": 5440,
+      "sha256": "4d5b50f519bd4009d2be1411acc25052a8c9de06b2474b3682be7ead20024352"
+    },
+    {
+      "file": "baseline-candidate/FINAL_MIGRATION_LAYOUT.md",
+      "bytes": 2682,
+      "sha256": "739cc2bdacb0fdcc4e10ad7c5a9ba819c45d874d8159d6a89f5cd6c560d3810f"
+    },
+    {
+      "file": "baseline-candidate/generate-candidate.mjs",
+      "bytes": 21198,
+      "sha256": "706e34a791635a4d0b0cea80a01c421e79cdd9a0f3392ac17f06f95d23427bfa"
+    },
+    {
+      "file": "baseline-candidate/HANDLE_NEW_USER_FINAL.sql",
+      "bytes": 349,
+      "sha256": "4f490357b2c80ea7de568adc7584a765f1fc56455b8e77b6b5fbe7d5e76deeab"
+    },
+    {
+      "file": "baseline-candidate/ISOLATED_SECURITY_TESTS.sql",
+      "bytes": 9208,
+      "sha256": "927bfa0a8716b159b1de4c858fa937b59b2d93cd9ebc9f1fc2071680fc15a8c3"
+    },
+    {
+      "file": "baseline-candidate/LOCAL_CERTIFICATION_037.md",
+      "bytes": 9568,
+      "sha256": "140b276315339cef47a7e76c6623665ee965e95b95a17b302ddb7fbe3c685bc2"
+    },
+    {
+      "file": "baseline-candidate/MIGRATION_REORGANIZATION_PLAN.md",
+      "bytes": 6713,
+      "sha256": "7187273aa80c5567418eb4bd7a9217faccafe0f6d204d75b67c22dbf4ad5ffb0"
+    },
+    {
+      "file": "baseline-candidate/PAYMENT_RETIREMENT_CERTIFICATION.md",
+      "bytes": 7355,
+      "sha256": "883f1337d1a59a9beb3e827c1aa4a9db1f5ebd52da1d0873ca5e5593089e21ff"
+    },
+    {
+      "file": "baseline-candidate/RPC_FINAL_MATRIX.json",
+      "bytes": 15782,
+      "sha256": "4ac4cc95b7fd90a56191698472ad1ea9f3c1ba6b9b051ba986aafede1670c86e"
+    },
+    {
+      "file": "baseline-candidate/RPC_FINAL_MATRIX.md",
+      "bytes": 11401,
+      "sha256": "c83339e14670174250619dcf3dc71f0538f7a4e2157ee4f86d698ada607bafdb"
+    },
+    {
+      "file": "baseline-candidate/SECURITY_DECISIONS_FINAL.md",
+      "bytes": 19448,
+      "sha256": "8e22c8f988d01ca7c61d62eafd6bc7b407bc6f05f7949a60b32cf0f99243717a"
+    },
+    {
+      "file": "baseline-candidate/SECURITY_REVIEW.md",
+      "bytes": 24688,
+      "sha256": "563cc8aed1a5a7e00b610c09152068671c16f6bb3a7a0b50f7ace7f5dc822ee2"
+    },
+    {
+      "file": "baseline-candidate/SEED_CANDIDATE.sql",
+      "bytes": 1339,
+      "sha256": "c00a87c5a0d78f20177f61dd0a3dbddd8c947ec1e467b91b236b7d432e0587f9"
+    },
+    {
+      "file": "baseline-candidate/STATIC_VALIDATION.json",
+      "bytes": 2711,
+      "sha256": "e616a77bff0ad2fb65f25b2606d07bd1ad43538ad64bba19bc03cdb5d0a436b5"
+    },
+    {
+      "file": "baseline-candidate/TEST_RESULTS.md",
+      "bytes": 1549,
+      "sha256": "5feeb9a9db8af706724f2f6b4f808a9c9498392bc5cd9c181fa9b73cf1e878ac"
+    },
+    {
+      "file": "baseline-candidate/validate-candidate.mjs",
+      "bytes": 5507,
+      "sha256": "2bce2475d8a45b63127338ff648fe3cb2371a35b8908544e99f38c327cc12c00"
+    },
+    {
+      "file": "baseline-candidate/verify-payment-retirement-generation.mjs",
+      "bytes": 1575,
+      "sha256": "58f9cf9bbae6bda9eec47bd76068276b4f0f7443043b84513210e18311c9c2fc"
+    },
+    {
+      "file": "baseline-candidate/write-payment-retirement-report.mjs",
+      "bytes": 15943,
+      "sha256": "3dea996e8f840622bb8fdcf3d855ec772e0621ef5e9a1e2ac2607994920ab36b"
+    },
+    {
+      "file": "checkout-preflight.sql",
+      "bytes": 1882,
+      "sha256": "b1b460125f254fb64374caed757222b2c5b7cf50672a5b663cab605a629b30f6"
+    },
+    {
+      "file": "config.toml",
+      "bytes": 15670,
+      "sha256": "bc5303e9b76f95637166530eef30f5f54da34f48a14679c5cef828cf2bb52ae6"
+    },
+    {
+      "file": "migrations/001_correccion_rls_fase2.sql",
+      "bytes": 2435,
+      "sha256": "929b4f2d8d0c2e167c20d4095bc302264b66e6d4535c1e0857f05ce0551c69c2"
+    },
+    {
+      "file": "migrations/002_correccion_rls_catalogo_empleado.sql",
+      "bytes": 2996,
+      "sha256": "5ffa61a15c27908a3d47596bc47cdbcf83614085d9afabb81e73b76ea1ed746f"
+    },
+    {
+      "file": "migrations/003_correccion_storage_product_images_empleado.sql",
+      "bytes": 1161,
+      "sha256": "5b61aa3419e2ae71fef52e2509a8f5a175dde4256eea6247f37cead28f5487eb"
+    },
+    {
+      "file": "migrations/004_correccion_rls_profiles.sql",
+      "bytes": 880,
+      "sha256": "9dbd4aa03ae232388712671955b301bfbc742fc1fd9520e85180c8c419051d63"
+    },
+    {
+      "file": "migrations/005_fase3_inventario_tablas.sql",
+      "bytes": 9614,
+      "sha256": "ceddbd7e9e9a4159a6a9ed794ec7654373ccae2f0bd3d60677c6e4e73393b795"
+    },
+    {
+      "file": "migrations/006_fase3_inventario_triggers.sql",
+      "bytes": 5376,
+      "sha256": "103601057ff356a5d89d45f018c3438783b8828bd4573d180679dd5fa3e5522d"
+    },
+    {
+      "file": "migrations/007_fase4_arreglos_tablas.sql",
+      "bytes": 4491,
+      "sha256": "b48f16c3ed2ed2359ca235a47bbd60213e555ba0521ca34ff802d67e75db8d29"
+    },
+    {
+      "file": "migrations/008_fase4_consumo_fifo.sql",
+      "bytes": 3714,
+      "sha256": "6894dd916178d58573d76ed72f77f91c3b0ed26c8ed215537c3f65ff164adf40"
+    },
+    {
+      "file": "migrations/009_fase5_pedidos_tablas.sql",
+      "bytes": 5607,
+      "sha256": "8a83cf1c936a72e3e982f940e94c01c68f9a0cac76580ea8b60fd3c2c1a678bc"
+    },
+    {
+      "file": "migrations/010_fase5_funciones_pedidos.sql",
+      "bytes": 8468,
+      "sha256": "6d944d59058cf28ea58544b600437d10ac63545f32e0874a48a94fef16daeac4"
+    },
+    {
+      "file": "migrations/011_fase5_pedido_publico.sql",
+      "bytes": 6536,
+      "sha256": "9d9480654d21173bd2fba1ccc4f97c7d4fa26f066eaf3873cca92f94c2c1a8db"
+    },
+    {
+      "file": "migrations/012_fase6_pagos_qr_tablas.sql",
+      "bytes": 3184,
+      "sha256": "d21eea0441ed213e026e33de303768014c116b3592bc8b5a208d1f6e55a94a46"
+    },
+    {
+      "file": "migrations/013_fase6_funciones_pagos.sql",
+      "bytes": 8140,
+      "sha256": "7fbcdaa6131d8c3408926e780625869fab8ff4ce1fa64399e08bb2855bbbd1d0"
+    },
+    {
+      "file": "migrations/014_fase6_fix_create_payment_return.sql",
+      "bytes": 1735,
+      "sha256": "ba08b0440ed69ef3c8397ad9ce0d4c6c7bc84cbfe715ee560e2b4ff115dc7f5b"
+    },
+    {
+      "file": "migrations/015_fase7_whatsapp_config.sql",
+      "bytes": 1103,
+      "sha256": "eb1749e27a22202108124e48feb6d515f4196d9177f12a251296ba4faf8d1dad"
+    },
+    {
+      "file": "migrations/016_fase7_fix_create_payment_order_number.sql",
+      "bytes": 1665,
+      "sha256": "640514121525119ed42a189e09eefe44c20c9e306e9c0f521cac9505c503ba75"
+    },
+    {
+      "file": "migrations/017_fase8_venta_fisica.sql",
+      "bytes": 8028,
+      "sha256": "7658994a92923dad64c5ce84991b3e842c264e620234abca0aade9df5cfc39ad"
+    },
+    {
+      "file": "migrations/018_catalogo_publico_rls.sql",
+      "bytes": 2897,
+      "sha256": "f3815d7d6ff001eceb41017d704801b0da8c483e6135cf786d1136c825b6080b"
+    },
+    {
+      "file": "migrations/018_fase9_tablas.sql",
+      "bytes": 3059,
+      "sha256": "a9bd87302e1db8e0fc0e2f2951cac31e0478721fd4920fbdbfc8a5b1ce9da344"
+    },
+    {
+      "file": "migrations/019_fase9_funciones.sql",
+      "bytes": 11665,
+      "sha256": "e1cf7baf989f3432c340abdce1444b2b87eb2cf0a51fc87b06845b9f408c93c7"
+    },
+    {
+      "file": "migrations/019_seguimiento_pedido_publico.sql",
+      "bytes": 2403,
+      "sha256": "c544b6d8bd8ecfbb20c4bbed293818f1c8c3b373108bd7cf279760dafb2f16dd"
+    },
+    {
+      "file": "migrations/020_fase5_fix_extra_price_personalizacion.sql",
+      "bytes": 8161,
+      "sha256": "2bfac27c5873c2010da0346bcc60f12c3ee40f1887e66d130343d274fe272f38"
+    },
+    {
+      "file": "migrations/020_fase9_fix_cancel_order_overload.sql",
+      "bytes": 456,
+      "sha256": "2f4cc258e0a91668c6bc761f77e2bfefc51298268f3f745aa007dc0dff95b419"
+    },
+    {
+      "file": "migrations/021_fase9_fix_can_delete_function.sql",
+      "bytes": 824,
+      "sha256": "7520ebaadab66c6c38dc31269e1970a9655487ce998c776293f15fc03a745061"
+    },
+    {
+      "file": "migrations/022_fase10_caja_tablas.sql",
+      "bytes": 3812,
+      "sha256": "2785f5b82cdb4f134c9a440d3d5d256de817de886d2a5d0637e61e3506d2f52e"
+    },
+    {
+      "file": "migrations/023_fase10_funciones_caja.sql",
+      "bytes": 14861,
+      "sha256": "73c737eb63a26c39c610a2c59bb695386183c7c4afcc928f651429a30680cdc8"
+    },
+    {
+      "file": "migrations/024_fase11_clientes_promociones_tablas.sql",
+      "bytes": 6416,
+      "sha256": "ae9f4d143b418f2cf91d6c33eb79517e12e786f43354c05aeddbf3da13fea72f"
+    },
+    {
+      "file": "migrations/025_fase11_funciones_promociones.sql",
+      "bytes": 14313,
+      "sha256": "38754a5f90c857605a0ffa499789c96c3faf1568c4f01507902a5dcbbc92802f"
+    },
+    {
+      "file": "migrations/026_fase12_venta_fisica_cliente_opcional.sql",
+      "bytes": 8127,
+      "sha256": "a81b8bc34b80fa543072801bcb638b1a71da2b9121c61bc367aa525dd30d31a7"
+    },
+    {
+      "file": "migrations/027_fase13_tablas.sql",
+      "bytes": 4278,
+      "sha256": "bc0ae58d4d5412b7770e368121c0e3b4b568a8d2dd6a0aa45c3d2ca466b4d19f"
+    },
+    {
+      "file": "migrations/028_fase13_funciones_y_triggers.sql",
+      "bytes": 12910,
+      "sha256": "4c74b9cf8bb547de82835bf473e35fe430d66b7bfd0b3cfc0dd1830b1b57c7b9"
+    },
+    {
+      "file": "migrations/029_fase14_rate_limiting.sql",
+      "bytes": 2794,
+      "sha256": "d74fc034bb146b90cd00a0f6fe4724ab8396b71c24611e72ecfd9def75e1cde1"
+    },
+    {
+      "file": "migrations/030_fase14_auditoria.sql",
+      "bytes": 7033,
+      "sha256": "db39ab4c968c5e2ec6d6199b8581ec8f4e289f1d9f4a3f1214a8d2c66e129ec1"
+    },
+    {
+      "file": "migrations/031_arma_tu_ramo_opciones_inventario.sql",
+      "bytes": 18870,
+      "sha256": "c120772662da4680e8dfd8d0cd36079a7c90a1ac8c7a0017be178e6665805e31"
+    },
+    {
+      "file": "migrations/032_rediseno_promociones.sql",
+      "bytes": 16972,
+      "sha256": "8b9d2c090906383128419bdb4c94ec966eb39543bfcc59f4e42114f26ed2b883"
+    },
+    {
+      "file": "migrations/033_reparacion_promociones.sql",
+      "bytes": 3278,
+      "sha256": "1444db423884935ee3fbf35cd917e44d04e26c34c4a2383a21b7c0900d2b4c96"
+    },
+    {
+      "file": "migrations/034 fix modulo pedidos.sql",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "file": "migrations/034_proteccion_monto_fijo.sql",
+      "bytes": 15806,
+      "sha256": "99dd4fda905075d02babe3eec786a45741ff8547fff982a46f6b807036ecd591"
+    },
+    {
+      "file": "migrations/035_checkout_public_summary.sql",
+      "bytes": 1357,
+      "sha256": "5c72b1099244e4ad6f9ab5fa01a47193f252999c7b2956140f97d83b6cf948bb"
+    }
+  ],
+  "replay": "passed: CLI --local, estructura activa del repositorio, seed al final",
+  "remoteOperations": [],
+  "completed": "2026-10-08T02:38:05.702Z",
+  "verification": "MIGRATION_REORGANIZATION_RESULTS.json"
+}

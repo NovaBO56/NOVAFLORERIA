@@ -1,0 +1,344 @@
+[
+  {
+    "signature": "public.\"notify_order_ready\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"rls_auto_enable\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "plataforma; no alterar en 036",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"is_active_user\"()",
+    "category": "B",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "perfil de auth.uid() activo",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "anon + authenticated para RLS; sin mutación",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"is_admin\"()",
+    "category": "B",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "is_admin activo",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "anon + authenticated para RLS; sin mutación",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"is_employee_or_admin\"()",
+    "category": "B",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "anon + authenticated para RLS; sin mutación",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"handle_new_user\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "ALTO condicional: autoempleado activo si signup habilitado"
+  },
+  {
+    "signature": "public.\"handle_inventory_entry\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"handle_inventory_waste\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"handle_inventory_adjustment\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"consume_product_inventory\"(uuid, numeric, text, uuid, uuid)",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "ALTO: mutación sin identidad/propiedad suficiente"
+  },
+  {
+    "signature": "public.\"release_expired_reservations\"(uuid)",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "ALTO: mutación sin identidad/propiedad suficiente"
+  },
+  {
+    "signature": "public.\"advance_order_status\"(uuid, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/orders/[id]/status/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"close_cash_session\"(uuid, numeric, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/cash-sessions/[id]/close/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"reject_payment\"(uuid, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/payments/[id]/reject/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"create_payment\"(uuid)",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "ruta payment anterior; código actual usa uuid,text",
+    "recommended": "uuid: propietario solo; uuid,text: service_role",
+    "risk": "ALTO: mutación sin identidad/propiedad suficiente"
+  },
+  {
+    "signature": "public.\"cancel_order\"(uuid, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "auth.uid; empleado/admin para pendiente; solo admin para pagado",
+    "nextjs": "src/app/api/admin/orders/[id]/cancel/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"create_sale_return\"(uuid, text, numeric, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "is_admin activo",
+    "nextjs": "src/app/api/admin/orders/[id]/returns/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"record_cash_movement\"(uuid, text, numeric, text, text, uuid)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/cash-sessions/[id]/movements/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"request_order_deletion\"(uuid, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/orders/[id]/deletion-request/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"review_order_deletion_request\"(uuid, boolean, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "is_admin activo",
+    "nextjs": "src/app/api/admin/deletion-requests/[id]/review/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"can_delete_cancelled_order\"(uuid)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "is_admin activo",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"open_cash_session\"(uuid, numeric)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/cash-sessions/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"get_business_status\"()",
+    "category": "A",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "src/app/api/business-hours/route.ts",
+    "recommended": "anon + authenticated; conservar contrato público",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"notify_stock_alert\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"create_order\"(text, text, text, jsonb, text, text, uuid)",
+    "category": "A",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "src/app/api/orders/route.ts",
+    "recommended": "anon + authenticated; conservar contrato público",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"apply_order_discount\"(uuid, numeric, uuid, uuid, numeric, text, uuid)",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "ALTO: mutación sin identidad/propiedad suficiente"
+  },
+  {
+    "signature": "public.\"notify_pending_payment\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"confirm_payment\"(uuid)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/payments/[id]/confirm/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"notify_new_order\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"check_rate_limit\"(text, text, integer, integer)",
+    "category": "A",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "src/lib/rate-limit.ts",
+    "recommended": "anon + authenticated; conservar contrato público",
+    "risk": "MEDIO: límites/IP manipulables y carrera; no barrera RPC obligatoria"
+  },
+  {
+    "signature": "public.\"audit_products_change\"()",
+    "category": "D",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "auth.uid() (no siempre autorización)",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "service_role / llamadas internas del propietario",
+    "risk": "no es RPC ordinario"
+  },
+  {
+    "signature": "public.\"get_audit_trail\"(integer, integer)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "is_admin activo",
+    "nextjs": "src/app/api/admin/audit-log/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "public.\"track_order\"(bigint, text)",
+    "category": "A",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "sin RPC directo (trigger/política/helper)",
+    "recommended": "anon + authenticated; conservar contrato público",
+    "risk": "revisar datos públicos y enumeración"
+  },
+  {
+    "signature": "public.\"create_order\"(text, text, text, jsonb, text, text)",
+    "category": "A",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "sin validación de llamador",
+    "nextjs": "ninguna; /api/orders usa 7",
+    "recommended": "sin EXECUTE externo, retirada física pendiente",
+    "risk": "ALTO: controles antiguos"
+  },
+  {
+    "signature": "public.\"create_physical_sale\"(jsonb, uuid, uuid, numeric, text, text)",
+    "category": "C",
+    "current": "PUBLIC + anon + authenticated + service_role (efectivo auditado)",
+    "internal_check": "empleado/admin activo",
+    "nextjs": "src/app/api/admin/sales/route.ts",
+    "recommended": "authenticated + service_role; comprobar rol dentro",
+    "risk": "rol validado, revisar concurrencia/negativos"
+  },
+  {
+    "signature": "vault.\"create_secret\"(text, text, text, uuid)",
+    "category": "D",
+    "current": "{supabase_admin=X/supabase_admin,postgres=X*/supabase_admin,service_role=X/supabase_admin}",
+    "internal_check": "plataforma Vault; cuerpo no capturado, no afirmar validación",
+    "nextjs": "ninguna",
+    "recommended": "mantener servidor; fuera de 036",
+    "risk": "secretos; no conceder a clientes"
+  },
+  {
+    "signature": "vault.\"update_secret\"(uuid, text, text, text, uuid)",
+    "category": "D",
+    "current": "{supabase_admin=X/supabase_admin,postgres=X*/supabase_admin,service_role=X/supabase_admin}",
+    "internal_check": "plataforma Vault; cuerpo no capturado, no afirmar validación",
+    "nextjs": "ninguna",
+    "recommended": "mantener servidor; fuera de 036",
+    "risk": "secretos; no conceder a clientes"
+  },
+  {
+    "signature": "public.create_payment(uuid,text)",
+    "category": "D",
+    "current": "no existe en snapshot; solo candidata",
+    "internal_check": "teléfono del cliente, pedido online no eliminado pendiente, plazo/reservas, monto e idempotencia bajo bloqueo",
+    "nextjs": "src/app/api/orders/[id]/payment/route.ts (cliente administrativo)",
+    "recommended": "solo service_role; sin PUBLIC/anon/authenticated",
+    "risk": "teléfono no demuestra identidad; probar permisos, API y concurrencia"
+  }
+]

@@ -1,0 +1,743 @@
+{
+  "event_triggers": [
+    {
+      "enabled": "O",
+      "event": "sql_drop",
+      "function": "set_graphql_placeholder()",
+      "name": "issue_graphql_placeholder",
+      "tags": [
+        "DROP EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "pgrst_ddl_watch()",
+      "name": "pgrst_ddl_watch",
+      "tags": null
+    },
+    {
+      "enabled": "O",
+      "event": "sql_drop",
+      "function": "pgrst_drop_watch()",
+      "name": "pgrst_drop_watch",
+      "tags": null
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "grant_pg_cron_access()",
+      "name": "issue_pg_cron_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "grant_pg_net_access()",
+      "name": "issue_pg_net_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "grant_pg_graphql_access()",
+      "name": "issue_pg_graphql_access",
+      "tags": [
+        "CREATE EXTENSION"
+      ]
+    },
+    {
+      "enabled": "O",
+      "event": "ddl_command_end",
+      "function": "rls_auto_enable()",
+      "name": "ensure_rls",
+      "tags": [
+        "CREATE TABLE",
+        "CREATE TABLE AS",
+        "SELECT INTO"
+      ]
+    }
+  ],
+  "function_permissions": [
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "notify_order_ready()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "rls_auto_enable()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "is_active_user()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "is_admin()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "is_employee_or_admin()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "handle_new_user()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "handle_inventory_entry()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "handle_inventory_waste()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "handle_inventory_adjustment()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "consume_product_inventory(uuid,numeric,text,uuid,uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "release_expired_reservations(uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "advance_order_status(uuid,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "close_cash_session(uuid,numeric,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "reject_payment(uuid,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "create_payment(uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "cancel_order(uuid,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "create_sale_return(uuid,text,numeric,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "record_cash_movement(uuid,text,numeric,text,text,uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "request_order_deletion(uuid,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "review_order_deletion_request(uuid,boolean,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "can_delete_cancelled_order(uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "open_cash_session(uuid,numeric)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "get_business_status()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "notify_stock_alert()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "create_order(text,text,text,jsonb,text,text,uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "apply_order_discount(uuid,numeric,uuid,uuid,numeric,text,uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "notify_pending_payment()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "confirm_payment(uuid)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "notify_new_order()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "check_rate_limit(text,text,integer,integer)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "audit_products_change()",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "get_audit_trail(integer,integer)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "track_order(bigint,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "create_order(text,text,text,jsonb,text,text)",
+      "service_role_execute": true
+    },
+    {
+      "anon_execute": true,
+      "authenticated_execute": true,
+      "function": "create_physical_sale(jsonb,uuid,uuid,numeric,text,text)",
+      "service_role_execute": true
+    }
+  ],
+  "publications": [
+    {
+      "all_tables": false,
+      "delete": true,
+      "insert": true,
+      "name": "supabase_realtime",
+      "truncate": true,
+      "update": true
+    }
+  ],
+  "replication_tables": [],
+  "sequence_ownership": [
+    {
+      "column": "id",
+      "dependency_type": "a",
+      "sequence": "auth.refresh_tokens_id_seq",
+      "table": "auth.refresh_tokens"
+    },
+    {
+      "column": "id",
+      "dependency_type": "i",
+      "sequence": "realtime.subscription_id_seq",
+      "table": "realtime.subscription"
+    },
+    {
+      "column": "id",
+      "dependency_type": "i",
+      "sequence": "rate_limit_attempts_id_seq",
+      "table": "rate_limit_attempts"
+    }
+  ],
+  "storage_object_counts": [
+    {
+      "bucket_id": "product-images",
+      "objects": 7
+    },
+    {
+      "bucket_id": "payment-qr",
+      "objects": 0
+    }
+  ],
+  "table_permissions": [
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "profiles"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "categories"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "product_components"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "customization_options"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "customers"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_reservations"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "order_items"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "cash_movements"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "cash_registers"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "cash_sessions"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "business_hours"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "audit_logs"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "notifications"
+    },
+    {
+      "anon_delete": false,
+      "anon_insert": false,
+      "anon_select": false,
+      "anon_update": false,
+      "authenticated_select": false,
+      "schema": "public",
+      "table": "audit_trail"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "customization_option_inventory_requirements"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_adjustments"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_entries"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_items"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_lots"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_movements"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "inventory_waste"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "order_deletion_requests"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "order_discounts"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "orders"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "payment_qr_config"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "payments"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "product_images"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "product_inventory_requirements"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "products"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "promotion_products"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "promotions"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "rate_limit_attempts"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "sale_returns"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "seasons"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "system_settings"
+    },
+    {
+      "anon_delete": true,
+      "anon_insert": true,
+      "anon_select": true,
+      "anon_update": true,
+      "authenticated_select": true,
+      "schema": "public",
+      "table": "whatsapp_config"
+    }
+  ],
+  "types": [
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "factor_type",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "factor_status",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "aal_level",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "code_challenge_method",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "one_time_token_type",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "oauth_registration_type",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "oauth_authorization_status",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "oauth_response_type",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "oauth_client_type",
+      "not_null": false,
+      "schema": "auth"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "buckettype",
+      "not_null": false,
+      "schema": "storage"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "action",
+      "not_null": false,
+      "schema": "realtime"
+    },
+    {
+      "base_type": "-",
+      "default": null,
+      "kind": "e",
+      "name": "equality_op",
+      "not_null": false,
+      "schema": "realtime"
+    }
+  ],
+  "vault_secret_count": 0
+}
