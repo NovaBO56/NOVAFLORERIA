@@ -1,5 +1,6 @@
 // Revisión local: reporta solo nombres/tipos, nunca el valor de credenciales.
-const fs=require('node:fs'),cp=require('node:child_process');
+import fs from 'node:fs';
+import cp from 'node:child_process';
 const staged=process.argv.includes('--staged');
 const args=staged?['ls-files','-z']:['ls-files','--cached','--others','--exclude-standard','-z'];
 const files=cp.execFileSync('git',args).toString().split('\0').filter(Boolean);
