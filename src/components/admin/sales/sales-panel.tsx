@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Minus, Plus, Search, TriangleAlert, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -23,12 +23,7 @@ type CartLine = { product: Product; quantity: number };
 
 type SaleResult = { id: string; order_number: number; subtotal: number; discount_total: number; total: number };
 
-/**
- * Ventas físicas — Fase 15 §4.5. Requiere caja abierta (create_physical_sale
- * lo exige también en el servidor). La selección de promoción queda fuera de
- * esta pantalla: solo se ofrece descuento manual, ya que Promociones se
- * construye en un paso posterior.
- */
+/** Ventas físicas: caja abierta, descuento manual o promoción vigente. */
 export function SalesPanel() {
   const [checkingSession, setCheckingSession] = useState(true);
   const [sessionOpen, setSessionOpen] = useState(false);
@@ -101,6 +96,10 @@ function SaleForm() {
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
+  const [promotions, setPromotions] = useState<{id:string;name:string}[]>([]);
+  const [promotionId, setPromotionId] = useState("");
+  const [promotionError, setPromotionError] = useState("");
+  const submitLock = useRef(false);
   const [manualDiscount, setManualDiscount] = useState(false);
   const [discountAmount, setDiscountAmount] = useState("");
   const [discountReason, setDiscountReason] = useState("");
@@ -158,6 +157,14 @@ function SaleForm() {
     };
   }, [customerSearch]);
 
+  useEffect(() => {
+    const controller = new AbortController();
+    fetch("/api/promotions",{signal:controller.signal}).then(async response => {
+      const body=await response.json(); if(!response.ok) throw Error(body.message || "No se pudieron cargar las promociones.");
+      if(!controller.signal.aborted) setPromotions(body.promotions || []);
+    }).catch(cause=>{if(!controller.signal.aborted) setPromotionError(cause instanceof Error ? cause.message : "No se pudieron cargar las promociones.");});
+    return ()=>controller.abort();
+  },[]);
   function addProduct(product: Product) {
     if (!product.is_active || !product.is_available || product.is_sold_out) return;
     setCart((current) => {
@@ -191,6 +198,7 @@ function SaleForm() {
     setCustomer(null);
     setCustomerSearch("");
     setManualDiscount(false);
+    setPromotionId("");
     setDiscountAmount("");
     setDiscountReason("");
     setError("");
@@ -198,6 +206,8 @@ function SaleForm() {
   }
 
   async function submit() {
+    if (submitLock.current) return;
+    submitLock.current = true;
     try {
       setSubmitting(true);
       setError("");
@@ -207,6 +217,7 @@ function SaleForm() {
         body: JSON.stringify({
           items: cart.map((line) => ({ product_id: line.product.id, quantity: line.quantity })),
           customer_id: customer?.id ?? null,
+          promotion_id: promotionId || null,
           manual_discount_amount: manualDiscount ? Number(discountAmount) : null,
           manual_discount_reason: manualDiscount ? discountReason : null,
           payment_method: paymentMethod,
@@ -222,6 +233,7 @@ function SaleForm() {
       setError(err instanceof Error ? err.message : "No se pudo registrar la venta.");
     } finally {
       setSubmitting(false);
+      submitLock.current = false;
     }
   }
 
@@ -235,10 +247,10 @@ function SaleForm() {
     );
   }
 
-  const canSubmit = cart.length > 0 && (!manualDiscount || (discountAmount !== "" && discountReason.trim() !== ""));
+  const canSubmit = cart.length > 0 && (!manualDiscount || (Number(discountAmount) > 0 && discountReason.trim() !== ""));
 
   return (
-    <div className="grid gap-4 lg:grid-cols-[1.4fr_1fr]">
+    <fieldset disabled={submitting} className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
       <div className="flex flex-col gap-3">
         <div className="relative">
           <Search
@@ -356,11 +368,17 @@ function SaleForm() {
             )}
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-border-decorative pt-3">
+          <Field label="Promoción" hint="No se acumula con descuento manual. El servidor valida elegibilidad y total definitivo.">
+            <select value={promotionId} onChange={event=>{setPromotionId(event.target.value);setManualDiscount(false);}} className="h-11 w-full min-w-0 rounded-xl border border-border-field bg-surface px-3 focus-visible:outline-2 focus-visible:outline-brand">
+              <option value="">Sin promoción</option>{promotions.map(promotion=><option key={promotion.id} value={promotion.id}>{promotion.name}</option>)}
+            </select>
+          </Field>
+          {promotionError && <p role="alert" className="text-danger">{promotionError}</p>}          <div className="flex flex-col gap-2 border-t border-border-decorative pt-3">
             <Button
               size="sm"
               variant={manualDiscount ? "secondary" : "outline"}
-              onClick={() => setManualDiscount((current) => !current)}
+              aria-pressed={manualDiscount}
+              onClick={() => { setManualDiscount((current) => !current); setPromotionId(""); }}
             >
               Descuento manual
             </Button>
@@ -390,6 +408,7 @@ function SaleForm() {
               <Button
                 size="sm"
                 variant={paymentMethod === "efectivo" ? "default" : "outline"}
+                aria-pressed={paymentMethod === "efectivo"}
                 onClick={() => setPaymentMethod("efectivo")}
               >
                 Efectivo
@@ -397,6 +416,7 @@ function SaleForm() {
               <Button
                 size="sm"
                 variant={paymentMethod === "qr" ? "default" : "outline"}
+                aria-pressed={paymentMethod === "qr"}
                 onClick={() => setPaymentMethod("qr")}
               >
                 QR
@@ -416,18 +436,18 @@ function SaleForm() {
               </div>
             )}
             <div className="flex justify-between text-base font-semibold text-text">
-              <span>Total</span>
+              <span>{promotionId ? "Total antes de promoción" : "Total"}</span>
               <span className="tabular-nums">{formatMoney(total)}</span>
             </div>
           </div>
 
-          {error && <p className="text-sm text-danger">{error}</p>}
+          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
 
           <Button size="lg" loading={submitting} disabled={!canSubmit} onClick={() => void submit()}>
             Cobrar
           </Button>
         </CardContent>
       </Card>
-    </div>
+    </fieldset>
   );
 }

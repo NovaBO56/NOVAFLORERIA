@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { OrderReturns } from "./order-returns";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Search, TriangleAlert } from "lucide-react";
 import { Badge, type OrderStatus } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -268,7 +269,15 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                   return (
                     <TableRow
                       key={order.id}
-                      className="cursor-pointer"
+                      className="cursor-pointer focus-visible:outline-2 focus-visible:outline-brand"
+                      tabIndex={0}
+                      aria-label={`Ver pedido ${order.order_number}`}
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setSelectedId(order.id);
+                        }
+                      }}
                       onClick={() => setSelectedId(order.id)}
                     >
                       <TableCell className="font-mono">#{order.order_number}</TableCell>
@@ -346,6 +355,7 @@ function OrderDetailModal({
   const [order, setOrder] = useState<OrderDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const actionLock = useRef(false);
   const [busy, setBusy] = useState(false);
   const [actionError, setActionError] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
@@ -388,6 +398,8 @@ function OrderDetailModal({
   }, [orderId]);
 
   async function runAction(url: string, body?: Record<string, unknown>) {
+    if (actionLock.current) return;
+    actionLock.current = true;
     try {
       setBusy(true);
       setActionError("");
@@ -411,6 +423,7 @@ function OrderDetailModal({
       setActionError(err instanceof Error ? err.message : "No se pudo completar la acción.");
     } finally {
       setBusy(false);
+      actionLock.current = false;
     }
   }
 
@@ -422,7 +435,7 @@ function OrderDetailModal({
 
   return (
     <Modal open={Boolean(orderId)} onOpenChange={(open) => !open && onClose()}>
-      <ModalContent className="md:max-w-lg">
+      <ModalContent className="md:max-w-lg" dismissible={!busy} showCloseButton={!busy}>
         <ModalHeader>
           <ModalTitle>{order ? `Pedido #${order.order_number}` : "Pedido"}</ModalTitle>
           <ModalDescription>
@@ -450,7 +463,7 @@ function OrderDetailModal({
               {order.order_items.map((item) => (
                 <div key={item.id} className="flex flex-col gap-1 text-sm">
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-text">
+                    <span className="min-w-0 flex-1 break-words text-text">
                       {item.quantity} × {item.product_name_snapshot}
                     </span>
                     <span className="tabular-nums text-text-secondary">{formatMoney(item.line_total)}</span>
@@ -515,6 +528,7 @@ function OrderDetailModal({
               <p className="text-sm text-text-secondary">Motivo: {order.cancellation_reason}</p>
             )}
 
+            {order.status === "finalizado" && <OrderReturns key={order.id} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
             {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
             {pendingAction ? (
