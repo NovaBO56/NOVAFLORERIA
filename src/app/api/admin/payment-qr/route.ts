@@ -52,7 +52,7 @@ export async function POST(request: Request) {
     if (!extension) return NextResponse.json({ success: false, message: "La imagen está vacía o no coincide con su formato." }, { status: 400 });
     try {
       // Decodificar para rechazar imágenes truncadas, conservando el archivo original.
-      await sharp(Buffer.from(arrayBuffer)).toBuffer();
+      await sharp(Buffer.from(arrayBuffer), { limitInputPixels: 16_000_000, failOn: "warning" }).toBuffer();
     } catch {
       return NextResponse.json({ success: false, message: "La imagen no se puede decodificar." }, { status: 400 });
     }

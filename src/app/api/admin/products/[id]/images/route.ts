@@ -1,7 +1,9 @@
 import { NextResponse } from "next/server";
 import sharp from "sharp";
+import { optimizeProductImage } from "@/lib/product-image-file";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const BUCKET_NAME = "product-images";
 
@@ -10,9 +12,6 @@ const BUCKET_NAME = "product-images";
 const MAX_FILE_SIZE = 5 * 1024 * 1024;
 const MAX_IMAGES_PER_PRODUCT = 10;
 
-const MAX_IMAGE_WIDTH = 1600;
-const MAX_IMAGE_HEIGHT = 1600;
-const WEBP_QUALITY = 82;
 
 const ALLOWED_MIME_TYPES = [
   "image/jpeg",
@@ -266,18 +265,7 @@ export async function POST(
     let processedBuffer: Buffer;
 
     try {
-      processedBuffer = await sharp(inputBuffer)
-        .rotate()
-        .resize({
-          width: MAX_IMAGE_WIDTH,
-          height: MAX_IMAGE_HEIGHT,
-          fit: "inside",
-          withoutEnlargement: true,
-        })
-        .webp({
-          quality: WEBP_QUALITY,
-        })
-        .toBuffer();
+      processedBuffer = await optimizeProductImage(inputBuffer, file.type);
     } catch (error) {
       console.error(
         "Error procesando imagen:",
@@ -371,9 +359,13 @@ export async function POST(
         imageError,
       );
 
-      await supabase.storage
+      // The staff Storage DELETE policy has no SELECT policy: remove() may
+      // silently see zero objects. Compensate with the private server client,
+      // only for the exact random path created by this authorized request.
+      const { error: cleanupError } = await createAdminClient().storage
         .from(BUCKET_NAME)
         .remove([storagePath]);
+      if (cleanupError) console.error("No se pudo compensar el upload de imagen.", { code: cleanupError.name });
 
       return NextResponse.json(
         {

@@ -19,6 +19,7 @@ import {
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { UserRole } from "@/lib/auth/permissions";
 import { formatDateTime, formatMoney } from "@/lib/format";
+import { whatsappLink } from "@/lib/public/format";
 
 type OneOrMany<T> = T | T[] | null;
 
@@ -26,9 +27,10 @@ function first<T>(value: OneOrMany<T>): T | null {
   return Array.isArray(value) ? (value[0] ?? null) : value;
 }
 
-type CustomerRef = { id: string; name: string; phone: string | null; whatsapp: string | null };
+type CustomerRef = { id: string | null; name: string; phone: string | null; whatsapp: string | null };
 
 type OrderRow = {
+  receipt_token: string | null;
   id: string;
   order_number: number;
   order_type: "online" | "fisica";
@@ -75,7 +77,7 @@ type PendingPayment = {
   reference: string | null;
 };
 
-const STATUS_CHIPS: { value: "activos" | "todos" | OrderStatus; label: string }[] = [
+const STATUS_CHIPS: { value: "activos" | "todos" | "expirados" | OrderStatus; label: string }[] = [
   { value: "activos", label: "Activos" },
   { value: "todos", label: "Todos" },
   { value: "pendiente_pago", label: "Pendiente de pago" },
@@ -84,6 +86,7 @@ const STATUS_CHIPS: { value: "activos" | "todos" | OrderStatus; label: string }[
   { value: "listo", label: "Listo" },
   { value: "finalizado", label: "Finalizado" },
   { value: "cancelado", label: "Cancelado" },
+  { value: "expirados", label: "Expirados" },
   { value: "rechazado", label: "Pago rechazado" },
 ];
 
@@ -115,7 +118,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
   const [error, setError] = useState("");
 
   const initialChip = STATUS_CHIPS.find((chip) => chip.value === initialStatus)?.value;
-  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | OrderStatus>(initialChip ?? "activos");
+  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | "expirados" | OrderStatus>(initialChip ?? "activos");
   const [typeFilter, setTypeFilter] = useState<"todos" | "online" | "fisica">("todos");
   const [pendingOnly, setPendingOnly] = useState(Boolean(initialPendingPaymentOnly));
   const [search, setSearch] = useState("");
@@ -167,7 +170,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
 
     return orders.filter((order) => {
       if (statusFilter === "activos" && !ACTIVE_STATUSES.includes(order.status)) return false;
-      if (statusFilter !== "activos" && statusFilter !== "todos" && order.status !== statusFilter) return false;
+      if (statusFilter === "expirados" && !(order.status === "cancelado" && order.cancellation_reason === "Reserva de inventario vencida.")) return false;
+      if (statusFilter !== "activos" && statusFilter !== "todos" && statusFilter !== "expirados" && order.status !== statusFilter) return false;
       if (typeFilter !== "todos" && order.order_type !== typeFilter) return false;
       if (pendingOnly && !pendingPaymentByOrder.has(order.id)) return false;
 
@@ -568,13 +572,19 @@ function OrderDetailModal({
               </div>
             ) : (
               <ModalFooter className="flex-wrap">
-                {order.status === "finalizado" && (
+                {order.receipt_token && (
                   <Button asChild variant="outline">
                     <Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer">
-                      Ver recibo
+                      Ver / descargar recibo
                     </Link>
                   </Button>
                 )}
+                {order.receipt_token && whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null) ? <Button variant="outline" onClick={() => {
+                  const phone = first(order.customer)?.whatsapp || first(order.customer)?.phone || null;
+                  const url = new URL(`/api/orders/receipt/${order.receipt_token}`, window.location.origin).href;
+                  const link = whatsappLink(phone, `Floristería Anabelle · Pago confirmado del pedido #${order.order_number}. Tu recibo: ${url}`);
+                  if (link) window.open(link, "_blank", "noopener,noreferrer");
+                }}>Enviar recibo por WhatsApp</Button> : null}
 
                 {order.status === "cancelado" && (
                   <Button variant="outline" onClick={() => setPendingAction("request-deletion")}>

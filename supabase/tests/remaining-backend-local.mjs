@@ -108,6 +108,9 @@ try {
   await test('invalid hour', '/api/admin/business-hours/0', 'admin', { opens_at: '25:90' }, 400, 'PATCH');
   await test('setting wrong type', '/api/admin/system-settings?key=accept_orders_outside_hours', 'admin', { value: { enabled: 'true' } }, 400, 'PATCH');
   for (let day = 0; day < 7; day++) await test('hours day ' + day, '/api/admin/business-hours/' + day, 'admin', { is_closed: true }, 200, 'PATCH');
+  // Fixture local explícito: cerrar conserva horas anteriores. La prueba de
+  // reapertura sin horas requiere un día sin horas incluso en un segundo run.
+  await sql("UPDATE public.business_hours SET opens_at=NULL, closes_at=NULL WHERE day_of_week=0 AND is_closed=true");
   await test('outside hours off', '/api/admin/system-settings/accept-orders-outside-hours', 'admin', { enabled: false }, 200, 'PATCH');
   const itemResult = await test('inventory item', '/api/admin/inventory/items', 'employee', { name: label, item_type: 'flor' }, 201);
   const item = itemResult.item.id;

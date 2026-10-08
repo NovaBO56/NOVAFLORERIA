@@ -4,6 +4,7 @@ import type {
   PublicPromotion,
   WeekDay,
 } from "./types";
+import { internationalBoliviaPhone } from "./phone";
 
 /* ============================================================
    Funciones puras de formato y reglas de la tienda pública.
@@ -139,7 +140,9 @@ export function dayHoursLabel(day: WeekDay) {
 export function whatsappLink(phone: string | null, message?: string) {
   if (!phone) return null;
 
-  const base = `https://wa.me/${phone}`;
+  const normalized = internationalBoliviaPhone(phone);
+  if (!normalized) return null;
+  const base = `https://wa.me/${normalized}`;
 
   return message ? `${base}?text=${encodeURIComponent(message)}` : base;
 }

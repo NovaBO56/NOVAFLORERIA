@@ -362,7 +362,7 @@ export default function PruebaClientePage() {
                 <span className="h-px w-8 bg-[#9270a4]" />
 
                 <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#735a7d]">
-                  NOVA FLORERÍA
+                  Floristería Anabelle
                 </span>
               </div>
 
@@ -986,7 +986,7 @@ export default function PruebaClientePage() {
         </div>
 
         <div className="mx-auto mt-10 max-w-[1180px] border-t border-white/10 pt-6 text-center text-[11px] text-white/30">
-          © 2026 NOVA FLORERÍA
+          © {new Date().getFullYear()} Floristería Anabelle. Todos los derechos reservados.
         </div>
       </footer>
 

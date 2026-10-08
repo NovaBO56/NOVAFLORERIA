@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { boliviaPhoneSchema } from "@/lib/public/phone";
 
 const orderItemSchema = z.object({
   product_id: z.string().uuid("El producto no es válido."),
@@ -17,7 +18,7 @@ const orderItemSchema = z.object({
 
 export const createOrderSchema = z.object({
   customer_name: z.string().trim().min(1, "El nombre es obligatorio.").max(200),
-  customer_phone: z.string().trim().min(6, "El teléfono no es válido.").max(30),
+  customer_phone: boliviaPhoneSchema,
   customer_whatsapp: z.string().trim().max(30).optional().nullable(),
   items: z.array(orderItemSchema).min(1, "El pedido debe tener al menos un producto."),
   customer_message: z.string().trim().max(1000).optional().nullable(),

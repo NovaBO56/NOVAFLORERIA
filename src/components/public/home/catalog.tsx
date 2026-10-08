@@ -1,6 +1,6 @@
 "use client";
 
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/public/safe-image";
 import { Heart, ShoppingBag } from "lucide-react";
 import { formatMoney, isPurchasable, pickImage } from "@/lib/public/format";
 import type { PublicCategory, PublicProduct } from "@/lib/public/types";
@@ -62,7 +62,7 @@ function ProductCard({
           ) : (
             <span className="flex h-full items-center justify-center">
               <span className={`${script.className} text-5xl text-[#73547f]`}>
-                NOVA
+                Anabelle
               </span>
             </span>
           )}

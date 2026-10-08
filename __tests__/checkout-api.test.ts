@@ -24,12 +24,22 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     const response = await create(request(payload)); expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ message: "Stock insuficiente" });
   });
   it("limita consultas públicas y no consulta datos si supera el límite", async () => {
-    mocks.allowed.mockResolvedValue(false); expect((await track(request({ order_number: 1, customer_phone: "70000000" }))).status).toBe(429); expect(mocks.rpc).not.toHaveBeenCalled();
+    mocks.allowed.mockResolvedValue(false); expect((await track(request({ order_number: 1, customer_phone: "70000000" }))).status).toBe(429); expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.adminFactory).not.toHaveBeenCalled();
   });
   it("consulta el resumen protegido por número y teléfono", async () => {
-    const order = { order_number: 1, status: "confirmado", payment_status: "confirmado" }; mocks.rpc.mockResolvedValue({ data: order, error: null });
+    const order = { order_number: 1, status: "confirmado", payment_status: "confirmado" }; mocks.adminRpc.mockResolvedValue({ data: order, error: null });
     const response = await track(request({ order_number: 1, customer_phone: "70000000" })); expect(await response.json()).toEqual({ success: true, order });
-    expect(mocks.rpc).toHaveBeenCalledWith("track_order_details", { p_order_number: 1, p_order_id: null, p_customer_phone: "70000000" });
+    expect(mocks.adminRpc).toHaveBeenCalledWith("track_order_details", { p_order_number: 1, p_order_id: null, p_customer_phone: "70000000" });
+    expect(mocks.rpc).not.toHaveBeenCalled();
+  });
+  it("invalid tracking input never creates a private client", async () => {
+    expect((await track(request({ customer_phone: "" }))).status).toBe(400);
+    expect(mocks.adminFactory).not.toHaveBeenCalled(); expect(mocks.allowed).not.toHaveBeenCalled();
+  });
+  it("tracking does not expose internal SQL exceptions", async () => {
+    mocks.adminRpc.mockResolvedValue({data:null,error:{code:"P0001",message:"internal detail"}});
+    const response=await track(request({order_number:1,customer_phone:"70000000"}));
+    expect(response.status).toBe(404); expect(JSON.stringify(await response.json())).not.toContain("internal detail");
   });
   it("no registra pago para un teléfono que no coincide", async () => {
     mocks.adminRpc.mockResolvedValue({ error: { code: "P0002" }, data: null });

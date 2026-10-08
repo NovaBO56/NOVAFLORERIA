@@ -207,7 +207,7 @@ describe("Carrito (lógica pura)", () => {
 
     expect(message).toBe(
       [
-        "Hola NOVA Florería, quiero hacer este pedido:",
+        "Hola Floristería Anabelle, quiero hacer este pedido:",
         "",
         "• 2 × Ramo de rosas (Bs 150.00 c/u)",
         "• 1 × Oso (Bs 80.00 c/u)",

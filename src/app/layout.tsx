@@ -15,8 +15,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "NOVA FLORERÍA",
-  description: "Sistema de gestión para NOVA FLORERÍA",
+  title: "Floristería Anabelle",
+  description: "Sistema de gestión para Floristería Anabelle",
 };
 
 export default function RootLayout({

@@ -1,7 +1,8 @@
 "use client";
+import { PublicStoreLocation } from "../store-location";
 
 import { useState } from "react";
-import Image from "next/image";
+import { SafeImage as Image } from "@/components/public/safe-image";
 import {
   ArrowRight,
   ChevronRight,
@@ -78,7 +79,7 @@ export function HeroSection({
               <span className="h-px w-8 bg-[#9270a4]" />
 
               <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#735a7d]">
-                NOVA FLORERÍA
+                Floristería Anabelle
               </span>
             </div>
 
@@ -379,7 +380,7 @@ export function AboutSection() {
             </div>
 
             <p className={`${script.className} mt-5 text-5xl text-[#5d3a69]`}>
-              NOVA
+              Anabelle
             </p>
           </div>
         </div>
@@ -399,7 +400,7 @@ export function AboutSection() {
             </h2>
 
             <p className="mt-6 text-sm leading-7 text-[#6a5e6e]">
-              Cada producto de NOVA busca transmitir una emoción. Cuidamos la
+              Cada producto de Floristería Anabelle busca transmitir una emoción. Cuidamos la
               selección, presentación y cada pequeño detalle para que regalar
               sea una experiencia.
             </p>
@@ -464,6 +465,7 @@ export function ContactSection({
           </a>
         ) : null}
 
+        <PublicStoreLocation />
         {hours ? (
           <p className="mt-5 inline-flex items-center gap-2 text-xs text-[#6a5e6e]">
             <Clock size={14} aria-hidden="true" />
@@ -498,10 +500,10 @@ export function SiteFooter({
     <footer className="bg-[#28202d] px-5 py-12 text-white sm:px-8">
       <div className="mx-auto grid max-w-[1180px] gap-10 sm:grid-cols-2 lg:grid-cols-4">
         <div>
-          <p className={`${script.className} text-[42px] leading-none`}>NOVA</p>
+          <p className={`${script.className} text-[42px] leading-none`}>Anabelle</p>
 
           <p className="mt-1 text-[8px] font-black tracking-[0.32em] text-white/60">
-            FLORERÍA
+            FLORISTERÍA
           </p>
 
           <p className="mt-5 max-w-[260px] text-xs leading-6 text-white/60">
@@ -577,7 +579,7 @@ export function SiteFooter({
       </div>
 
       <div className="mx-auto mt-10 max-w-[1180px] border-t border-white/10 pt-6 text-center text-[11px] text-white/60">
-        © {year} NOVA FLORERÍA
+        © {year} Floristería Anabelle. Todos los derechos reservados.
       </div>
     </footer>
   );

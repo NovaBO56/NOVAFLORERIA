@@ -38,7 +38,7 @@ describe("Fecha comercial y acceso", () => {
 });
 
 describe("Rate limiting con RPC simulado (no demuestra permisos reales)", () => {
-  it("falla cerrado para escrituras y abierto para lecturas", async () => {
+  it("falla cerrado para escrituras y seguimiento; conserva otras lecturas", async () => {
     rpc.mockResolvedValue({ data: null, error: { code: "TEST", message: "offline" } });
     const log = vi.spyOn(console, "error").mockImplementation(() => {});
     try {
@@ -46,7 +46,8 @@ describe("Rate limiting con RPC simulado (no demuestra permisos reales)", () => 
       const request = new Request("http://localhost/api/orders");
       expect(await checkRateLimit(client, request, "createOrder")).toBe(false);
       expect(await checkRateLimit(client, request, "reportPayment")).toBe(false);
-      expect(await checkRateLimit(client, request, "trackOrder")).toBe(true);
+      expect(await checkRateLimit(client, request, "trackOrder")).toBe(false);
+      expect(await checkRateLimit(client, request, "getBusinessHours")).toBe(true);
     } finally { log.mockRestore(); }
   });
 });

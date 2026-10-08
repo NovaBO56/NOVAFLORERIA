@@ -104,7 +104,7 @@ export default function PruebaUiPage() {
 
             <div className="min-w-0">
               <p className="font-display text-[20px] leading-tight font-medium text-text">
-                NOVA FLORERÍA
+                Floristería Anabelle
               </p>
 
               <p className="mt-0.5 text-xs text-text-secondary">
@@ -164,7 +164,7 @@ export default function PruebaUiPage() {
           <Flower2 className="size-5 text-brand" />
 
           <span className="font-display text-lg font-medium">
-            NOVA FLORERÍA
+            Floristería Anabelle
           </span>
         </div>
 
@@ -540,7 +540,7 @@ export default function PruebaUiPage() {
                 <Flower2 className="size-5 text-brand" />
 
                 <span className="font-display text-lg font-medium">
-                  NOVA FLORERÍA
+                  Floristería Anabelle
                 </span>
               </div>
 

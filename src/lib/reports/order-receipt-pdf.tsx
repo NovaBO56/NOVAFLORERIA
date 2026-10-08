@@ -29,6 +29,8 @@ export type OrderReceiptData = {
   order_type: string;
   status: string;
   created_at: string;
+  paid_at?: string;
+  customer_message?: string | null;
   customer_name: string | null;
   customer_phone: string | null;
   items: OrderReceiptItem[];
@@ -43,13 +45,14 @@ export function OrderReceiptDocument({ order }: { order: OrderReceiptData }) {
   return (
     <Document>
       <Page size="A5" style={styles.page}>
-        <Text style={styles.title}>Nova Florería</Text>
-        <Text style={styles.orderNumber}>Comprobante — Pedido #{order.order_number}</Text>
+        <Text style={styles.title}>Floristería Anabelle</Text>
+        <Text style={styles.orderNumber}>Recibo AN-{order.order_number} — Pedido #{order.order_number}</Text>
+        <Text style={styles.sectionTitle}>PAGO CONFIRMADO</Text>
 
         <View style={styles.section}>
           <View style={styles.row}>
             <Text>Fecha</Text>
-            <Text>{new Date(order.created_at).toLocaleString("es-BO")}</Text>
+            <Text>{new Date(order.paid_at || order.created_at).toLocaleString("es-BO", { timeZone: "America/La_Paz" })}</Text>
           </View>
           <View style={styles.row}>
             <Text>Tipo</Text>
@@ -97,7 +100,7 @@ export function OrderReceiptDocument({ order }: { order: OrderReceiptData }) {
             </View>
           )}
           <View style={styles.totalRow}>
-            <Text style={styles.grandTotal}>Total</Text>
+            <Text style={styles.grandTotal}>Total pagado</Text>
             <Text style={styles.grandTotal}>Bs. {order.total.toFixed(2)}</Text>
           </View>
           {order.payment_method && (
@@ -108,7 +111,9 @@ export function OrderReceiptDocument({ order }: { order: OrderReceiptData }) {
           )}
         </View>
 
-        <Text style={styles.footer}>Gracias por su compra — Nova Florería</Text>
+        {order.customer_message ? <View style={styles.section}><Text style={styles.sectionTitle}>Entrega / retiro y observaciones</Text><Text>{order.customer_message}</Text></View> : null}
+
+        <Text style={styles.footer}>Gracias por su compra — Floristería Anabelle</Text>
       </Page>
     </Document>
   );
