@@ -9,7 +9,7 @@ export default function TrackingPage() {
   const [number, setNumber] = useState(""); const [phone, setPhone] = useState("");
   const [order, setOrder] = useState<PublicOrder | null>(null); const [error, setError] = useState(""); const [busy, setBusy] = useState(false);
   const flight = useRef(singleFlight());
-  return <main className="min-h-screen bg-[#faf8fb] px-4 py-8 text-[#403344]"><div className="mx-auto max-w-2xl space-y-6"><Link href="/">← Volver a la tienda</Link><h1 className="text-3xl font-bold">Seguimiento de tu pedido</h1><p>Ingresa el número de pedido y el teléfono usado al comprar.</p><form className="space-y-4 rounded-2xl border bg-white p-5" onSubmit={event => { event.preventDefault(); void flight.current(async () => {
+  return <main className="nova-checkout nova-page min-h-screen bg-[#faf8fb] px-4 py-8 text-[#403344]"><div className="mx-auto max-w-2xl space-y-6"><Link href="/">← Volver a la tienda</Link><h1 className="text-3xl font-bold">Seguimiento de tu pedido</h1><p>Ingresa el número de pedido y el teléfono usado al comprar.</p><form className="space-y-4 rounded-2xl border bg-white p-5" onSubmit={event => { event.preventDefault(); void flight.current(async () => {
     setError(""); setOrder(null); const parsed = trackOrderSchema.safeParse({ order_number: number, customer_phone: phone });
     if (!parsed.success) { setError(parsed.error.issues[0]?.message || "Revisa tus datos."); return; }
     setBusy(true); try { setOrder((await publicRequest<{ order: PublicOrder }>("/api/orders/track", parsed.data)).order); } catch (cause) { setError(cause instanceof Error ? cause.message : "No se pudo consultar el pedido."); } finally { setBusy(false); }

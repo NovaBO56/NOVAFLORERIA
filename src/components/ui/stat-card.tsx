@@ -18,14 +18,14 @@ export function StatCard({
   trend,
 }: StatCardProps) {
   return (
-    <Card className="min-w-0">
+    <Card className="nova-fade min-w-0">
       <CardContent className="flex items-start justify-between gap-4 p-0">
         <div className="min-w-0">
           <p className="text-xs font-medium uppercase tracking-[0.05em] text-text-secondary">
             {label}
           </p>
 
-          <p className="mt-2 truncate text-2xl font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[28px]">
+          <p key={value} className="nova-value mt-2 truncate text-2xl font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[28px]">
             {value}
           </p>
 

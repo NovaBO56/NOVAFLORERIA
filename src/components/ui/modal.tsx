@@ -93,10 +93,10 @@ function ModalContent({
             "motion-reduce:animate-none",
             "data-[state=closed]:animate-out",
             "data-[state=closed]:fade-out-0",
-            "data-[state=closed]:slide-out-to-bottom-8",
+            "data-[state=closed]:slide-out-to-bottom-2",
             "data-[state=open]:animate-in",
             "data-[state=open]:fade-in-0",
-            "data-[state=open]:slide-in-from-bottom-8",
+            "data-[state=open]:slide-in-from-bottom-2",
           ].join(" "),
           [
             "rounded-t-2xl",
@@ -110,8 +110,6 @@ function ModalContent({
             "md:p-6",
             "md:data-[state=closed]:slide-out-to-bottom-0",
             "md:data-[state=open]:slide-in-from-bottom-0",
-            "md:data-[state=closed]:zoom-out-95",
-            "md:data-[state=open]:zoom-in-95",
           ].join(" "),
           isPublic && [
             "md:max-w-xl",

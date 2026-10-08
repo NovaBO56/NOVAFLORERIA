@@ -240,7 +240,7 @@ function SaleForm() {
   if (result) {
     return (
       <Card className="items-center gap-3 text-center">
-        <p className="text-text">Venta #{result.order_number} registrada.</p>
+        <p role="status" className="nova-enter text-text">Venta #{result.order_number} registrada.</p>
         <p className="text-2xl font-semibold tabular-nums text-text">{formatMoney(result.total)}</p>
         <Button onClick={resetForm}>Nueva venta</Button>
       </Card>

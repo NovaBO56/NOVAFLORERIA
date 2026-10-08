@@ -41,7 +41,7 @@ function ProductCard({
   const purchasable = isPurchasable(product);
 
   return (
-    <article className="group min-w-0">
+    <article className="nova-product-card group min-w-0">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#eee5f0]">
         <button
           type="button"
@@ -55,7 +55,7 @@ function ProductCard({
               alt={image.alt_text ?? product.name}
               fill
               sizes="(min-width: 1024px) 280px, (min-width: 768px) 33vw, 50vw"
-              className={`object-cover transition duration-500 group-hover:scale-105 ${
+              className={`object-cover motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.02] ${
                 purchasable ? "" : "opacity-60"
               }`}
             />

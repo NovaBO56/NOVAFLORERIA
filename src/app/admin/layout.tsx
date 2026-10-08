@@ -3,6 +3,7 @@ import { AccountDisabled } from "@/components/admin/layout/account-disabled";
 import { AdminHeader } from "@/components/admin/layout/admin-header";
 import { AdminSidebar } from "@/components/admin/layout/admin-sidebar";
 import { SessionGuard } from "@/components/admin/layout/session-guard";
+import { PageMotion } from "@/components/admin/layout/page-motion";
 import { getNavSectionsForRole } from "@/config/admin-navigation";
 import {
   canUseEmployeeFunctions,
@@ -57,7 +58,7 @@ export default async function AdminLayout({
 
         {/* Es un <div> y no <main>: las páginas existentes ya traen su propio <main>. */}
         <div id="contenido" className="flex-1 px-4 py-6 md:px-6 lg:px-8">
-          {children}
+          <PageMotion>{children}</PageMotion>
         </div>
       </div>
     </div>

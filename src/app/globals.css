@@ -416,7 +416,66 @@
    MOTION — SUTIL Y ACCESIBLE
    ========================================================= */
 
+@keyframes nova-fade {
+  from { opacity: .35; }
+  to { opacity: 1; }
+}
+@keyframes nova-enter {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes nova-value {
+  from { opacity: .5; transform: translateY(2px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Discrete display transitions enhance native hidden/details without timers.
+   Older browsers retain immediate, fully functional opening and closing. */
+.nova-cart-overlay {
+  opacity: 1;
+  transition: opacity 200ms ease-out, display 200ms allow-discrete;
+}
+.nova-cart-overlay[hidden] { display: none; opacity: 0; pointer-events: none; }
+.nova-cart-panel { transform: translateX(0); transition: transform 200ms ease-out; }
+.nova-cart-overlay[hidden] .nova-cart-panel { transform: translateX(8px); }
+@starting-style {
+  .nova-cart-overlay:not([hidden]) { opacity: 0; }
+  .nova-cart-overlay:not([hidden]) .nova-cart-panel { transform: translateX(8px); }
+}
+
 @media (prefers-reduced-motion: no-preference) {
+  .nova-page { animation: nova-fade 220ms ease-out; }
+  .nova-enter { animation: nova-enter 200ms ease-out; }
+  .nova-value { animation: nova-value 160ms ease-out; }
+  .nova-fade,
+  .theme-admin details[open] > pre,
+  .theme-admin tbody tr,
+  .theme-admin [role="alert"],
+  .theme-admin [role="status"],
+  .nova-checkout [role="alert"],
+  .nova-checkout [role="status"],
+  .nova-checkout > div > section,
+  .nova-checkout form > section,
+  .nova-checkout form > fieldset,
+  .nova-notifications[open] > div {
+    animation: nova-fade 180ms ease-out;
+  }
+  .nova-product-card { animation: nova-enter 220ms ease-out; }
+  .nova-product-card > div { transition: transform 160ms ease-out; }
+  .nova-option { transition: background-color 140ms ease-out, border-color 140ms ease-out; }
+  .nova-option:has(input:checked) { background-color: #f5eff7; }
+  .nova-notification { transition: opacity 160ms ease-out, transform 160ms ease-out; }
+  .nova-notification[aria-busy="true"] { opacity: .5; transform: translateX(2px); }
+  .nova-checkout button,
+  .nova-checkout a {
+    transition: opacity 140ms ease-out, transform 140ms ease-out, background-color 140ms ease-out;
+  }
+  .nova-checkout button:active:not(:disabled),
+  .nova-storefront button:active:not(:disabled),
+  .theme-public button:active:not(:disabled) { transform: scale(.98); }
+  @media (hover: hover) and (pointer: fine) {
+    .nova-product-card:hover > div { transform: translateY(-2px); }
+  }
   .theme-admin a,
   .theme-admin button,
   .theme-admin input,
@@ -440,5 +499,15 @@
       box-shadow 160ms ease,
       transform 160ms ease,
       opacity 160ms ease;
+  }
+}
+
+/* Includes existing Radix/Tailwind motion and loading indicators. Never reset
+   transforms globally: dialogs use them for positioning, not only animation. */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
   }
 }

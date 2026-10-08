@@ -98,7 +98,7 @@ export function HeroSection({
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#catalogo"
-                className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#65358e] px-6 text-sm font-black text-white shadow-[0_8px_20px_rgba(101,53,142,.18)] transition hover:-translate-y-0.5 hover:bg-[#572d7a]"
+                className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#65358e] px-6 text-sm font-black text-white shadow-[0_8px_20px_rgba(101,53,142,.18)] transition motion-safe:hover:-translate-y-0.5 hover:bg-[#572d7a]"
               >
                 Explorar catálogo
                 <ArrowRight size={16} />

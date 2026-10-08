@@ -27,7 +27,7 @@ function Card({ className, interactive = false, ...props }: CardProps) {
           "p-5",
           "text-text",
           "shadow-card",
-          "transition-all duration-200 ease-out",
+          "transition-[transform,box-shadow,border-color] duration-150 ease-out",
           "in-[.theme-public]:gap-6",
           "in-[.theme-public]:rounded-2xl",
           "in-[.theme-public]:p-6",
@@ -35,9 +35,9 @@ function Card({ className, interactive = false, ...props }: CardProps) {
         interactive &&
           [
             "cursor-pointer",
-            "hover:-translate-y-0.5",
+            "motion-safe:hover:-translate-y-0.5",
             "hover:shadow-card-hover",
-            "active:translate-y-0",
+            "motion-safe:active:translate-y-0",
           ].join(" "),
         className,
       )}

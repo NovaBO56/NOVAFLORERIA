@@ -26,6 +26,18 @@ El inventario inicial de pendientes quedó preservado en el commit `3593596`; se
 
 Los datos de prueba permanecen exclusivamente en `NOVA-LOCAL-VALIDATION`, con manifiestos y rollback privados. Esta certificación local no sustituye revisar los datos, el despliegue/proxy, los respaldos ni el historial de producción antes de autorizar una reconciliación separada.
 
+## Microinteracciones — 8 de octubre de 2026
+
+La interfaz conserva su diseño y usa CSS y `tw-animate-css` existente, sin dependencias nuevas. Entradas de página/cards: 200–220 ms; cifras: 160 ms; mensajes, filas y estados: 180 ms; carrito y diálogos: 200 ms. Las imágenes del catálogo usan zoom recortado del 2%; paneles y elementos se desplazan como máximo 8 px. No se añadieron temporizadores, listeners, contadores animados ni efectos decorativos continuos.
+
+Público: entrada del catálogo/detalle, selección de opciones, feedback de botones, cifras de cantidad/subtotal, apertura/cierre del carrito, bloques de checkout, resumen/QR y estado de seguimiento. Admin: entrada común por ruta, tablas al montar filas, badges de estado, métricas, botones/campos, modales, menú lateral, mensajes y bandeja de notificaciones. Los filtros no reinician la página completa. Eliminar una línea del carrito sigue siendo inmediato; las notificaciones se atenúan durante la petición y se retiran únicamente al confirmar el servidor, sin retrasos artificiales.
+
+`prefers-reduced-motion: reduce` desactiva animaciones y transiciones globalmente, incluidos pseudo-elementos y desplazamiento suave, sin borrar los transforms usados para centrar diálogos. La regla se revisó en código; no se emuló la preferencia del sistema en el navegador. Las entradas animan transform/opacity; colores/bordes mantienen transiciones breves de controles. No se animan width/height/top/left. El cierre CSS del carrito usa mejora progresiva `allow-discrete`: navegadores sin soporte conservan cierre inmediato.
+
+Verificación real sobre el build local: catálogo, agregar al carrito, cantidad/subtotal, Escape y restitución de foco del carrito, reapertura, checkout hasta resumen conservando campos (sin crear otro pedido), seguimiento gratuito #54, tabla de clientes, apertura/cierre de modal, navegación por menú, dashboard y bandeja de avisos. Escritorio observado a 870 px CSS, sin overflow horizontal en las superficies medidas. Se conservan las limitaciones de viewport descritas abajo: 390/768 px revisados por CSS/layout, pendientes de validación visual completa. Se observó una miniatura sintética del laboratorio sin cargar; no se alteraron Storage ni URLs de imágenes en esta tarea.
+
+Calidad: 301 tests, lint 0 errores/0 warnings, TypeScript y build correctos. No se modificaron SQL, APIs ni contratos del backend. No se realizó un benchmark de rendimiento ni una nueva certificación integral del backend.
+
 ## Revisión de la aplicación visible — 8 de octubre de 2026
 
 Revisión realizada en `revision/backend-certificado`, con Next.js en modo producción local y Supabase en `http://127.0.0.1:55421`. Solo se modificaron componentes de interfaz y documentación; APIs, contratos, tests funcionales, cinco migraciones, seed y 39 migraciones históricas permanecen sin cambios. Las etiquetas `TEST UI` provienen de registros sintéticos del laboratorio, nunca de datos hardcodeados en la interfaz.

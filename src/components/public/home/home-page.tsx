@@ -403,7 +403,7 @@ export default function HomePage({ year }: { year: number }) {
   ];
 
   return (
-    <main className={`${lato.className} min-h-screen bg-[#faf8fb] text-[#28202d]`}>
+    <main className={`${lato.className} nova-page nova-storefront min-h-screen bg-[#faf8fb] text-[#28202d]`}>
       <SiteHeader
         navItems={navItems}
         cartCount={cart.count}

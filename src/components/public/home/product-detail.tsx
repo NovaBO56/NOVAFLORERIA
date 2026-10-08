@@ -89,7 +89,7 @@ export function ProductDetailSection({
   return (
     <section
       id="detalle"
-      className="scroll-mt-20 border-y border-[#e8e0ea] bg-white px-5 py-16 sm:px-8 sm:py-20"
+      className="nova-enter scroll-mt-20 border-y border-[#e8e0ea] bg-white px-5 py-16 sm:px-8 sm:py-20"
     >
       <div className="mx-auto max-w-[1180px]">
         <div className="mb-8">
@@ -140,11 +140,12 @@ export function ProductDetailSection({
             <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#ead9df]">
               {current ? (
                 <Image
+                  key={current.id}
                   src={current.public_url}
                   alt={current.alt_text ?? product.name}
                   fill
                   sizes="(min-width: 1024px) 560px, 100vw"
-                  className="object-cover"
+                  className="nova-fade object-cover"
                 />
               ) : (
                 <div className="flex h-full items-center justify-center">
@@ -171,7 +172,7 @@ export function ProductDetailSection({
               {product.name}
             </h3>
 
-            <p className="mt-5 text-2xl font-black text-[#65358e]">
+            <p key={product.price} className="nova-value mt-5 text-2xl font-black text-[#65358e]">
               {formatMoney(product.price)}
             </p>
 
@@ -210,7 +211,8 @@ export function ProductDetailSection({
                 </button>
 
                 <span
-                  className="flex size-11 items-center justify-center border-x border-[#ded2e2] text-sm font-black"
+                  key={quantity}
+                  className="nova-value flex size-11 items-center justify-center border-x border-[#ded2e2] text-sm font-black"
                   aria-live="polite"
                 >
                   {quantity}
@@ -231,7 +233,7 @@ export function ProductDetailSection({
             </div>
 
             <div className="mt-5 space-y-3">
-              {full?.customization_options?.map(option => <label key={option.id} className="flex items-center gap-3 text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
+              {full?.customization_options?.map(option => <label key={option.id} className="nova-option flex items-center gap-3 rounded-lg text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
               <label className="block text-sm">Mensaje para la tarjeta<textarea maxLength={500} value={message} onChange={event => setMessage(event.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">

@@ -25,7 +25,7 @@ const controlBase = [
   "bg-surface",
   "text-base text-text",
   "outline-none",
-  "transition-all duration-200 ease-out",
+  "transition-[color,background-color,border-color,box-shadow,opacity] duration-150 ease-out",
   "placeholder:text-text-secondary/70",
   "focus-visible:border-brand",
   "focus-visible:outline-2",

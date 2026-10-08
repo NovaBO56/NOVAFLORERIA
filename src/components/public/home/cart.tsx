@@ -169,8 +169,6 @@ export function CartDrawer({
     if (open) void refreshCartItems();
   }, [open]);
 
-  if (!open) return null;
-
   const canContinue =
     cart.items.length > 0 && !cart.hasUnavailable && acceptingOrders;
 
@@ -181,7 +179,10 @@ export function CartDrawer({
 
   return (
     <div
-      className="fixed inset-0 z-[110] bg-[#28202d]/40 backdrop-blur-[2px]"
+      hidden={!open}
+      inert={!open}
+      aria-hidden={!open}
+      className="nova-cart-overlay fixed inset-0 z-[110] overflow-hidden bg-[#28202d]/40 backdrop-blur-[2px]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -191,7 +192,7 @@ export function CartDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        className="absolute right-0 top-0 flex h-full w-full max-w-[430px] flex-col bg-white shadow-2xl"
+        className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[430px] flex-col bg-white shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-[#e7dfe9] px-6 py-5">
           <div>
@@ -249,7 +250,7 @@ export function CartDrawer({
             cart.items.map((item) => (
               <div
                 key={item.id}
-                className="border-b border-[#eee7f0] py-5 first:pt-0"
+                className="nova-enter border-b border-[#eee7f0] py-5 first:pt-0"
               >
                 <div className="flex gap-4">
                   <div className="relative flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eee5f0]">
@@ -299,7 +300,7 @@ export function CartDrawer({
                           −
                         </button>
 
-                        <span className="flex size-9 items-center justify-center border-x border-[#ded2e2] text-xs font-black">
+                        <span key={item.quantity} className="nova-value flex size-9 items-center justify-center border-x border-[#ded2e2] text-xs font-black">
                           {item.quantity}
                         </span>
 
@@ -332,12 +333,12 @@ export function CartDrawer({
         <div className="border-t border-[#e7dfe9] px-6 py-6">
           <div className="flex items-center justify-between text-sm text-[#706474]">
             <span>Subtotal</span>
-            <span>{formatMoney(cart.total)}</span>
+            <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>
           </div>
 
           <div className="mt-2 flex items-center justify-between text-lg font-black text-[#403344]">
             <span>Total</span>
-            <span>{formatMoney(cart.total)}</span>
+            <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>
           </div>
 
           {!acceptingOrders && closedNotice ? (

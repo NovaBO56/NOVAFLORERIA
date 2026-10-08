@@ -119,11 +119,13 @@ function Badge({
 
     return (
       <span
+        key={status}
         data-slot="badge"
         data-status={status}
         className={cn(
           badgeVariants({ variant: null }),
           statusClass,
+          "nova-fade",
           className,
         )}
         {...props}
