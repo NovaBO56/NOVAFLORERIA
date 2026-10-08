@@ -15,12 +15,12 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     expect((await create(request({ ...payload, items: [] }))).status).toBe(400); expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it("pasa la clave de idempotencia y retorna el UUID real", async () => {
-    mocks.rpc.mockResolvedValue({ data: id, error: null });
+    mocks.adminRpc.mockResolvedValue({ data: id, error: null });
     const response = await create(request(payload)); expect(response.status).toBe(201); expect(await response.json()).toEqual({ success: true, order_id: id });
-    expect(mocks.rpc).toHaveBeenCalledWith("create_order", expect.objectContaining({ p_idempotency_key: "same-key", p_customer_phone: "70000000", p_items: [{ product_id: id, quantity: 1, customization_option_ids: [] }] }));
+    expect(mocks.adminRpc).toHaveBeenCalledWith("create_order", expect.objectContaining({ p_idempotency_key: "same-key", p_customer_phone: "70000000", p_items: [{ product_id: id, quantity: 1, customization_option_ids: [] }] }));
   });
   it("devuelve un error de stock comprensible", async () => {
-    mocks.rpc.mockResolvedValue({ error: { code: "P0001", message: "Stock insuficiente" }, data: null });
+    mocks.adminRpc.mockResolvedValue({ error: { code: "P0001", message: "Stock insuficiente" }, data: null });
     const response = await create(request(payload)); expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ message: "Stock insuficiente" });
   });
   it("limita consultas públicas y no consulta datos si supera el límite", async () => {

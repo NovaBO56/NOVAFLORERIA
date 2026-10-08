@@ -26,6 +26,13 @@ export async function PATCH(request: Request, context: RouteContext) {
     }
 
     const supabase = await createClient();
+    const { data: existing, error: readError } = await supabase.from("business_hours").select("opens_at, closes_at, is_closed").eq("day_of_week", day).maybeSingle();
+    if (readError) return NextResponse.json({ success: false, message: "No se pudo leer el horario." }, { status: 500 });
+    if (!existing) return NextResponse.json({ success: false, message: "Día no encontrado." }, { status: 404 });
+    const merged = { ...existing, ...result.data };
+    if (!merged.is_closed && (!merged.opens_at || !merged.closes_at || merged.opens_at >= merged.closes_at)) {
+      return NextResponse.json({ success: false, message: "Define una apertura anterior al cierre para abrir el día." }, { status: 400 });
+    }
     const { data, error } = await supabase
       .from("business_hours")
       .update({ ...result.data, updated_by: profile.id, updated_at: new Date().toISOString() })

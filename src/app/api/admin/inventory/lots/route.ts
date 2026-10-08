@@ -3,8 +3,8 @@ import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { listLotsQuerySchema } from "@/validations/inventory-queries";
 
-const LOT_SELECT = "id, inventory_entry_id, inventory_item_id, initial_quantity, remaining_quantity, received_at, created_at, inventory_item:inventory_items(name, unit, item_type), entry:inventory_entries(supplier_name)";
-// Solo lectura: los lotes nacen automáticamente de una entrada (trigger), nunca se crean a mano.
+const LOT_SELECT = "id, inventory_entry_id, inventory_adjustment_id, inventory_item_id, initial_quantity, remaining_quantity, received_at, created_at, inventory_item:inventory_items(name, unit, item_type), entry:inventory_entries(supplier_name)";
+// Solo lectura: lotes de entrada o ajuste positivo, siempre creados por trigger.
 export async function GET(request: Request) {
   try {
     await requireEmployeeOrAdmin();

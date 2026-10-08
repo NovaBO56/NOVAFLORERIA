@@ -71,7 +71,8 @@ type InventoryItem = {
 
 type Lot = {
   id: string;
-  inventory_entry_id: string;
+  inventory_entry_id: string | null;
+  inventory_adjustment_id: string | null;
   inventory_item_id: string;
   initial_quantity: number;
   remaining_quantity: number;

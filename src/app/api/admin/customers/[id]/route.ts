@@ -77,6 +77,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (error) {
+      if (error.code === "23505") return NextResponse.json({ success: false, message: "Ya existe un cliente con ese teléfono." }, { status: 409 });
       console.error("Error actualizando cliente:", error);
       return NextResponse.json({ success: false, message: "No se pudo actualizar el cliente." }, { status: 500 });
     }

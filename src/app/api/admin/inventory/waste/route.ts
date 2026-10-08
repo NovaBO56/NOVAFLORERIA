@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createInventoryWasteSchema } from "@/validations/inventory";
-import { attachUserNames } from "@/lib/inventory/user-names";
 
 const WASTE_SELECT = "id, inventory_item_id, lot_id, quantity, reason, created_by, created_at";
 

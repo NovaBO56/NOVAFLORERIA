@@ -40,8 +40,8 @@ export async function GET(request: Request) {
     const { data: waste, error } = await supabase
       .from("inventory_waste")
       .select("quantity, reason, created_at, inventory_item:inventory_items(name, unit)")
-      .gte("created_at", `${from}T00:00:00`)
-      .lte("created_at", `${to}T23:59:59`)
+      .gte("created_at", `${from}T00:00:00-04:00`)
+      .lte("created_at", `${to}T23:59:59.999999-04:00`)
       .order("created_at", { ascending: false });
 
     if (error) {

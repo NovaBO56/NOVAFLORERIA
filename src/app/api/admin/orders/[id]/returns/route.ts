@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
+import { requireEmployeeOrAdmin, requireAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createSaleReturnSchema } from "@/validations/sale-returns";
 
@@ -31,7 +31,7 @@ export async function GET(_request: Request, context: RouteContext) {
 
 export async function POST(request: Request, context: RouteContext) {
   try {
-    await requireEmployeeOrAdmin();
+    await requireAdmin();
     const { id } = await context.params;
 
     const body = await request.json();

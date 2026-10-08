@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 
+import { businessDate, businessDayStart } from "@/lib/business-date";
+
 const ACTIVE_STATUSES = ["confirmado", "en_preparacion", "listo", "finalizado"];
 
 export async function GET() {
@@ -9,8 +11,7 @@ export async function GET() {
     await requireEmployeeOrAdmin();
     const supabase = await createClient();
 
-    const todayStart = new Date();
-    todayStart.setHours(0, 0, 0, 0);
+    const todayStart = businessDayStart();
 
     // 1. Ventas de hoy
     const { data: todayOrders, error: todayOrdersError } = await supabase
@@ -99,12 +100,12 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
     }
 
-    const today = new Date();
+    const today = businessDate();
     const cumpleanos_hoy = (customersWithBirthday ?? [])
       .filter((c) => {
         if (!c.birthday) return false;
         const b = new Date(c.birthday);
-        return b.getUTCMonth() === today.getUTCMonth() && b.getUTCDate() === today.getUTCDate();
+        return b.toISOString().slice(5, 10) === today.slice(5, 10);
       })
       .map((c) => ({ name: c.name, birthday: c.birthday }));
 

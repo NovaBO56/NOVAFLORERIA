@@ -34,8 +34,8 @@ export async function GET(request: Request) {
       .from("orders")
       .select("order_number, order_type, total, cancellation_reason, cancelled_at")
       .eq("status", "cancelado")
-      .gte("cancelled_at", `${from}T00:00:00`)
-      .lte("cancelled_at", `${to}T23:59:59`)
+      .gte("cancelled_at", `${from}T00:00:00-04:00`)
+      .lte("cancelled_at", `${to}T23:59:59.999999-04:00`)
       .order("cancelled_at", { ascending: false });
 
     if (error) {

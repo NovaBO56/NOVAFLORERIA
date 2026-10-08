@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import type { SupabaseClient } from "@supabase/supabase-js";
 
 /**
@@ -45,21 +46,18 @@ export function getClientIp(request: Request): string {
  * Llama a la función atómica check_rate_limit() de Supabase para la
  * ruta indicada. Devuelve true si el intento está permitido.
  *
- * Si la llamada al RPC falla (error de red, Supabase caído, etc.),
- * se falla "abierto" (permite el intento) en vez de "cerrado":
- * un problema de infraestructura de rate limiting no debe tumbar
- * el checkout ni las rutas públicas de solo lectura. Queda logueado
- * para poder detectarlo.
+ * El servidor usa su cliente privado: el RPC no es accesible públicamente.
+ * Escrituras fallan cerradas; lecturas pueden continuar si el limitador falla.
  */
 export async function checkRateLimit(
-  supabase: SupabaseClient,
+  _supabase: SupabaseClient,
   request: Request,
   route: RateLimitedRoute,
 ): Promise<boolean> {
   const { maxAttempts, windowSeconds } = RATE_LIMITS[route];
   const ip = getClientIp(request);
 
-  const { data, error } = await supabase.rpc("check_rate_limit", {
+  const { data, error } = await createAdminClient().rpc("check_rate_limit", {
     p_ip: ip,
     p_route: route,
     p_max_attempts: maxAttempts,
@@ -68,7 +66,7 @@ export async function checkRateLimit(
 
   if (error) {
     console.error(`Error verificando rate limit para "${route}":`, error);
-    return true;
+    return route !== "createOrder" && route !== "reportPayment";
   }
 
   return data === true;

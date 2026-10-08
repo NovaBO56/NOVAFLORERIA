@@ -12,7 +12,7 @@ const createUserSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    await requireAdmin();
+    const actor = await requireAdmin();
 
     const body = await request.json();
     const result = createUserSchema.safeParse(body);
@@ -51,15 +51,9 @@ export async function POST(request: Request) {
       );
     }
 
-    const { error: profileError } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        full_name,
-        role,
-        is_active: true,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", data.user.id);
+    const { error: profileError } = await supabaseAdmin.rpc("update_staff_profile", {
+      p_actor: actor.id, p_user: data.user.id, p_name: full_name, p_role: role, p_active: true,
+    });
 
     if (profileError) {
       console.error("Error configurando perfil:", profileError);

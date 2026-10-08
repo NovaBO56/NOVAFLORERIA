@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrderSchema } from "@/validations/orders";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
@@ -36,7 +37,7 @@ export async function POST(request: Request) {
       promotion_id,
     } = result.data;
 
-    const { data: orderId, error } = await supabase.rpc("create_order", {
+    const { data: orderId, error } = await createAdminClient().rpc("create_order", {
       p_customer_name: customer_name,
       p_customer_phone: customer_phone,
       p_customer_whatsapp: customer_whatsapp || null,

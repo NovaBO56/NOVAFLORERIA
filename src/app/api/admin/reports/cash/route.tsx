@@ -33,8 +33,8 @@ export async function GET(request: Request) {
     const { data: sessions, error } = await supabase
       .from("cash_sessions")
       .select("opened_at, closed_at, opening_amount, expected_amount, counted_amount, difference_amount, status")
-      .gte("opened_at", `${from}T00:00:00`)
-      .lte("opened_at", `${to}T23:59:59`)
+      .gte("opened_at", `${from}T00:00:00-04:00`)
+      .lte("opened_at", `${to}T23:59:59.999999-04:00`)
       .order("opened_at", { ascending: true });
 
     if (error) {

@@ -18,7 +18,7 @@ export async function PATCH(
   context: RouteContext,
 ) {
   try {
-    await requireAdmin();
+    const actor = await requireAdmin();
 
     const { id } = await context.params;
 
@@ -37,16 +37,11 @@ export async function PATCH(
 
     const supabaseAdmin = createAdminClient();
 
-    const { data, error } = await supabaseAdmin
-      .from("profiles")
-      .update({
-        role: result.data.role,
-        updated_at: new Date().toISOString(),
-      })
-      .eq("id", id)
-      .select("id, full_name, role, is_active, updated_at")
-      .single();
+    const { data, error } = await supabaseAdmin.rpc("update_staff_profile", {
+      p_actor: actor.id, p_user: id, p_role: result.data.role,
+    });
 
+    if (error?.code === "P0001") return NextResponse.json({ success: false, message: error.message }, { status: 400 });
     if (error || !data) {
       console.error("Error actualizando rol del usuario:", error);
 

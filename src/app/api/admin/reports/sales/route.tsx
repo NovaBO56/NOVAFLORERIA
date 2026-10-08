@@ -51,8 +51,8 @@ export async function GET(request: Request) {
       .select(
         "order_number, order_type, status, total, created_at, customer:customers(name), payments(method, status)",
       )
-      .gte("created_at", `${from}T00:00:00`)
-      .lte("created_at", `${to}T23:59:59`)
+      .gte("created_at", `${from}T00:00:00-04:00`)
+      .lte("created_at", `${to}T23:59:59.999999-04:00`)
       .in("status", ACTIVE_STATUSES)
       .order("created_at", { ascending: true });
 

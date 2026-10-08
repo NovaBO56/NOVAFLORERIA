@@ -2,6 +2,7 @@
 "use client";
 
 import { FormEvent, Suspense, useState } from "react";
+import { loginDestination } from "@/lib/auth/login-destination";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -39,10 +40,7 @@ function LoginForm() {
     const redirect = searchParams.get("redirect");
 
     // Solo permitimos redirecciones internas.
-    const destination =
-      redirect && redirect.startsWith("/")
-        ? redirect
-        : "/admin";
+    const destination = loginDestination(redirect);
 
     router.replace(destination);
     router.refresh();

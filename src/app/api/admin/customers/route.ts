@@ -91,6 +91,7 @@ export async function POST(request: Request) {
       .single();
 
     if (error) {
+      if (error.code === "23505") return NextResponse.json({ success: false, message: "Ya existe un cliente con ese teléfono." }, { status: 409 });
       console.error("Error creando cliente:", error);
 
       return NextResponse.json(
