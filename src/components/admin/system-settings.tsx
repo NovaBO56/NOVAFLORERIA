@@ -134,14 +134,14 @@ export default function SystemSettings() {
           <p className="text-text-secondary">No hay configuraciones registradas.</p>
         </Card>
       ) : (
-        settings.map((setting) => (
+        settings.filter(setting => setting.key !== "store_location").map((setting) => (
           <Card
             key={setting.key}
             className="flex-col gap-4 md:flex-row md:items-center md:justify-between"
           >
-            <div>
+            <div className="min-w-0 break-words">
               <p className="font-semibold text-text">{setting.key === "accept_orders_outside_hours" ? "Aceptar pedidos fuera de horario" : setting.key}</p>
-              <p className="text-text-secondary">
+              <p className="break-all text-text-secondary">
                 Estado:{" "}
                 {setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Pedidos permitidos fuera de horario" : "Solo dentro del horario de atención") : typeof setting.value === "string"
                   ? setting.value

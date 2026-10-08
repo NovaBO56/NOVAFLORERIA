@@ -15,7 +15,7 @@ describe("Primera ronda de producción: reglas reales", () => {
   });
   it("prepara aviso manual con pedido, cliente, importe y entrega",()=>{
     const message=paymentNotice({id:"test",order_number:12,status:"pendiente_pago",subtotal:10,discount_total:0,total:10,customer_message:"Método: Retiro en tienda",created_at:"",reserved_until:null,payment_status:"pendiente",items:[{product_name:"Ramo",quantity:1,unit_price:10,line_total:10,message:"Tarjeta TEST",note:null,personalization:null}]},"TEST cliente","70011223");
-    expect(message).toContain("Pedido #12");expect(message).toContain("59170011223");expect(message).toContain("Tarjeta TEST");expect(message).toContain("Retiro en tienda");expect(message).toContain("pendiente de revisión");
+    expect(message).toContain("Pedido #12");expect(message).toContain("59170011223");expect(message).toContain("Tarjeta TEST");expect(message).toContain("Retiro en tienda");expect(message).toContain("pendiente de revisión");expect(message).not.toContain("/admin/");
   });
   it.each(["1234567","123456789","abc12345","+59170011223"])("rechaza celular nuevo %s", value => { expect(boliviaPhoneSchema.safeParse(value).success).toBe(false); });
   it("acepta 8 dígitos y normaliza separadores",()=>{expect(boliviaPhoneSchema.parse("7001-1223")).toBe("70011223");expect(phoneInput("70 01-1223")).toBe("70011223");});
