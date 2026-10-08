@@ -28,6 +28,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .select(PRODUCT_DETAIL_SELECT)
       .eq("id", id)
       .eq("is_active", true)
+      .eq("customization_options.is_active", true)
       // Sin esto, product_images vuelve en orden arbitrario y la "imagen
       // principal" (sort_order = 0) no queda necesariamente primera.
       .order("sort_order", { foreignTable: "product_images", ascending: true })

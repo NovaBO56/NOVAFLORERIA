@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { ArrowRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import {
   addItem,
@@ -21,7 +22,7 @@ import {
   whatsappLink,
 } from "@/lib/public/format";
 import { createLocalStore } from "@/lib/public/local-store";
-import type { ProductDetail, PublicProduct } from "@/lib/public/types";
+import type { CustomizationOption, ProductDetail, PublicProduct } from "@/lib/public/types";
 import { script, useDialog } from "./shared";
 
 /* ============================================================
@@ -50,14 +51,15 @@ export function useCart() {
   );
 }
 
-export function addToCart(product: PublicProduct, quantity = 1) {
+export function clearCart() { cartStore.update(() => []); }
+export function addToCart(product: PublicProduct, quantity = 1, options: CustomizationOption[] = [], message = "") {
   cartStore.update((items) =>
     addItem(
       items,
       {
         id: product.id,
         name: product.name,
-        price: product.price,
+        price: Number(product.price) + options.reduce((sum, o) => sum + Number(o.extra_price), 0), options, message,
         image: pickImage(product)?.public_url ?? null,
       },
       quantity,
@@ -79,7 +81,7 @@ function removeFromCart(id: string) {
  * recalcula siempre el precio real al crear el pedido; esto evita
  * mostrar datos viejos al cliente.)
  */
-async function refreshCartItems() {
+export async function refreshCartItems() {
   const current = cartStore.get();
 
   if (current.length === 0) return;
@@ -87,7 +89,7 @@ async function refreshCartItems() {
   const results = await Promise.all(
     current.map(async (item) => {
       try {
-        const response = await fetch(`/api/products/${item.id}`, {
+        const response = await fetch(`/api/products/${item.id.split(":")[0]}`, {
           cache: "no-store",
         });
 
@@ -123,9 +125,9 @@ async function refreshCartItems() {
       return {
         ...item,
         name: product.name,
-        price: Number(product.price),
+        price: Number(product.price) + (item.options ?? []).reduce((sum, o) => sum + Number(product.customization_options?.find(entry => entry.id === o.id)?.extra_price ?? o.extra_price), 0),
         image: pickImage(product)?.public_url ?? item.image,
-        available: isPurchasable(product),
+        available: isPurchasable(product) && (item.options ?? []).every(o => product.customization_options?.some(entry => entry.id === o.id)),
       };
     }),
   );
@@ -153,10 +155,10 @@ export function CartDrawer({
   whatsappNumber,
 }: CartDrawerProps) {
   const cart = useCart();
-  const [fallbackOpen, setFallbackOpen] = useState(false);
+
 
   function close() {
-    setFallbackOpen(false);
+
     onClose();
   }
 
@@ -347,45 +349,8 @@ export function CartDrawer({
             </p>
           ) : null}
 
-          <button
-            type="button"
-            disabled={!canContinue}
-            onClick={() => setFallbackOpen(true)}
-            className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Continuar compra
-            <ArrowRight size={16} />
-          </button>
-
-          {/*
-            TEMPORAL: la pantalla de pago en línea (datos → pedido → QR →
-            seguimiento) todavía no existe. Mientras tanto el cliente puede
-            enviar su pedido por WhatsApp. Cuando exista, "Continuar compra"
-            debe navegar al checkout y este bloque se elimina.
-          */}
-          {fallbackOpen && canContinue ? (
-            <div
-              role="status"
-              className="mt-4 rounded-xl border border-[#e2d5e5] bg-[#faf8fb] px-4 py-4"
-            >
-              <p className="text-xs leading-5 text-[#55455c]">
-                El pago en línea estará disponible muy pronto. Por ahora puedes
-                enviarnos tu pedido por WhatsApp y te ayudamos a completarlo.
-              </p>
-
-              {whatsappHref ? (
-                <a
-                  href={whatsappHref}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-3 inline-flex h-11 w-full items-center justify-center gap-2 rounded-xl border border-[#65358e] text-sm font-black text-[#65358e] transition hover:bg-[#f5eff7]"
-                >
-                  <MessageCircle size={16} />
-                  Enviar pedido por WhatsApp
-                </a>
-              ) : null}
-            </div>
-          ) : null}
+          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : <p className="mt-4 text-sm">Revisa tu carrito para continuar.</p>}
+          {whatsappHref && cart.items.length > 0 ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center gap-2 text-sm text-[#65358e]"><MessageCircle size={16} /> Comprar por WhatsApp</a> : null}
         </div>
       </aside>
     </div>

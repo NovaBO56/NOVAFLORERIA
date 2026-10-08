@@ -39,3 +39,16 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Estado privado/local de Supabase y laboratorio (nunca publicar)
+supabase/.temp/
+**/backups/
+**/private/
+*.dump
+*.sql.gz
+*.bak
+*.private.json
+auth-sessions.json
+audit-supabase/*-response.json
+audit-supabase/remote-schema.sql
+supabase/MIGRATION_REORGANIZATION_RESULTS.json

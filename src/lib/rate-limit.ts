@@ -10,6 +10,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * se pueden testear directamente sin necesitar una base de datos.
  */
 export const RATE_LIMITS = {
+  trackOrder: { maxAttempts: 20, windowSeconds: 5 * 60 },
   createOrder: { maxAttempts: 10, windowSeconds: 5 * 60 },
   reportPayment: { maxAttempts: 5, windowSeconds: 5 * 60 },
   getPaymentQr: { maxAttempts: 30, windowSeconds: 60 },

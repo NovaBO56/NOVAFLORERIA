@@ -37,6 +37,7 @@ export type ProductComponent = {
 };
 
 export type ProductDetail = PublicProduct & {
+  customization_options: CustomizationOption[];
   description: string | null;
   components: ProductComponent[] | null;
 };
@@ -73,4 +74,11 @@ export type WeekDay = {
   opens_at: string | null;
   closes_at: string | null;
   is_closed: boolean;
+};
+
+export type CustomizationOption = { id: string; option_type: string; name: string; value: string; extra_price: number };
+export type PublicOrder = {
+  id: string; order_number: number; status: string; subtotal: number; discount_total: number; total: number;
+  customer_message: string | null; created_at: string; reserved_until: string | null; payment_status: string | null;
+  items: { product_name: string; quantity: number; unit_price: number; line_total: number; message: string | null; note: string | null; personalization: CustomizationOption[] | null }[];
 };

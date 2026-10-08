@@ -1,0 +1,3 @@
+# Conservar bytes y SHA-256 de los artefactos certificados e históricos.
+/supabase/** -text
+/audit-supabase/** -text

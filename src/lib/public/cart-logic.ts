@@ -8,6 +8,8 @@ export const MAX_QUANTITY = 99;
 export const MAX_ITEMS = 50;
 
 export type CartItem = {
+  options?: { id: string; name: string; extra_price: number }[];
+  message?: string;
   id: string;
   name: string;
   price: number;
@@ -18,6 +20,8 @@ export type CartItem = {
 };
 
 export type CartProductInput = {
+  options?: CartItem["options"];
+  message?: string;
   id: string;
   name: string;
   price: number | string;
@@ -51,6 +55,7 @@ export function sanitizeCart(raw: unknown): CartItem[] {
       typeof item.name !== "string" ||
       !Number.isFinite(price) ||
       price < 0 ||
+      !Number.isFinite(quantity) ||
       quantity < 1 ||
       seen.has(item.id)
     ) {
@@ -65,6 +70,8 @@ export function sanitizeCart(raw: unknown): CartItem[] {
       image: typeof item.image === "string" ? item.image : null,
       quantity,
       available: item.available !== false,
+      ...(Array.isArray(item.options) ? { options: item.options.filter((o): o is NonNullable<CartItem["options"]>[number] => Boolean(o) && typeof o.id === "string" && typeof o.name === "string" && Number.isFinite(Number(o.extra_price)) && Number(o.extra_price) >= 0) } : {}),
+      ...(typeof item.message === "string" ? { message: item.message.slice(0, 500) } : {}),
     });
 
     if (items.length >= MAX_ITEMS) break;
@@ -84,9 +91,13 @@ export function addItem(
 
   const existing = items.find((item) => item.id === product.id);
 
-  if (existing) {
+  // A configured line has its own identity; unconfigured carts keep their original ids.
+  const lineId = product.options?.length || product.message ? `${product.id}:${JSON.stringify([product.options?.map(o => o.id).sort(), product.message])}` : product.id;
+  const matching = lineId === product.id ? existing : items.find(item => item.id === lineId);
+
+  if (matching) {
     return items.map((item) =>
-      item.id === product.id
+      item.id === lineId
         ? { ...item, quantity: clampQuantity(item.quantity + amount) }
         : item,
     );
@@ -97,12 +108,14 @@ export function addItem(
   return [
     ...items,
     {
-      id: product.id,
+      id: lineId,
       name: product.name,
       price: Number(product.price),
       image: product.image,
       quantity: amount,
       available: true,
+      options: product.options,
+      message: product.message,
     },
   ];
 }
@@ -142,7 +155,7 @@ export function hasUnavailable(items: CartItem[]) {
 export function buildOrderMessage(items: CartItem[]) {
   const lines = items.map(
     (item) =>
-      `• ${item.quantity} × ${item.name} (${formatMoney(item.price)} c/u)`,
+      [`• ${item.quantity} × ${item.name} (${formatMoney(item.price)} c/u)`, ...(item.options ?? []).map(option => `  ${option.name}`), item.message ? `  Tarjeta: ${item.message}` : ""].filter(Boolean).join("\n"),
   );
 
   return [

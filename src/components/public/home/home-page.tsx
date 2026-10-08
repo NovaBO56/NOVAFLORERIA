@@ -399,6 +399,7 @@ export default function HomePage({ year }: { year: number }) {
       : []),
     { label: "Nosotros", href: "#nosotros" },
     { label: "Contacto", href: "#contacto" },
+    { label: "Seguimiento", href: "/seguimiento" },
   ];
 
   return (
@@ -452,8 +453,8 @@ export default function HomePage({ year }: { year: number }) {
           categoryName={categoryName}
           isFavorite={favoriteIds.includes(detailProduct.id)}
           onToggleFavorite={() => toggleFavorite(detailProduct.id)}
-          onAdd={(quantity) => {
-            addToCart(detailProduct, quantity);
+          onAdd={(quantity, options, message) => {
+            addToCart(detailProduct, quantity, options, message);
             setCartOpen(true);
           }}
         />

@@ -52,7 +52,7 @@ export async function updateSession(request: NextRequest) {
   ];
 
   // Páginas públicas (coincidencia exacta).
-  const publicPages = ["/"];
+  const publicPages = ["/", "/checkout", "/seguimiento"];
 
   const isPublicApiRoute = publicApiRoutes.some(
     (route) => pathname === route || pathname.startsWith(`${route}/`),

@@ -27,6 +27,7 @@ export const listPublicProductsQuerySchema = z
   });
 
 export const trackOrderSchema = z.object({
-  order_number: z.coerce.number().int().positive("El número de pedido no es válido."),
+  order_number: z.coerce.number().int().positive("El número de pedido no es válido.").optional(),
+  order_id: z.string().uuid().optional(),
   customer_phone: z.string().trim().min(6, "El teléfono no es válido.").max(30),
-});
+}).refine(data => Boolean(data.order_number || data.order_id), { message: "Indica el número de pedido." });

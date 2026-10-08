@@ -56,6 +56,7 @@ export async function POST(request: Request) {
       .update({
         full_name,
         role,
+        is_active: true,
         updated_at: new Date().toISOString(),
       })
       .eq("id", data.user.id);

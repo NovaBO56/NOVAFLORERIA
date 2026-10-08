@@ -9,7 +9,7 @@ import {
   isPurchasable,
 } from "@/lib/public/format";
 import { MAX_QUANTITY } from "@/lib/public/cart-logic";
-import type { ProductDetail, PublicProduct } from "@/lib/public/types";
+import type { CustomizationOption, ProductDetail, PublicProduct } from "@/lib/public/types";
 import { script } from "./shared";
 
 type DetailState = { id: string; data: ProductDetail | null } | null;
@@ -19,7 +19,7 @@ type ProductDetailSectionProps = {
   categoryName: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onAdd: (quantity: number) => void;
+  onAdd: (quantity: number, options: CustomizationOption[], message: string) => void;
 };
 
 /**
@@ -35,6 +35,8 @@ export function ProductDetailSection({
   onAdd,
 }: ProductDetailSectionProps) {
   const [detail, setDetail] = useState<DetailState>(null);
+  const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
+  const [message, setMessage] = useState("");
   const [quantity, setQuantity] = useState(1);
   const [activeImage, setActiveImage] = useState(0);
 
@@ -228,11 +230,15 @@ export function ProductDetailSection({
               </div>
             </div>
 
+            <div className="mt-5 space-y-3">
+              {full?.customization_options?.map(option => <label key={option.id} className="flex items-center gap-3 text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
+              <label className="block text-sm">Mensaje para la tarjeta<textarea maxLength={500} value={message} onChange={event => setMessage(event.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
+            </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={() => onAdd(quantity)}
-                disabled={!purchasable}
+                onClick={() => onAdd(quantity, full?.customization_options?.filter(o => selectedOptions.includes(o.id)) ?? [], message)}
+                disabled={!purchasable || loadingDetail || !full}
                 className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] sm:flex-1 text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag size={17} />
