@@ -1,68 +1,44 @@
 # Estado vigente de Supabase
 
-La única fuente oficial de SQL es supabase/migrations/ (cuatro versiones activas) y supabase/seed.sql. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage provisionados; nunca ejecutar sobre producción existente. migrations-legacy conserva 39 archivos solo como evidencia, no como cadena ejecutable.
+La fuente oficial es supabase/migrations/ (cinco versiones activas) y supabase/seed.sql. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
 
-## Validación local
+## Cadena local
 
-Laboratorio NOVA-LOCAL-VALIDATION: API http://127.0.0.1:55421, PostgreSQL localhost:55422, sin project-ref remoto. migrations es una junction al repositorio y seed un hardlink al archivo activo. CLI aplica baseline → checkout/tracking → security hardening → concurrency/zero-total → seed.
+1. 20261007000100_baseline_initial.sql
+2. 20261007000200_checkout_public_summary.sql
+3. 20261007000300_security_rpc_hardening.sql
+4. 20261007000400_backend_concurrency_zero_total.sql
+5. 20261008120236_inventory_cash_configuration.sql
+6. seed.sql (la CLI local ejecuta los seeds después de todas las migraciones).
 
-El SQL ejecutable y los 39 SHA-256 legacy permanecen idénticos a la certificación previa; únicamente se corrigieron comentarios y se consolidaron artefactos. No cambió API ni tests funcionales. El test estático de contrato ahora lee las migraciones oficiales conservando sus aserciones.
+Destino validado: NOVA-LOCAL-VALIDATION, API http://127.0.0.1:55421, PostgreSQL localhost:55422, sin project-ref. migrations es una junction al repositorio y seed un hardlink. No se ejecutó SQL remoto, link, db push ni repair.
 
-Esquema certificado: 35 tablas, 37 funciones públicas, 161 constraints, 73 índices, 2 secuencias, 1 vista, 11 triggers de aplicación/Auth, 86 políticas public y 3 Storage. create_payment(uuid) y create_order(6) ausentes. create_payment(uuid,text) tiene EXECUTE únicamente para service_role, no PUBLIC/anon/authenticated.
+La migración nueva corrige FIFO de ajustes/mermas y protección de reservas; lotes de ajuste positivo con origen explícito; valores numéricos finitos; apertura de caja serializada y una sesión por caja; bloqueo venta/cierre; devolución monetaria física atómica conservando efectivo/QR; venta gratuita sin pago ni movimiento ficticios; clientes sin duplicados de teléfono y bloqueo únicamente para su alta; QR/WhatsApp atómicos y únicos activos; horarios/configuración válidos; rate limiting serializado privado; trazabilidad sensible y gestión privada de perfiles con protección del último administrador.
 
-## Calidad y discrepancia de lint
+create_order(6) y create_payment(uuid) siguen ausentes. create_order(7), create_payment(uuid,text), check_rate_limit, set_checkout_configuration y update_staff_profile son server-only: sin EXECUTE para PUBLIC/anon/authenticated. El checkout público mantiene /api/orders; así no se puede saltar su rate limiting invocando create_order directamente. Helpers internos y triggers no tienen EXECUTE público.
 
-Lint ejecutado sobre HEAD f021381 antes de limpiar: 0 errores y 49 advertencias. Las cifras anteriores de 5 correspondían a la copia de la aplicación sin herramientas de auditoría añadidas; no al repositorio completo de ese HEAD. Esta discrepancia queda corregida aquí; no se suprimen reglas ni advertencias. Resultado vigente después de consolidar: **0 errores y 5 advertencias**. Las cinco advertencias corresponden a tres imports no utilizados y dos usos de img en la aplicación; no se ocultaron ni corrigieron funcionalmente.
+Esquema local: 35 tablas, 43 funciones públicas, 199 constraints, 77 índices, 2 secuencias, 1 vista, 35 triggers de aplicación/Auth, 86 políticas public y 3 Storage. Las cuatro migraciones anteriores y seed permanecen byte-idénticos a 2ad2be7. Hashes históricos: MIGRATION_REORGANIZATION_AUDIT.md.
 
-Regresión final: replay local completo de las cuatro migraciones + seed exitoso; prueba SQL aislada exitosa con ROLLBACK; npm test 288/288 en 26 archivos; npm run lint exit 0; npx tsc --noEmit exit 0; npm run build exit 0. Integridad: 39/39 legacy byte-idénticos y SQL ejecutable de cuatro migraciones y seed idéntico al snapshot anterior.
+## Evidencia y ejecución
 
-## Clasificación de baseline-candidate
+Replay limpio de las cinco migraciones y seed: correcto. ISOLATED_SECURITY_TESTS.sql: correcto con opt-in y ROLLBACK. Regresión real anterior adaptada al RPC privado: 51 HTTP/RPC, 17 JWT, 17 grupos de concurrencia y 11 promociones, todos correctos. La suite reutilizable remaining-backend-local.mjs pasó sus 127 comprobaciones adicionales de configuración, catálogo/imágenes, FIFO, reservas, devoluciones, efectivo/QR, usuarios, auditoría, notificaciones, reportes y permisos: 223 comprobaciones reales en conjunto, sin fallos. No usa mocks. Credenciales, JWT, informes detallados y manifiestos sintéticos permanecen fuera de Git, en el laboratorio privado.
 
-A: reutilizable, conservado. B: evidencia histórica, respaldada en privado y disponible en Git. C: duplicado/temporal, retirado de la estructura normal y respaldado. Los generadores que dependían de snapshots remotos quedan como evidencia histórica; no regeneran ni compiten con la cadena activa.
+Calidad final: npm test, 301 tests en 27 archivos; npm run lint, 0 errores y 0 warnings; npx tsc --noEmit y npm run build, correctos. Los tests unitarios usan mocks donde corresponde y se distinguen de las pruebas reales anteriores. El build generó 67 páginas estáticas.
 
-| Archivo anterior | Clase | Destino |
-|---|---|---|
-| 036_security_rpc_hardening.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| 037_backend_concurrency_zero_total.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| activate-local-migrations.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| BACKEND_037_DECISIONS.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| BACKEND_FINAL_DEFINITIONS.json | B | backup privado e historial Git; retirado de la estructura vigente |
-| BACKEND_ORIGINAL_DEFINITIONS.json | B | backup privado e historial Git; retirado de la estructura vigente |
-| BACKEND_SCHEMA_FINAL.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| BACKEND_TRIGGER_FINAL.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| BASELINE_CANDIDATE.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| BASELINE_PLAN.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| build-backend-037.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| build-hardening.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| candidate-manifest.json | B | backup privado e historial Git; retirado de la estructura vigente |
-| CONFIRM_PAYMENT_FINAL.sql | B | backup privado e historial Git; retirado de la estructura vigente |
-| CREATE_PAYMENT_FINAL.sql | B | backup privado e historial Git; retirado de la estructura vigente |
-| DRIFT_DECISIONS.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| FINAL_MIGRATION_LAYOUT.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| final-payment-retirement-tests.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| finalize-local-reorganization.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| generate-candidate.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| HANDLE_NEW_USER_FINAL.sql | B | backup privado e historial Git; retirado de la estructura vigente |
-| ISOLATED_SECURITY_TESTS.sql | A | supabase/tests/ISOLATED_SECURITY_TESTS.sql |
-| LOCAL_CERTIFICATION_037.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| MIGRATION_REORGANIZATION_PLAN.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| PAYMENT_RETIREMENT_CERTIFICATION.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| RPC_FINAL_MATRIX.json | B | backup privado e historial Git; retirado de la estructura vigente |
-| RPC_FINAL_MATRIX.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| SECURITY_DECISIONS_FINAL.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| SECURITY_REVIEW.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| SEED_CANDIDATE.sql | C | backup privado e historial Git; retirado de la estructura vigente |
-| STATIC_VALIDATION.json | B | backup privado e historial Git; retirado de la estructura vigente |
-| TEST_RESULTS.md | B | backup privado e historial Git; retirado de la estructura vigente |
-| validate-candidate.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| verify-active-local-reorganization.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| verify-payment-retirement-generation.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
-| write-payment-retirement-report.mjs | B | backup privado e historial Git; retirado de la estructura vigente |
+Navegador real contra Next local: personalización, carrito, checkout, pedido normal #43, reporte sintético de pago, confirmación administrativa, preparación/listo/finalizado y seguimiento correctos. Pedido gratuito #50 con promoción 100%, total cero, sin QR, pagos ni movimientos de caja ficticios; preparación/listo/finalizado y seguimiento correctos. Las operaciones administrativas de ambos flujos se ejecutaron mediante HTTP real. En el build de producción conectado exclusivamente al laboratorio, /prueba-cliente y /admin/prueba-ui devuelven 404; /login devuelve 200.
 
-## Otros artefactos
+Ejecución de la suite ampliada (Next local debe estar levantado):
 
-Se retiraron los snapshots/JSON e informes de audit-supabase y el manifiesto completo de reorganización con inventarios locales. Solo se conservaron dos consultas genéricas de catálogo, sin datos capturados, en tools/. Se conserva el escáner genérico de credenciales en tools/ y la prueba SQL aislada con opt-in y ROLLBACK en tests/. Los scripts de validación de una sola fase, informes anteriores y documentos de checkout se preservan como historia y backup privado, fuera de la estructura vigente.
+~~~powershell
+$env:NOVA_LOCAL_LAB = 'C:\ruta\NOVA-LOCAL-VALIDATION'
+$env:NOVA_LOCAL_HTTP = 'http://127.0.0.1:3100'
+node supabase/tests/remaining-backend-local.mjs
+~~~
 
-Documentación actual: README.md, este archivo y MIGRATION_REORGANIZATION_AUDIT.md con los 39 hashes históricos. Evidencia y logs completos de regresión permanecen en el laboratorio privado. El historial ya publicado conserva las capturas antiguas; esta limpieza no reescribe ese historial.
+La suite crea usuarios/filas/archivos sintéticos y guarda sus resultados y rollback en certification/REMAINING_BACKEND.private.json del laboratorio. Se conservaron los fixtures para revisión; los pedidos del navegador y sus IDs están en certification/UI_FLOW.private.json. Restaurar el laboratorio desechable desde cero con supabase db reset --local --workdir <NOVA-LOCAL-VALIDATION> --yes. Esta instrucción no debe usarse contra una instancia con datos reales. El fixture SQL separado revierte sus filas al terminar.
 
-Antes de producción siguen pendientes auditoría vigente, backup/restore verificable, estrategia explícita de reconciliación e historial, ensayo aislado y autorización separada. No se ejecutó link/db push/repair ni SQL remoto. El repositorio público no necesita snapshots del catálogo remoto para ejecutar o desarrollar la aplicación.
+Durante el desarrollo se detectaron y corrigieron un delimitador SQL mal compuesto y una serialización innecesaria por teléfono. Se reconstruyó desde cero después de cada corrección SQL; no se parcheó la base. Un error EPERM del sandbox se resolvió repitiendo la prueba con acceso normal a node_modules. Los mocks de alta/pedido se actualizaron al contrato privado sin retirar aserciones funcionales.
+
+## Límites
+
+Certificación funcional exclusivamente local y del alcance probado; no autoriza producción. La nueva migración falla ante duplicados/inconsistencias existentes, sin eliminarlos ni repararlos automáticamente. Antes de una reconciliación remota se necesitan inventario actual, backup/restore, plan de datos/historial, ensayo aislado y autorización separada. No se infiere compatibilidad con datos productivos a partir del replay vacío. Capturas antiguas quedan en historial/backup privado, no como segunda fuente SQL.
