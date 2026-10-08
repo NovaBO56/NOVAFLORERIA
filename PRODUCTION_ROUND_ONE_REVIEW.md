@@ -1,5 +1,19 @@
 # Floristería Anabelle — primera ronda, revisión pendiente
 
+## Cierre posterior: seguimiento privado y método de entrega
+
+Commit de alcance limitado a los dos hallazgos, exclusivamente en fix/production-round-1. Nueva migración incremental `20261009000300_tracking_rpc_server_only.sql`: revoca EXECUTE de PUBLIC/anon/authenticated en track_order_details(text,bigint,uuid) y track_order(bigint,text), y concede a service_role. No cambia definiciones, datos ni migraciones previas. El propietario postgres conserva sus llamadas internas SECURITY DEFINER. Ningún archivo src invoca track_order directamente; track_order_details se consume exclusivamente desde la API del servidor.
+
+La API de seguimiento valida entrada y pasa checkRateLimit antes de ejecutar mediante el cliente privado; errores de negocio presentan 404 genérico. Seguimiento falla cerrado cuando el limitador falla para impedir consultas sin protección. El borrador considera delivery distinto de retiro incluso sin otros campos; conserva sessionStorage, límites, campos permitidos e idempotencia/limpieza anteriores.
+
+Resultados vigentes: **358/358 tests, 30 archivos; lint 0 errores / 0 warnings; TypeScript y build correctos (69 páginas)**. Regresión real guest-receipts **73/73**: anon y authenticated sin rol admin denegados en ambas firmas, service_role autorizado, API funcional, teléfono incorrecto sin pedido/token, token oculto hasta confirmación, primeros 20 intentos permitidos y 21 bloqueado (429). Catálogo SQL sin RPC SECURITY DEFINER público que exponga receipt_token; RLS anónima de pedidos/clientes y recibos privados también probados. No hay otra API pública que use una firma equivalente sin limitador; las rutas admin mantienen autorización. Las pruebas reales no usan mocks; los tests unitarios de API sí los utilizan.
+
+Delta aplicado únicamente a NOVA-LOCAL-VALIDATION; replay limpio de nueve migraciones y seed en NOVA-LOCAL-ROUND2-REPLAY, ambos sin project-ref. Esquemas public idénticos tras retirar solo cabeceras aleatorias de pg_dump; incluye ACL, funciones, RLS, índices y constraints. Hashes legacy 39/39. Escaneo de secretos sin hallazgos. El primer test unitario falló por una expectativa antigua de seguimiento abierto si falla el limitador; se actualizó explícitamente al contrato protegido y se repitió la suite completa. Se conservaron fixtures sintéticos y evidencia privada local, sin credenciales versionadas ni eliminación automática.
+
+Una repetición de Vitest dentro del sandbox terminó sin ejecutar tests por EPERM al resolver node_modules; se repitió con acceso normal, 358/358 correctos, sin cambios para ocultar el error. La clave privada local está ausente del JavaScript estático del navegador.
+
+Las cuatro migraciones incrementales de esta rama permanecen pendientes de producción; sin merge, deploy, SQL remoto ni cambios al Supabase antiguo. Este cierre no añade funcionalidades ni sustituye la batería agresiva posterior por módulo. Persisten las limitaciones anteriores de revisión visual PDF, QR real y tooling; no se declara producción certificada.
+
 ## Cierre vigente de correcciones manuales
 
 Rama exclusiva `fix/production-round-1`; sin merge, despliegue ni SQL remoto. Las secciones posteriores conservan la evidencia anterior y sus cifras históricas; los resultados vigentes son los de este cierre.

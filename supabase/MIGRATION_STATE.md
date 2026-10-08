@@ -1,6 +1,6 @@
 # Estado vigente de Supabase
 
-La fuente oficial es supabase/migrations/ (ocho versiones activas) y supabase/seed.sql. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+La fuente oficial es supabase/migrations/ (nueve versiones activas) y supabase/seed.sql. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
 
 ## Cadena local
 
@@ -12,7 +12,8 @@ La fuente oficial es supabase/migrations/ (ocho versiones activas) y supabase/se
 6. 20261008180000_production_round_one.sql
 7. 20261009000100_guest_customers_secure_receipts.sql
 8. 20261009000200_receipt_rate_limit.sql
-9. seed.sql (la CLI local ejecuta los seeds después de todas las migraciones).
+9. 20261009000300_tracking_rpc_server_only.sql
+10. seed.sql (la CLI local ejecuta los seeds después de todas las migraciones).
 
 Destino validado: NOVA-LOCAL-VALIDATION, API http://127.0.0.1:55421, PostgreSQL localhost:55422, sin project-ref. migrations es una junction al repositorio y seed un hardlink. No se ejecutó SQL remoto, link, db push ni repair.
 
@@ -43,6 +44,8 @@ La suite crea usuarios/filas/archivos sintéticos y guarda sus resultados y roll
 Durante el desarrollo se detectaron y corrigieron un delimitador SQL mal compuesto y una serialización innecesaria por teléfono. Se reconstruyó desde cero después de cada corrección SQL; no se parcheó la base. Un error EPERM del sandbox se resolvió repitiendo la prueba con acceso normal a node_modules. Los mocks de alta/pedido se actualizaron al contrato privado sin retirar aserciones funcionales.
 
 ## Validación vigente de la ronda de corrección
+
+Cierre posterior de seguimiento/draft: 358/358 tests (30 archivos), lint 0 errores / 0 warnings, TypeScript y build correctos (69 páginas), suite real guest-receipts 73/73. Replay de nueve migraciones y seed correcto; esquema public idéntico al delta local. Ambos RPC de seguimiento sin EXECUTE para PUBLIC/anon/authenticated, con EXECUTE para service_role; el helper interno conserva ejecución bajo el propietario de SECURITY DEFINER. La API valida y limita antes de consultar privadamente, y falla cerrada ante error del limitador. Entrega sola persiste en el borrador. Las ocho migraciones anteriores y 39 legacy no cambiaron. Nueva cuarta migración pendiente de aprobación productiva: 20261009000300_tracking_rpc_server_only.sql. Los párrafos siguientes conservan la evidencia de la ronda previa.
 
 Ocho migraciones y seed reprodujeron correctamente el esquema desde cero en NOVA-LOCAL-ROUND2-REPLAY (localhost:57621, sin vínculo remoto). El esquema public, incluidos ACL, funciones y políticas, es idéntico al laboratorio actualizado mediante delta tras normalizar exclusivamente las cabeceras aleatorias de pg_dump. No se compararon datos Auth ni archivos físicos de Storage.
 

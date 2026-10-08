@@ -61,6 +61,9 @@ export function readCheckoutDraft(storage: Pick<Storage, "getItem">): CheckoutDe
 export function saveCheckoutDraft(storage: Pick<Storage, "setItem">, details: CheckoutDetails) {
   try { storage.setItem(checkoutSessionKeys.draft, JSON.stringify(draftSchema.parse(details))); } catch { /* Session storage is optional. */ }
 }
+export function hasCheckoutDraft(details: CheckoutDetails): boolean {
+  return details.delivery !== "retiro" || Boolean(details.customer_name || details.customer_phone || details.address || details.reference || details.notes || details.promotion_id);
+}
 export function clearCheckoutSession(storage: Pick<Storage, "removeItem">) {
   for (const key of Object.values(checkoutSessionKeys)) { try { storage.removeItem(key); } catch { /* In-memory state is cleared by caller. */ } }
 }

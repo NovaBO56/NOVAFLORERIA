@@ -48,7 +48,7 @@ export function getClientIp(request: Request): string {
  * ruta indicada. Devuelve true si el intento está permitido.
  *
  * El servidor usa su cliente privado: el RPC no es accesible públicamente.
- * Escrituras fallan cerradas; lecturas pueden continuar si el limitador falla.
+ * Escrituras, seguimiento y recibos fallan cerrados; otras lecturas pueden continuar.
  */
 export async function checkRateLimit(
   _supabase: SupabaseClient,
@@ -67,7 +67,7 @@ export async function checkRateLimit(
 
   if (error) {
     console.error(`Error verificando rate limit para "${route}":`, error);
-    return route !== "createOrder" && route !== "reportPayment" && route !== "orderReceipt";
+    return route !== "createOrder" && route !== "reportPayment" && route !== "orderReceipt" && route !== "trackOrder";
   }
 
   return data === true;

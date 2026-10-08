@@ -5,7 +5,7 @@ import Link from "next/link";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import { useEffect, useRef, useState } from "react";
 import { clearCart, refreshCartItems, useCart } from "./home/cart";
-import { checkoutDetailsSchema, checkoutSessionKeys, checkoutStep, clearCheckoutSession, readCheckoutDraft, reachedConfirmation, saveCheckoutDraft, orderPayload, publicRequest, requiresPayment, singleFlight, type CheckoutDetails } from "@/lib/public/checkout";
+import { checkoutDetailsSchema, checkoutSessionKeys, checkoutStep, clearCheckoutSession, readCheckoutDraft, reachedConfirmation, saveCheckoutDraft, hasCheckoutDraft, orderPayload, publicRequest, requiresPayment, singleFlight, type CheckoutDetails } from "@/lib/public/checkout";
 import { CheckCircle2, ExternalLink, RotateCcw } from "lucide-react";
 import { acceptingOrders, formatMoney, whatsappLink } from "@/lib/public/format";
 import type { BusinessStatus, PublicOrder, PublicPromotion } from "@/lib/public/types";
@@ -68,7 +68,7 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (ready && !recovery) {
-      if (details.customer_name || details.customer_phone || details.address || details.reference || details.notes || details.promotion_id) saveCheckoutDraft(sessionStorage, details);
+      if (hasCheckoutDraft(details)) saveCheckoutDraft(sessionStorage, details);
       else { try { sessionStorage.removeItem(checkoutSessionKeys.draft); } catch { /* Optional storage. */ } }
     }
   }, [details, ready, recovery]);

@@ -39,6 +39,12 @@ try{
  const login=await admin.auth.signInWithPassword({email:credentials.email,password:credentials.password});if(login.error)throw login.error;cookie=[...jar].map(([k,v])=>k+'='+v).join('; ');
  check('real admin login',!!login.data.session);
  check('local admin profile',await sql(`SELECT role='administrador' AND is_active FROM profiles WHERE id=${q(login.data.user.id)}`)==='t');
+ const normalClient=createClient(config.API_URL,config.ANON_KEY,{auth:{persistSession:false}});
+ const testEmail=`tracking-${crypto.randomUUID()}@example.invalid`, testPassword=crypto.randomBytes(24).toString('base64url');
+ const testUser=await service.auth.admin.createUser({email:testEmail,password:testPassword,email_confirm:true,user_metadata:{full_name:label}});
+ if(testUser.error)throw testUser.error;fixtures.push({table:'auth.users',id:testUser.data.user.id});
+ const normalLogin=await normalClient.auth.signInWithPassword({email:testEmail,password:testPassword}); if(normalLogin.error)throw normalLogin.error;
+ check('authenticated tracking tester is not admin',await sql(`SELECT role <> 'administrador' FROM profiles WHERE id=${q(testUser.data.user.id)}`)==='t');
  await api('/api/admin/system-settings/accept-orders-outside-hours',{enabled:true},true,'PATCH');
  const result=await api('/api/admin/products',{name:label,price:10},true);product=result.data.product.id;
  item=(await api('/api/admin/inventory/items',{name:label,item_type:'flor'},true)).data.item.id;
@@ -49,6 +55,20 @@ try{
  check('new temporary order creates no customer',await customerCount(normal.phone)==='0');
  check('guest snapshot and null customer FK',await sql(`SELECT customer_id IS NULL AND guest_name=${q(label)} AND guest_phone=${q(normal.phone)} FROM orders WHERE id=${q(normal.id)}`)==='t');
  check('guest tracking works before report',(await api('/api/orders/track',{order_id:normal.id,customer_phone:normal.phone})).data.order.payment_status===null);
+ const trackingArgs={p_order_id:normal.id,p_order_number:null,p_customer_phone:normal.phone};
+ const number=Number(await sql(`SELECT order_number FROM orders WHERE id=${q(normal.id)}`));
+ for(const [fn,args] of [['track_order_details',trackingArgs],['track_order',{p_order_number:number,p_customer_phone:normal.phone}]]){
+  check('anon cannot invoke '+fn,!!(await anon.rpc(fn,args)).error);
+  check('normal authenticated cannot invoke '+fn,!!(await normalClient.rpc(fn,args)).error);
+  check('service role can invoke '+fn,!(await service.rpc(fn,args)).error);
+ }
+ const wrongTrack=await api('/api/orders/track',{order_id:normal.id,customer_phone:'00000000'});
+ check('wrong tracking phone gets no order/token',wrongTrack.status===404&&!wrongTrack.data?.order);
+ const rateIp=`198.19.${crypto.randomInt(1,254)}.${crypto.randomInt(1,254)}`, rateStatuses=[];
+ for(let i=0;i<21;i++){const response=await fetch(http+'/api/orders/track',{method:'POST',headers:{'Content-Type':'application/json','x-forwarded-for':rateIp},body:JSON.stringify({order_id:normal.id,customer_phone:normal.phone})});rateStatuses.push(response.status);}
+ check('real tracking rate limit accepts 20 then blocks 21',rateStatuses.slice(0,20).every(status=>status===200)&&rateStatuses[20]===429);
+ check('tracking SQL ACL closes PUBLIC/anon/authenticated on both signatures',await sql("SELECT bool_and(NOT has_function_privilege('anon',p.oid,'EXECUTE') AND NOT has_function_privilege('authenticated',p.oid,'EXECUTE') AND has_function_privilege('service_role',p.oid,'EXECUTE') AND NOT EXISTS(SELECT 1 FROM aclexplode(coalesce(p.proacl,acldefault('f',p.proowner))) acl WHERE acl.grantee=0 AND acl.privilege_type='EXECUTE')) FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.proname IN ('track_order','track_order_details')")==='t');
+ check('no public definer RPC discloses receipt token',await sql("SELECT count(*)=0 FROM pg_proc p JOIN pg_namespace n ON n.oid=p.pronamespace WHERE n.nspname='public' AND p.prosecdef AND p.prosrc ILIKE '%receipt_token%' AND (has_function_privilege('anon',p.oid,'EXECUTE') OR has_function_privilege('authenticated',p.oid,'EXECUTE'))")==='t');
  const token=await sql(`SELECT receipt_token FROM orders WHERE id=${q(normal.id)}`);
  check('public receipt unavailable before confirmation',(await api('/api/orders/receipt/'+token)).status===404);
  check('admin receipt unavailable before confirmation',(await api(`/api/admin/orders/${normal.id}/receipt`,null,true)).status===409);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { checkoutStep, checkoutSessionKeys, clearCheckoutSession, readCheckoutDraft, saveCheckoutDraft, orderPayload } from "@/lib/public/checkout";
+import { checkoutStep, checkoutSessionKeys, clearCheckoutSession, readCheckoutDraft, saveCheckoutDraft, hasCheckoutDraft, orderPayload } from "@/lib/public/checkout";
 import { whatsappLink } from "@/lib/public/format";
 import { storeMapPreview } from "@/validations/store-location";
 import { orderContact } from "@/lib/public/order-contact";
@@ -16,6 +16,7 @@ describe("checkout: confirmation survives status updates and recovery", () => {
 describe("session draft and explicit new purchase", () => {
   const draft = { customer_name: "Prueba", customer_phone: "700", delivery: "entrega" as const, address: "Calle de prueba", reference: "Esquina", notes: "Tarjeta", promotion_id: "" };
   function storage() { const values = new Map<string,string>(); return { getItem: (key:string) => values.get(key) ?? null, setItem: (key:string,value:string) => { values.set(key,value); }, removeItem: (key:string) => { values.delete(key); } }; }
+  it("delivery alone survives saving and reload", () => { const session=storage(); const initial={customer_name:"",customer_phone:"",delivery:"retiro" as const,address:"",reference:"",notes:"",promotion_id:""}; expect(hasCheckoutDraft(initial)).toBe(false); const changed={...initial,delivery:"entrega" as const}; if(hasCheckoutDraft(changed)) saveCheckoutDraft(session,changed); expect(readCheckoutDraft(session)).toEqual(changed); });
   it("incomplete pre-order draft survives a new read", () => { const session=storage(); saveCheckoutDraft(session,draft); expect(readCheckoutDraft(session)).toEqual(draft); });
   it("only allowlisted fields are persisted", () => { const session=storage(); saveCheckoutDraft(session,{ ...draft, password:"must not persist" } as typeof draft); expect(session.getItem(checkoutSessionKeys.draft)).not.toContain("password"); });
   it("new purchase clears draft, recovery and idempotency attempt, preserves unrelated session", () => { const session=storage(); for(const key of Object.values(checkoutSessionKeys)) session.setItem(key,"saved"); session.setItem("unrelated","keep"); clearCheckoutSession(session); for(const key of Object.values(checkoutSessionKeys)) expect(session.getItem(key)).toBeNull(); expect(session.getItem("unrelated")).toBe("keep"); });
