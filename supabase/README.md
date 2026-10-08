@@ -1,15 +1,22 @@
-# Supabase: cadena local activa
+# Supabase: fuente oficial
 
-`migrations/` contiene las cuatro migraciones limpias certificadas, con versiones CLI únicas. `migrations-legacy/` conserva los 39 archivos anteriores, nombres y bytes intactos; es evidencia histórica y no debe ejecutarse ni copiarse a la cadena activa. `seed.sql` contiene únicamente configuración inicial segura y queda fuera de migrations.
+La única cadena activa local certificada está en `migrations/`:
 
-La baseline requiere una instancia Supabase vacía con Auth/Storage provisionados. **No aplicar la baseline sobre producción existente.** La adopción productiva requiere un plan separado de reconciliación e historial remoto, backups verificables y nueva aprobación. Esta reorganización no cambia el historial remoto ni autoriza link, db push, repair o reset remoto.
+1. `20261007000100_baseline_initial.sql`
+2. `20261007000200_checkout_public_summary.sql`
+3. `20261007000300_security_rpc_hardening.sql`
+4. `20261007000400_backend_concurrency_zero_total.sql`
 
-Para validar localmente se usa `NOVA-LOCAL-VALIDATION`, API `http://127.0.0.1:55421`, PostgreSQL `127.0.0.1:55422`. Su config mantiene project_id local y no tiene project-ref. Su carpeta migrations es una junction a esta carpeta activa y su seed.sql es un hardlink al seed del repositorio: CLI lee los archivos definitivos, sin copias SQL manuales. El config del repositorio conserva su configuración previa; no se usa para resetear el proyecto vinculado.
+`seed.sql` se ejecuta después y contiene configuración mínima idempotente: buckets sin archivos, Caja principal sin abrir, siete días cerrados y pedidos fuera de horario desactivados. No contiene clientes, usuarios, productos reales, QR ni WhatsApp privados.
 
-Desde ese laboratorio, `supabase db reset --local` aplica baseline → checkout → hardening → concurrencia/gratuidad → seed. Antes de resetear, respaldar cualquier fixture local que se necesite conservar. Las claves locales de la copia Next.js se mantienen en archivos privados ignorados por Git; no utilizar las credenciales productivas para las pruebas.
+**La baseline es solo para instancias nuevas/vacías. Nunca aplicarla sobre producción existente.** Producción necesita un plan y autorización separados de reconciliación e historial remoto.
 
-Defaults seed: dos buckets sin archivos, Caja principal sin abrir, siete días cerrados y pedidos fuera de horario desactivados. QR, WhatsApp, horarios y configuración comercial deben configurarse explícitamente. El seed conserva filas existentes y su idempotencia fue verificada en PostgreSQL local.
+`migrations-legacy/` conserva los 39 originales con nombres y bytes intactos; no ejecutar ni copiar a la cadena activa. Los hashes están en [la auditoría de conservación](MIGRATION_REORGANIZATION_AUDIT.md). No existe otra carpeta editable de SQL oficial.
 
-Para nuevas modificaciones crear una migración timestamp de 14 dígitos, única y mayor que `20261007000400`, con nombre snake_case. No editar las cuatro migraciones certificadas ni reactivar originales históricos. Los generadores/candidatas sirven para revisión y no deben sobrescribir automáticamente la cadena activa.
+Para validar se usa `NOVA-LOCAL-VALIDATION`, API `http://127.0.0.1:55421` y DB `localhost:55422`, sin vínculo remoto. Su carpeta migrations y seed enlazan directamente los archivos activos. Ejecutar `supabase db reset --local` únicamente desde ese laboratorio después de respaldar fixtures necesarios. No usar el config/vínculo del checkout para operaciones remotas.
 
-Ver [estado final](MIGRATION_STATE.md), [auditoría de movimiento](MIGRATION_REORGANIZATION_AUDIT.md) y `MIGRATION_REORGANIZATION_MANIFEST.json` para hashes, backup y evidencias de pruebas.
+Las claves locales de pruebas están en archivos privados ignorados por Git; nunca usar credenciales productivas. `tests/ISOLATED_SECURITY_TESTS.sql` requiere base local vacía y opt-in `nova.security_test=isolated`; sus fixtures se revierten con ROLLBACK. Las dos consultas de `tools/` son genéricas y no contienen datos remotos capturados. El escáner genérico es `tools/scan-review-files.mjs`.
+
+Crear cambios futuros con timestamp único mayor que `20261007000400` y nombres snake_case. No reactivar históricos ni sobrescribir migraciones certificadas. La consolidación actual solo corrigió comentarios y retiró duplicados; el SQL ejecutable permanece idéntico.
+
+El [estado vigente](MIGRATION_STATE.md) contiene los resultados de calidad y la clasificación de artefactos retirados. Los informes y snapshots anteriores se conservaron en backup privado e historial Git; no son documentación vigente ni necesarios para ejecutar la aplicación.

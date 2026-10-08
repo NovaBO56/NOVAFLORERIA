@@ -2,11 +2,17 @@ import fs from "node:fs";
 import path from "node:path";
 import { describe, expect, it } from "vitest";
 
-const root = path.resolve("supabase/baseline-candidate");
+const root = path.resolve("supabase/migrations");
 const read = (name: string) => fs.readFileSync(path.join(root, name), "utf8");
-const migration = read("036_security_rpc_hardening.sql");
-const payment = read("CREATE_PAYMENT_FINAL.sql");
-const confirmation = read("CONFIRM_PAYMENT_FINAL.sql");
+const migration = read("20261007000300_security_rpc_hardening.sql");
+function definition(name: string) {
+  const start = migration.search(new RegExp(`CREATE OR REPLACE FUNCTION public\\.${name}\\(`, "i"));
+  if (start < 0) throw new Error(`Falta la función ${name} en la migración activa`);
+  const next = migration.slice(start + 1).search(/\nCREATE OR REPLACE FUNCTION/i);
+  return migration.slice(start, next < 0 ? undefined : start + 1 + next);
+}
+const payment = definition("create_payment");
+const confirmation = definition("confirm_payment");
 
 // Estos controles inspeccionan el contrato entregado, NO ejecutan PostgreSQL.
 // Los casos conductuales por rol se ejecutan aparte en Supabase local real.
@@ -23,7 +29,7 @@ describe("Contrato SQL de hardening (verificación estática)", () => {
     expect(migration).toContain("IF to_regprocedure('public.create_payment(uuid)') IS NOT NULL THEN");
     expect(migration).toContain("EXECUTE 'DROP FUNCTION public.create_payment(uuid) RESTRICT';");
     expect(migration).not.toMatch(/DROP FUNCTION[^;]*CASCADE/i);
-    expect(read("BASELINE_CANDIDATE.sql")).not.toMatch(/CREATE (?:OR REPLACE )?FUNCTION public\.create_payment\(\s*\w+ uuid\s*\)/i);
+    expect(read("20261007000100_baseline_initial.sql")).not.toMatch(/CREATE (?:OR REPLACE )?FUNCTION public\.create_payment\(\s*\w+ uuid\s*\)/i);
     expect(migration).not.toMatch(/GRANT EXECUTE ON FUNCTION public\."create_payment"\(uuid\)/);
     expect(migration).toContain("GRANT EXECUTE ON FUNCTION public.create_payment(uuid,text) TO service_role;");
   });
@@ -55,7 +61,7 @@ describe("Contrato SQL de hardening (verificación estática)", () => {
     expect(migration).toContain("and o.status = 'pendiente_pago'");
   });
   it("no habilita automáticamente personal nuevo ni mezcla 035/historial", () => {
-    expect(read("HANDLE_NEW_USER_FINAL.sql")).toContain("'empleado', false");
+    expect(definition("handle_new_user")).toContain("'empleado', false");
     expect(migration).not.toMatch(/CREATE (OR REPLACE )?FUNCTION public\.track_order_details/);
     expect(migration).not.toMatch(/(?:INSERT INTO|UPDATE|DELETE FROM)\s+supabase_migrations/);
     expect(migration).not.toMatch(/^DROP\s+/m);

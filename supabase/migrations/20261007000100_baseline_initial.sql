@@ -1,7 +1,7 @@
--- NOVA FLORERÍA: CANDIDATA, NO APROBADA NI EJECUTADA.
+-- NOVA FLORERÍA: baseline de la cadena activa local certificada.
 -- Solo para una instancia Supabase NUEVA con auth/storage y roles provisionados.
--- No ejecutar en el proyecto vinculado. No es un dump ni una reconciliación.
--- Decisiones propuestas: DRIFT_DECISIONS.md y SECURITY_REVIEW.md.
+-- Nunca aplicar esta baseline sobre producción existente. No es una reconciliación.
+-- Estado vigente y límites de uso: supabase/README.md y MIGRATION_STATE.md.
 -- Sin filas reales, historial, valores actuales de secuencias ni migración 035.
 BEGIN;
 SET LOCAL search_path = public, extensions, pg_catalog;
@@ -2757,7 +2757,7 @@ begin
 end;
 $function$;
 
--- confirm_payment: fuente local 013, propuesta
+-- confirm_payment: definición certificada de la cadena activa.
 CREATE OR REPLACE FUNCTION public.confirm_payment(p_payment_id uuid) RETURNS void
 LANGUAGE plpgsql SECURITY DEFINER SET search_path=public AS $function$
 DECLARE actor uuid:=auth.uid(); o public.orders%rowtype; p public.payments%rowtype;
@@ -3178,7 +3178,7 @@ end;
 $function$;
 
 -- create_payment: catálogo auditado
--- Definición oficial propuesta: SOLO servidor, teléfono validado atómicamente.
+-- Contrato certificado: SOLO servidor, teléfono validado atómicamente.
 CREATE OR REPLACE FUNCTION public.create_payment(p_order_id uuid, p_customer_phone text)
 RETURNS TABLE(id uuid, amount numeric, method text, status text, order_number bigint)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
@@ -5091,7 +5091,7 @@ GRANT REFERENCES ON TABLE "public"."audit_trail" TO "service_role";
 
 GRANT TRIGGER ON TABLE "public"."audit_trail" TO "service_role";
 
--- Propuesta: no conceder TRUNCATE/TRIGGER/REFERENCES a clientes; TRUNCATE no queda protegido por RLS. service_role conserva privilegios auditados.
+-- No conceder TRUNCATE/TRIGGER/REFERENCES a clientes; TRUNCATE no queda protegido por RLS. service_role conserva privilegios auditados.
 
 REVOKE ALL ON SEQUENCE "public"."order_number_seq" FROM PUBLIC, anon, authenticated;
 GRANT USAGE, SELECT ON SEQUENCE "public"."order_number_seq" TO service_role;
@@ -5099,7 +5099,7 @@ GRANT USAGE, SELECT ON SEQUENCE "public"."order_number_seq" TO service_role;
 REVOKE ALL ON SEQUENCE "public"."rate_limit_attempts_id_seq" FROM PUBLIC, anon, authenticated;
 GRANT USAGE, SELECT ON SEQUENCE "public"."rate_limit_attempts_id_seq" TO service_role;
 
--- ACL RPC PROPUESTA: revocar PUBLIC evita EXECUTE heredado. Los helpers internos siguen funcionando bajo el propietario de los RPC SECURITY DEFINER.
+-- ACL RPC certificada: revocar PUBLIC evita EXECUTE heredado. Los helpers internos siguen funcionando bajo el propietario de los RPC SECURITY DEFINER.
 
 ALTER FUNCTION public."notify_order_ready"() OWNER TO postgres;
 REVOKE ALL ON FUNCTION public."notify_order_ready"() FROM PUBLIC, anon, authenticated, service_role;

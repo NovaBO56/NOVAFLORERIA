@@ -1,11 +1,11 @@
--- CANDIDATA: solo nueva instancia después de BASELINE_CANDIDATE.sql.
+-- Seed de la cadena activa local certificada; solo instalación nueva/vacía.
 -- Defaults de instalación, sin clientes, usuarios, productos o configuraciones privadas.
 BEGIN;
 INSERT INTO storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
 VALUES ('product-images', 'product-images', true, 5242880, ARRAY['image/jpeg','image/png','image/webp']),
        ('payment-qr', 'payment-qr', true, 5242880, ARRAY['image/jpeg','image/png','image/webp'])
 ON CONFLICT (id) DO NOTHING;
--- No sube archivos. Límites de payment-qr propuestos: no copiar ausencia de límites remota.
+-- No sube archivos. Límites certificados de payment-qr, sin copiar configuración privada.
 INSERT INTO public.cash_registers (name, is_active)
 SELECT 'Caja principal', true WHERE NOT EXISTS (SELECT 1 FROM public.cash_registers);
 -- Caja sin sesión abierta, saldo o movimientos; la apertura corresponde al operador.

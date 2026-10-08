@@ -1,7 +1,7 @@
--- CANDIDATA 036, FUERA DE LA CADENA ACTIVA. NO APLICADA.
--- No incluye 035 ni toca schema_migrations. Revisar SECURITY_DECISIONS_FINAL.md.
--- Solo sobre un esquema equivalente al snapshot; no ejecuta baseline ni borra datos.
--- Retirada física de create_order(6) PENDIENTE de aprobación: aquí solo se deshabilita su acceso RPC.
+-- Hardening RPC de la cadena activa local certificada.
+-- Independiente de checkout/tracking; no modifica el historial remoto.
+-- Aplicar después de la baseline en instalaciones nuevas/vacías; no borra datos.
+-- Compatibilidad histórica: revoca acceso a create_order(6) si existe; no lo crea.
 BEGIN;
 SET LOCAL search_path = public, extensions, pg_catalog;
 
@@ -1083,7 +1083,7 @@ begin
 end;
 $function$;
 
--- Definición oficial propuesta: SOLO servidor, teléfono validado atómicamente.
+-- Contrato certificado: SOLO servidor, teléfono validado atómicamente.
 CREATE OR REPLACE FUNCTION public.create_payment(p_order_id uuid, p_customer_phone text)
 RETURNS TABLE(id uuid, amount numeric, method text, status text, order_number bigint)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
@@ -1295,5 +1295,5 @@ ALTER FUNCTION public.create_payment(uuid,text) OWNER TO postgres;
 REVOKE ALL ON FUNCTION public.create_payment(uuid,text) FROM PUBLIC, anon, authenticated, service_role;
 GRANT EXECUTE ON FUNCTION public.create_payment(uuid,text) TO service_role;
 -- create_payment(uuid) ya no existe; solo queda el contrato privado de dos argumentos.
--- No DROP de create_order(6) hasta confirmar consumidores externos y aprobación explícita.
+-- La firma create_order(6) no existe en instalaciones limpias; aquí no se elimina.
 COMMIT;

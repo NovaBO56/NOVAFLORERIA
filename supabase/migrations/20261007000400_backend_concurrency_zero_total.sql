@@ -1,4 +1,4 @@
--- CANDIDATA LOCAL; no historial, no datos productivos, no 035.
+-- Concurrencia y total cero: cadena activa local certificada, sin datos productivos.
 BEGIN;
 ALTER TABLE public.orders ADD COLUMN IF NOT EXISTS request_contract jsonb;
 ALTER TABLE public.inventory_movements ALTER COLUMN created_by DROP NOT NULL;
@@ -983,7 +983,7 @@ begin
 end;
 $function$;
 
--- Definición oficial propuesta: SOLO servidor, teléfono validado atómicamente.
+-- Contrato certificado: SOLO servidor, teléfono validado atómicamente.
 CREATE OR REPLACE FUNCTION public.create_payment(p_order_id uuid, p_customer_phone text)
 RETURNS TABLE(id uuid, amount numeric, method text, status text, order_number bigint)
 LANGUAGE plpgsql SECURITY DEFINER SET search_path = public
