@@ -9,6 +9,10 @@ import { trackOrderSchema } from "@/validations/public-catalog";
 import { paymentNotice } from "@/lib/public/payment-notice";
 
 describe("Primera ronda de producción: reglas reales", () => {
+  it("conserva el significado histórico del pago sin cambiar los detalles actuales",()=>{
+    const entry={table_name:"payments",action:"pago_rechazado",after:null,presentation_details:{status:"confirmado",amount:10},entity_name:"Pedido #12"};
+    expect(auditPresentation(entry)).toMatchObject({title:"Pago rechazado"});expect(auditPresentation(entry).facts).toContain("Estado: Rechazado");expect(entry.presentation_details.status).toBe("confirmado");
+  });
   it("prepara aviso manual con pedido, cliente, importe y entrega",()=>{
     const message=paymentNotice({id:"test",order_number:12,status:"pendiente_pago",subtotal:10,discount_total:0,total:10,customer_message:"Método: Retiro en tienda",created_at:"",reserved_until:null,payment_status:"pendiente",items:[{product_name:"Ramo",quantity:1,unit_price:10,line_total:10,message:"Tarjeta TEST",note:null,personalization:null}]},"TEST cliente","70011223");
     expect(message).toContain("Pedido #12");expect(message).toContain("59170011223");expect(message).toContain("Tarjeta TEST");expect(message).toContain("Retiro en tienda");expect(message).toContain("pendiente de revisión");
