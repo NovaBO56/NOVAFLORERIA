@@ -142,6 +142,7 @@ export default function CustomerManagement() {
   }
 
   function handleSaved(customer: Customer) {
+    setShowCreate(false);
     setEditingCustomer(null);
 
     setCustomers((current) => {

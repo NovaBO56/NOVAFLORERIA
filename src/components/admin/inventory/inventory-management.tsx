@@ -1808,7 +1808,7 @@ useEffect(() => {
             <Field
               label="Lote"
               optional
-              hint="Si no eliges lote, la merma se descuenta del stock general."
+              hint="Si no eliges lote, se consumen primero los lotes más antiguos (FIFO), respetando las reservas."
             >
               <select
                 value={wasteForm.lot_id}

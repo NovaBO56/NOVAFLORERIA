@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
@@ -11,7 +11,8 @@ type UserRole = "administrador" | "empleado";
 const selectClassName =
   "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 
-export default function CreateUserForm() {
+export default function CreateUserForm({ onCreated }: { onCreated?: () => void }) {
+  const lock = useRef(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
@@ -21,6 +22,8 @@ export default function CreateUserForm() {
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+    if (lock.current) return;
+    lock.current = true;
     setLoading(true);
     setMessage("");
 
@@ -50,16 +53,19 @@ export default function CreateUserForm() {
       setPassword("");
       setFullName("");
       setRole("empleado");
+      onCreated?.();
     } catch {
       setMessage("No se pudo conectar con el servidor.");
     } finally {
       setLoading(false);
+      lock.current = false;
     }
   }
 
   return (
     <Card>
       <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+        <fieldset disabled={loading} className="flex min-w-0 flex-col gap-4">
         <Field label="Nombre completo">
           <Input
             value={fullName}
@@ -109,6 +115,7 @@ export default function CreateUserForm() {
         <Button type="submit" loading={loading} loadingText="Creando…" className="self-start">
           Crear usuario
         </Button>
+        </fieldset>
 
         {message && (
           <p className="text-sm text-text" role="status">

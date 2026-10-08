@@ -104,7 +104,7 @@ export function ProductDetailSection({
           </h2>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-[1.05fr_.95fr]">
+        <div className="grid min-w-0 gap-8 break-words lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
           <div
             className={`grid gap-4 ${
               images.length > 1 ? "grid-cols-[84px_1fr]" : "grid-cols-1"

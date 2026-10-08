@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 import type { Customer } from "./customer-management";
 
@@ -20,6 +20,7 @@ export default function CustomerForm({
   onSaved,
 }: Props) {
   const editing = Boolean(customer);
+  const lock = useRef(false);
 
   const [name, setName] = useState(customer?.name ?? "");
   const [phone, setPhone] = useState(customer?.phone ?? "");
@@ -39,6 +40,8 @@ export default function CustomerForm({
 
   async function submit(event: React.FormEvent) {
     event.preventDefault();
+    if (lock.current) return;
+    lock.current = true;
 
     try {
       setSaving(true);
@@ -82,37 +85,40 @@ export default function CustomerForm({
       );
     } finally {
       setSaving(false);
+      lock.current = false;
     }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="w-full max-w-2xl">
+    <Modal open onOpenChange={open => { if (!open && !saving) onClose(); }}><ModalContent dismissible={!saving} showCloseButton={false} className="gap-0 p-0 md:max-w-2xl">
+      <>
         <div className="flex items-center justify-between border-b p-6">
           <div>
-            <h2 className="text-lg font-semibold">
+            <ModalTitle className="text-lg font-semibold">
               {editing
                 ? "Editar cliente"
                 : "Nuevo cliente"}
-            </h2>
+            </ModalTitle>
 
-            <p className="mt-1 text-sm text-muted-foreground">
+            <ModalDescription className="mt-1 text-sm text-muted-foreground">
               {editing
                 ? "Actualiza los datos del cliente."
                 : "Registra un nuevo cliente."}
-            </p>
+            </ModalDescription>
           </div>
 
           <Button
             variant="ghost"
             size="icon-sm"
+            aria-label="Cerrar cliente"
+            disabled={saving}
             onClick={onClose}
           >
             <X className="h-4 w-4" />
           </Button>
         </div>
 
-        <form onSubmit={submit}>
+        <form onSubmit={submit}><fieldset disabled={saving}>
           <div className="grid gap-5 p-6 sm:grid-cols-2">
             <label className="space-y-2">
               <span className="text-sm font-medium">
@@ -204,7 +210,7 @@ export default function CustomerForm({
           </div>
 
           {error && (
-            <div className="mx-6 mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+            <div role="alert" className="mx-6 mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
               {error}
             </div>
           )}
@@ -230,8 +236,8 @@ export default function CustomerForm({
                   : "Crear cliente"}
             </Button>
           </div>
-        </form>
-      </Card>
-    </div>
+        </fieldset></form>
+      </>
+    </ModalContent></Modal>
   );
 }

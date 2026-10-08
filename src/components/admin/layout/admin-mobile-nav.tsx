@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Menu } from "lucide-react";
+import { Menu, X } from "lucide-react";
 import { Dialog } from "radix-ui";
 import { Button } from "@/components/ui/button";
 import type { AdminNavSection } from "@/config/admin-navigation";
@@ -26,6 +26,7 @@ export function AdminMobileNav({ sections }: { sections: AdminNavSection[] }) {
             Secciones del panel de administración
           </Dialog.Description>
           <AdminBrand />
+          <Dialog.Close asChild><Button variant="ghost" size="icon" aria-label="Cerrar menú" className="absolute right-2 top-2"><X aria-hidden="true" /></Button></Dialog.Close>
           <AdminNavList sections={sections} onNavigate={() => setOpen(false)} />
         </Dialog.Content>
       </Dialog.Portal>

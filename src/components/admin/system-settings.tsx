@@ -15,6 +15,7 @@ type SystemSetting = {
 export default function SystemSettings() {
   const [settings, setSettings] = useState<SystemSetting[]>([]);
   const [loading, setLoading] = useState(true);
+  const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
 
   async function loadSettings() {
@@ -52,8 +53,10 @@ export default function SystemSettings() {
   }, []);
 
   async function updateSetting(setting: SystemSetting) {
+    if (pending) return;
     if (setting.key === "accept_orders_outside_hours") {
       const current = typeof setting.value === "object" && setting.value !== null && "enabled" in setting.value && setting.value.enabled === true;
+      setPending(true);
       try {
         const response = await fetch("/api/admin/system-settings/accept-orders-outside-hours", {
           method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ enabled: !current }),
@@ -62,6 +65,7 @@ export default function SystemSettings() {
         if (!response.ok) throw new Error(result.message || "No se pudo actualizar.");
         await loadSettings();
       } catch (error) { setError(error instanceof Error ? error.message : "No se pudo actualizar."); }
+      finally { setPending(false); }
       return;
     }
     const value = window.prompt(
@@ -138,8 +142,8 @@ export default function SystemSettings() {
             <div>
               <p className="font-semibold text-text">{setting.key === "accept_orders_outside_hours" ? "Aceptar pedidos fuera de horario" : setting.key}</p>
               <p className="text-text-secondary">
-                Valor:{" "}
-                {typeof setting.value === "string"
+                Estado:{" "}
+                {setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Pedidos permitidos fuera de horario" : "Solo dentro del horario de atención") : typeof setting.value === "string"
                   ? setting.value
                   : JSON.stringify(setting.value)}
               </p>
@@ -150,8 +154,8 @@ export default function SystemSettings() {
               </div>
             </div>
 
-            <Button size="sm" variant="outline" onClick={() => void updateSetting(setting)}>
-              {setting.key === "accept_orders_outside_hours" ? "Cambiar permitido/cerrado" : "Modificar"}
+            <Button size="sm" variant="outline" loading={pending} disabled={pending} onClick={() => void updateSetting(setting)}>
+              {setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Desactivar pedidos fuera de horario" : "Permitir pedidos fuera de horario") : "Modificar"}
             </Button>
           </Card>
         ))

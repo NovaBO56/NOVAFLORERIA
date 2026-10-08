@@ -78,6 +78,7 @@ export default function CustomerList({
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
 
             <input
+              aria-label="Buscar clientes"
               value={search}
               onChange={(event) => setSearch(event.target.value)}
               onKeyDown={(event) => {
@@ -98,6 +99,7 @@ export default function CustomerList({
           </Button>
 
           <select
+            aria-label="Filtrar clientes por estado"
             value={status}
             onChange={(event) => {
               setStatus(event.target.value);
@@ -219,6 +221,7 @@ export default function CustomerList({
                       <Button
                         variant="ghost"
                         size="icon-sm"
+                        aria-label={`Ver cliente ${customer.name}`}
                         onClick={() => onView(customer.id)}
                       >
                         <MoreHorizontal className="h-4 w-4" />
@@ -235,7 +238,8 @@ export default function CustomerList({
               <button
                 key={customer.id}
                 type="button"
-                onClick={() => onView(customer.id)}
+                aria-label={`Ver cliente ${customer.name}`}
+                        onClick={() => onView(customer.id)}
                 className="flex w-full items-center gap-3 p-4 text-left hover:bg-muted/20"
               >
                 <div className="flex h-10 w-10 items-center justify-center rounded-full bg-brand/10 text-brand">

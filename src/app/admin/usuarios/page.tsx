@@ -1,7 +1,6 @@
 import { requireAdmin } from "@/lib/auth/permissions";
 import { AccessDenied } from "@/components/admin/layout/access-denied";
-import CreateUserForm from "@/components/admin/create-user-form";
-import UserManagement from "@/components/admin/user-management";
+import { UsersPanel } from "@/components/admin/users-panel";
 
 export default async function AdminUsersPage() {
   try {
@@ -17,15 +16,7 @@ export default async function AdminUsersPage() {
         <p className="text-text-secondary">Administración de usuarios, roles y estados.</p>
       </div>
 
-      <section className="flex flex-col gap-4">
-        <h2>Crear usuario</h2>
-        <CreateUserForm />
-      </section>
-
-      <section className="flex flex-col gap-4">
-        <h2>Usuarios registrados</h2>
-        <UserManagement />
-      </section>
+      <UsersPanel />
     </div>
   );
 }

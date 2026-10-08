@@ -120,7 +120,7 @@ export default function UserManagement() {
     <div className="flex flex-col gap-4">
       {users.map((user) => (
         <Card key={user.id} className="flex-col gap-4 md:flex-row md:items-center md:justify-between">
-          <div>
+          <div className="min-w-0 break-words">
             <p className="font-semibold text-text">{user.full_name ?? "Sin nombre"}</p>
             <p className="text-text-secondary">Rol: {user.role}</p>
             <div className="mt-1">
@@ -130,7 +130,7 @@ export default function UserManagement() {
             </div>
           </div>
 
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button size="sm" variant="outline" onClick={() => void updateStatus(user)}>
               {user.is_active ? "Desactivar" : "Activar"}
             </Button>

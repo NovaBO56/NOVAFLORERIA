@@ -88,7 +88,7 @@ export default function CheckoutPage() {
   }
   const whatsapp = whatsappLink(meta.whatsapp, recovery ? `Hola NOVA, necesito ayuda con mi pedido ${order ? `#${order.order_number}` : "recién creado"}.` : "Hola NOVA, necesito ayuda para completar mi compra.");
   return <main className="min-h-screen bg-[#faf8fb] px-4 py-8 text-[#403344]">
-    <div className="mx-auto max-w-3xl space-y-6">
+    <div className="mx-auto max-w-3xl space-y-6 break-words">
       <nav className="flex flex-wrap gap-5"><Link href="/">← Volver a la tienda</Link><Link href="/seguimiento">Seguir un pedido</Link></nav>
       <h1 className="text-3xl font-bold">{recovery ? "Pedido creado" : "Finalizar compra"}</h1>
       {error ? <p role="alert" className="rounded-xl border border-red-200 bg-red-50 p-4">{error}</p> : null}
@@ -112,14 +112,14 @@ export default function CheckoutPage() {
           {details.delivery === "entrega" ? <><label className="block">Dirección y referencia<textarea required minLength={5} maxLength={400} autoComplete="street-address" className={inputClass} value={details.address} onChange={event => update("address", event.target.value)} /></label><p className="text-sm">Disponibilidad, horario y costo de envío se coordinan con la tienda. El total mostrado corresponde a los productos.</p></> : null}
           <label className="block">Notas<textarea maxLength={400} className={inputClass} value={details.notes} onChange={event => update("notes", event.target.value)} /></label>
           <label className="block">Promoción<select className={inputClass} value={details.promotion_id} onChange={event => update("promotion_id", event.target.value)}><option value="">Sin promoción</option>{meta.promotions.map(promotion => <option key={promotion.id} value={promotion.id}>{promotion.name}</option>)}</select></label>
-          <p>Método de pago: QR con revisión de la tienda.</p>
+          <p>Pago por QR con revisión de la tienda. Si el total definitivo es cero, no necesitarás pagar.</p>
         </fieldset>
         <section className="space-y-3 rounded-2xl border bg-white p-5"><h2 className="text-xl font-bold">{review ? "Resumen final" : "Tu compra"}</h2>{cart.items.map(item => <div key={item.id}><p>{item.quantity} × {item.name}: {formatMoney(item.price * item.quantity)}</p>{item.options?.map(option => <p key={option.id} className="text-sm">{option.name}</p>)}{item.message ? <p className="text-sm">Tarjeta: {item.message}</p> : null}</div>)}<p className="font-bold">Subtotal estimado: {formatMoney(cart.total)}</p><p className="text-sm">El servidor valida precios, stock y promoción al crear el pedido. Revisa el total definitivo antes de transferir.</p>{review ? <p>{details.customer_name} · {details.customer_phone} · {details.delivery === "retiro" ? "Retiro en tienda" : details.address}</p> : null}</section>
         {cart.hasUnavailable ? <p role="alert">Hay productos no disponibles. Revisa el carrito en la tienda.</p> : null}
         {!acceptingOrders(meta.status) ? <p role="alert">La tienda está cerrada y no acepta pedidos fuera de horario.</p> : null}
         <button className={buttonClass} disabled={busy || cart.hasUnavailable || !acceptingOrders(meta.status)}>{busy ? "Creando pedido…" : review ? "Confirmar y crear pedido" : "Revisar compra"}</button>
       </form>}
-      {whatsapp ? <a className="block rounded-xl border border-purple-300 p-4 text-center font-bold" href={whatsapp} target="_blank" rel="noopener noreferrer">Necesito ayuda por WhatsApp</a> : <p className="text-sm">WhatsApp no está disponible en este momento. Consulta los datos de contacto de la tienda.</p>}
+      {ready && (whatsapp ? <a className="block rounded-xl border border-purple-300 p-4 text-center font-bold" href={whatsapp} target="_blank" rel="noopener noreferrer">Necesito ayuda por WhatsApp</a> : <p className="text-sm">WhatsApp no está disponible en este momento. Consulta los datos de contacto de la tienda.</p>)}
     </div>
   </main>;
 }

@@ -326,6 +326,7 @@ export default function ProductManagement() {
         <CardContent>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <input
+              aria-label="Buscar productos"
               value={filters.search}
               onChange={(event) =>
                 updateFilter("search", event.target.value)
@@ -335,6 +336,7 @@ export default function ProductManagement() {
             />
 
             <select
+              aria-label="Filtrar por categoría"
               value={filters.categoryId}
               onChange={(event) =>
                 updateFilter("categoryId", event.target.value)
@@ -351,6 +353,7 @@ export default function ProductManagement() {
             </select>
 
             <select
+              aria-label="Filtrar por temporada"
               value={filters.seasonId}
               onChange={(event) =>
                 updateFilter("seasonId", event.target.value)
@@ -367,6 +370,7 @@ export default function ProductManagement() {
             </select>
 
             <select
+              aria-label="Filtrar por estado"
               value={filters.status}
               onChange={(event) =>
                 updateFilter("status", event.target.value)
@@ -379,6 +383,7 @@ export default function ProductManagement() {
             </select>
 
             <select
+              aria-label="Filtrar por disponibilidad"
               value={filters.availability}
               onChange={(event) =>
                 updateFilter("availability", event.target.value)
@@ -391,6 +396,7 @@ export default function ProductManagement() {
             </select>
 
             <select
+              aria-label="Filtrar agotados"
               value={filters.soldOut}
               onChange={(event) =>
                 updateFilter("soldOut", event.target.value)
@@ -403,6 +409,7 @@ export default function ProductManagement() {
             </select>
 
             <select
+              aria-label="Filtrar destacados"
               value={filters.featured}
               onChange={(event) =>
                 updateFilter("featured", event.target.value)

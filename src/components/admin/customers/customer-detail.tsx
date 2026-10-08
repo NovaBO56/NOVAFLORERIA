@@ -4,7 +4,7 @@ import { Mail, Pencil, Phone, X } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 import type {
   Customer,
@@ -44,14 +44,14 @@ export default function CustomerDetail({
   );
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-      <Card className="max-h-[90vh] w-full max-w-3xl overflow-y-auto">
+    <Modal open onOpenChange={open => { if (!open) onClose(); }}><ModalContent showCloseButton={false} className="gap-0 p-0 md:max-w-3xl">
+      <>
         <div className="flex items-start justify-between border-b p-6">
-          <div>
-            <div className="flex items-center gap-3">
-              <h2 className="text-lg font-semibold">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-3">
+              <ModalTitle className="min-w-0 break-words text-lg font-semibold">
                 {data.customer.name}
-              </h2>
+              </ModalTitle>
 
               <Badge
                 variant={
@@ -66,15 +66,16 @@ export default function CustomerDetail({
               </Badge>
             </div>
 
-            <p className="mt-1 text-sm text-muted-foreground">
+            <ModalDescription className="mt-1 text-sm text-muted-foreground">
               Cliente registrado el{" "}
               {formatDate(data.customer.created_at)}
-            </p>
+            </ModalDescription>
           </div>
 
           <Button
             variant="ghost"
             size="icon-sm"
+            aria-label="Cerrar cliente"
             onClick={onClose}
           >
             <X className="h-4 w-4" />
@@ -126,7 +127,7 @@ export default function CustomerDetail({
         </div>
 
         <div className="grid gap-4 p-6 sm:grid-cols-2">
-          <Card className="p-4">
+          <>
             <p className="text-sm text-muted-foreground">
               Pedidos
             </p>
@@ -134,9 +135,9 @@ export default function CustomerDetail({
             <p className="mt-1 text-2xl font-semibold">
               {data.orders.length}
             </p>
-          </Card>
+          </>
 
-          <Card className="p-4">
+          <>
             <p className="text-sm text-muted-foreground">
               Total comprado
             </p>
@@ -144,7 +145,7 @@ export default function CustomerDetail({
             <p className="mt-1 text-2xl font-semibold">
               {formatMoney(total)}
             </p>
-          </Card>
+          </>
         </div>
 
         <div className="px-6 pb-6">
@@ -156,7 +157,7 @@ export default function CustomerDetail({
             Pedidos asociados a este cliente.
           </p>
 
-          <div className="mt-4 overflow-hidden rounded-lg border">
+          <div className="mt-4 overflow-x-auto rounded-lg border">
             {data.orders.length === 0 ? (
               <div className="p-8 text-center text-sm text-muted-foreground">
                 Este cliente todavía no tiene pedidos.
@@ -232,7 +233,7 @@ export default function CustomerDetail({
             Editar cliente
           </Button>
         </div>
-      </Card>
-    </div>
+      </>
+    </ModalContent></Modal>
   );
 }

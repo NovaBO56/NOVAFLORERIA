@@ -4,7 +4,7 @@ import { orderStatusLabels, paymentStatusLabels } from "@/lib/public/checkout";
 import type { PublicOrder } from "@/lib/public/types";
 
 export function OrderSummary({ order }: { order: PublicOrder }) {
-  return <section className="space-y-4 rounded-2xl border bg-white p-5" aria-live="polite">
+  return <section className="min-w-0 space-y-4 break-words rounded-2xl border bg-white p-5" aria-live="polite">
     <h2 className="text-xl font-bold">Pedido #{order.order_number}</h2>
     <p>Estado: <strong>{orderStatusLabels[order.status] ?? "Consulta con la tienda"}</strong></p>
     <p>Pago: {Number(order.total) === 0 ? "No requiere pago: pedido gratuito" : order.payment_status ? paymentStatusLabels[order.payment_status] ?? "Consulta con la tienda" : "Sin reportar"}</p>
