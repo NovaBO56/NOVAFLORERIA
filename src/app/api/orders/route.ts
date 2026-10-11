@@ -13,7 +13,15 @@ export async function POST(request: Request) {
       return rateLimitResponse();
     }
 
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "El cuerpo de la solicitud no es JSON válido." },
+        { status: 400 },
+      );
+    }
     const result = createOrderSchema.safeParse(body);
 
     if (!result.success) {

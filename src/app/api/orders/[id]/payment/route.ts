@@ -9,8 +9,16 @@ type RouteContext = { params: Promise<{ id: string }> };
 export async function POST(request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
-    const body = await request.json();
-    const parsed = trackOrderSchema.safeParse({ order_id: id, customer_phone: body.customer_phone });
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "El cuerpo de la solicitud no es JSON válido." },
+        { status: 400 },
+      );
+    }
+    const parsed = trackOrderSchema.safeParse({ order_id: id, customer_phone: body && typeof body === "object" && "customer_phone" in body ? body.customer_phone : undefined });
     if (!parsed.success) return NextResponse.json({ success: false, message: "El teléfono o pedido no es válido." }, { status: 400 });
     const supabase = await createClient();
     const allowed = await checkRateLimit(supabase, request, "reportPayment");

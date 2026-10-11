@@ -130,8 +130,8 @@ export default function ProductForm({
       return;
     }
 
-    if (!Number.isFinite(price) || price < 0) {
-      setError("El precio debe ser un número válido mayor o igual a cero.");
+    if (!Number.isFinite(price) || price <= 0) {
+      setError("El precio debe ser mayor a cero.");
       return;
     }
 
@@ -225,7 +225,7 @@ export default function ProductForm({
         <Field label="Precio" required>
           <Input
             type="number"
-            min="0"
+            min="0.01"
             step="0.01"
             value={form.price}
             onChange={(event) => updateForm("price", event.target.value)}
