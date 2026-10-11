@@ -6,7 +6,15 @@ import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 
 export async function POST(request: Request) {
   try {
-    const body = await request.json();
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { success: false, message: "El cuerpo de la solicitud no es JSON válido." },
+        { status: 400 },
+      );
+    }
     const result = trackOrderSchema.safeParse(body);
 
     if (!result.success) {

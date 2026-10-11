@@ -19,22 +19,22 @@ export function StatCard({
 }: StatCardProps) {
   return (
     <Card className="nova-fade min-w-0">
-      <CardContent className="flex items-start justify-between gap-4 p-0">
-        <div className="min-w-0">
-          <p className="text-xs font-medium uppercase tracking-[0.05em] text-text-secondary">
+      <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 p-0">
+        <div className="contents">
+          <p className="min-w-0 self-center text-xs font-medium uppercase tracking-[0.05em] text-text-secondary">
             {label}
           </p>
 
-          <p key={value} className="nova-value mt-2 truncate text-2xl font-semibold leading-none tracking-tight tabular-nums text-text sm:text-[28px]">
+          <p key={value} className="nova-value col-span-2 min-w-0 mt-2 [overflow-wrap:anywhere] text-2xl font-semibold leading-tight tracking-tight tabular-nums text-text sm:text-[28px]">
             {value}
           </p>
 
           {trend ? (
-            <p className="mt-2 text-xs font-medium text-leaf">
+            <p className="col-span-2 mt-2 text-xs font-medium text-leaf">
               {trend}
             </p>
           ) : description ? (
-            <p className="mt-2 text-xs leading-5 text-text-secondary">
+            <p className="col-span-2 mt-2 text-xs leading-5 text-text-secondary">
               {description}
             </p>
           ) : null}
@@ -43,7 +43,7 @@ export function StatCard({
         {icon ? (
           <div
             className={[
-              "flex size-10 shrink-0 items-center justify-center",
+              "col-start-2 row-start-1 flex size-10 shrink-0 items-center justify-center",
               "rounded-xl",
               "bg-brand-soft",
               "text-brand",

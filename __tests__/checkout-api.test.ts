@@ -82,3 +82,29 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     expect(await response.json()).toMatchObject({ success: false, message: "La reserva del pedido venció." });
   });
 });
+
+describe("JSON público inválido (regresión de certificación)", () => {
+  const routes = [
+    ["crear pedido", (r: Request) => create(r)],
+    ["seguimiento", (r: Request) => track(r)],
+    ["reportar pago", (r: Request) => pay(r, { params: Promise.resolve({ id }) })],
+  ] as const;
+  for (const [name, handler] of routes) {
+    it.each(["{", ""])(name + " rechaza JSON malformado %j sin RPC", async body => {
+      const response = await handler(new Request("http://localhost", { method: "POST", headers: { "Content-Type": "application/json" }, body }));
+      expect(response.status).toBe(400);
+      expect(await response.json()).toEqual({ success: false, message: "El cuerpo de la solicitud no es JSON válido." });
+      expect(mocks.adminFactory).not.toHaveBeenCalled();
+      expect(mocks.rpc).not.toHaveBeenCalled();
+    });
+    it.each([null, {}, [], 42])(name + " rechaza JSON válido con schema inválido %j", async body => {
+      expect((await handler(request(body))).status).toBe(400);
+      expect(mocks.adminFactory).not.toHaveBeenCalled();
+    });
+  }
+  it("crear pedido conserva rate limiting antes de leer el cuerpo", async () => {
+    mocks.allowed.mockResolvedValue(false);
+    expect((await create(new Request("http://localhost", { method: "POST", body: "{" }))).status).toBe(429);
+    expect(mocks.adminFactory).not.toHaveBeenCalled();
+  });
+});

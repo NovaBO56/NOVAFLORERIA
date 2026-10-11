@@ -100,32 +100,32 @@ export async function POST(request: Request, context: RouteContext) {
       );
     }
 
+    const { data: product, error: productError } = await supabase
+      .from("products")
+      .select("name, price")
+      .eq("id", result.data.product_id)
+      .maybeSingle();
+
+    if (productError) {
+      console.error("Error obteniendo el producto:", productError);
+      return NextResponse.json(
+        { success: false, message: "No se pudo verificar el producto." },
+        { status: 500 },
+      );
+    }
+
+    if (!product) {
+      return NextResponse.json(
+        { success: false, message: "El producto no existe." },
+        { status: 404 },
+      );
+    }
+
     if (
       promotion.promotion_type === "producto" &&
       promotion.discount_type === "monto_fijo" &&
       promotion.discount_value !== null
     ) {
-      const { data: product, error: productError } = await supabase
-        .from("products")
-        .select("name, price")
-        .eq("id", result.data.product_id)
-        .maybeSingle();
-
-      if (productError) {
-        console.error("Error obteniendo el producto:", productError);
-        return NextResponse.json(
-          { success: false, message: "No se pudo verificar el producto." },
-          { status: 500 },
-        );
-      }
-
-      if (!product) {
-        return NextResponse.json(
-          { success: false, message: "El producto no existe." },
-          { status: 404 },
-        );
-      }
-
       const discountValue = Number(promotion.discount_value);
       const violation = findFixedDiscountViolation(discountValue, [
         { name: product.name as string, price: Number(product.price) },

@@ -51,6 +51,21 @@ export async function GET(request: Request) {
 
     const { data, error, count } = await query;
 
+    // PostgREST responde 416 cuando un offset válido supera el total.
+    // Recuperamos el conteo con los mismos filtros, sin interpretar mensajes SQL.
+    if (error?.code === "PGRST103") {
+      const counted = await query.range(0, 0);
+      if (!counted.error && counted.count !== null) {
+        return NextResponse.json({
+          success: true,
+          products: [],
+          pagination: { page, limit, total: counted.count, total_pages: Math.max(1, Math.ceil(counted.count / limit)) },
+        });
+      }
+      console.error("Error contando el catálogo:", counted.error);
+      return NextResponse.json({ success: false, message: "No se pudo obtener el catálogo." }, { status: 500 });
+    }
+
     if (error) {
       console.error("Error obteniendo el catálogo:", error);
       return NextResponse.json({ success: false, message: "No se pudo obtener el catálogo." }, { status: 500 });
