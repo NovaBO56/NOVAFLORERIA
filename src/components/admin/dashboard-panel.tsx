@@ -182,7 +182,7 @@ export function DashboardPanel() {
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <p className="text-2xl font-semibold tabular-nums text-text">{data.clientes_total}</p>
+            <p className="min-w-0 [overflow-wrap:anywhere] text-2xl font-semibold tabular-nums text-text">{data.clientes_total}</p>
             <p className="text-text-secondary">clientes registrados en total</p>
           </CardContent>
         </Card>
@@ -226,7 +226,7 @@ function StatCard({
     <Link href={href} className="block">
       <Card interactive className="gap-2">
         <Icon aria-hidden="true" className="size-5 stroke-[1.5] text-brand" />
-        <p className="text-2xl font-semibold tabular-nums text-text">{value}</p>
+        <p className="min-w-0 [overflow-wrap:anywhere] text-2xl font-semibold tabular-nums text-text">{value}</p>
         <p className="text-text-secondary">{label}</p>
       </Card>
     </Link>
