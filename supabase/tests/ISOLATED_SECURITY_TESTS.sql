@@ -1,5 +1,5 @@
--- NO EJECUTADO. Solo instancia Supabase NUEVA, LOCAL y desechable.
--- Prerrequisitos: baseline + seeds + 036. Ejecutar como postgres.
+-- Solo instancia Supabase NUEVA, LOCAL y desechable.
+-- Prerrequisitos: cadena activa completa + seed. Ejecutar como postgres.
 -- Debe establecerse explícitamente: SET nova.security_test = 'isolated';
 -- El fixture entero revierte al final; secuencias pueden avanzar en la instancia desechable.
 BEGIN;
@@ -40,7 +40,8 @@ INSERT INTO public.orders (id,customer_id,subtotal,total,reserved_until)
 VALUES ('00000000-0000-4000-8000-000000000040','00000000-0000-4000-8000-000000000010',100,100,now()+interval '30 minutes'),
        ('00000000-0000-4000-8000-000000000041','00000000-0000-4000-8000-000000000011',100,100,now()+interval '30 minutes'),
        ('00000000-0000-4000-8000-000000000042','00000000-0000-4000-8000-000000000010',100,100,now()-interval '1 minute'),
-       ('00000000-0000-4000-8000-000000000043','00000000-0000-4000-8000-000000000010',100,100,now()+interval '30 minutes');
+       ('00000000-0000-4000-8000-000000000043','00000000-0000-4000-8000-000000000010',100,100,now()+interval '30 minutes'),
+       ('00000000-0000-4000-8000-000000000044','00000000-0000-4000-8000-000000000010',100,100,now()-interval '1 minute');
 INSERT INTO public.inventory_reservations (order_id,inventory_item_id,quantity,expires_at)
 SELECT id,'00000000-0000-4000-8000-000000000020',1,reserved_until
 FROM public.orders;
@@ -161,9 +162,18 @@ SELECT public.release_expired_reservations(NULL);
 RESET ROLE;
 DO $expiry$
 BEGIN
-  IF (SELECT status FROM public.orders WHERE id='00000000-0000-4000-8000-000000000042')<>'cancelado'
-     OR EXISTS (SELECT 1 FROM public.inventory_reservations WHERE order_id='00000000-0000-4000-8000-000000000042' AND status<>'released') THEN
-    RAISE EXCEPTION 'Expiración no liberó y canceló';
+  -- Sin pago reportado: el timeout cancela y libera.
+  IF (SELECT status FROM public.orders WHERE id='00000000-0000-4000-8000-000000000044')<>'cancelado'
+     OR NOT EXISTS (SELECT 1 FROM public.inventory_reservations WHERE order_id='00000000-0000-4000-8000-000000000044')
+     OR EXISTS (SELECT 1 FROM public.inventory_reservations WHERE order_id='00000000-0000-4000-8000-000000000044' AND status<>'released') THEN
+    RAISE EXCEPTION 'Expiración sin pago no liberó y canceló';
+  END IF;
+  -- Con pago pendiente: conserva pedido y reserva para revisión administrativa.
+  IF (SELECT status FROM public.orders WHERE id='00000000-0000-4000-8000-000000000042')<>'pendiente_pago'
+     OR (SELECT status FROM public.payments WHERE id='00000000-0000-4000-8000-000000000052')<>'pendiente'
+     OR NOT EXISTS (SELECT 1 FROM public.inventory_reservations WHERE order_id='00000000-0000-4000-8000-000000000042' AND status='reserved')
+     OR EXISTS (SELECT 1 FROM public.inventory_reservations WHERE order_id='00000000-0000-4000-8000-000000000042' AND status<>'reserved') THEN
+    RAISE EXCEPTION 'Expiración alteró pedido o reserva con pago reportado';
   END IF;
 END;
 $expiry$;
