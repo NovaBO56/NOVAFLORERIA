@@ -45,6 +45,8 @@ supabase/.temp/
 **/backups/
 **/private/
 *.dump
+*.dump.enc
+*.verified.json
 *.sql.gz
 *.bak
 *.private.json
