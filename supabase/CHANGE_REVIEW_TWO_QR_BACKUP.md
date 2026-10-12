@@ -1,30 +1,47 @@
-# Dos QR y backup semanal — revisión del 12 de octubre de 2026
+# Dos QR y backup — cierre LOCAL del 12 de octubre de 2026
 
-Rama: `codex/weekly-backup-two-qr`, desde master `b50cbf2139e1d125b6b67fd9be5cda84ba7a6dc4`. La rama está excluida de deployments automáticos en `vercel.json`. No merge, deploy, SQL remoto, cambio de credenciales ni conexión a bucket real. La propuesta **no está certificada integralmente**: falta cerrar las pruebas enumeradas abajo.
+Rama `codex/weekly-backup-two-qr`, base `b50cbf2139e1d125b6b67fd9be5cda84ba7a6dc4`. Sin merge, deploy, SQL remoto, bucket real ni cambios de credenciales productivas. La rama sigue excluida de deploys automáticos y el calendario de backup DESACTIVADO.
 
-## Cambios propuestos
+## Infraestructura
 
-- Nueva incremental `20261012000100_two_payment_qr.sql`. No modifica los nueve archivos anteriores ni seed/legacy. Convierte filas QR existentes en `qr_1` por columna default, conservando ID, ruta e imagen; permite un QR activo por slot.
-- Admin configura imagen, etiqueta y activación de cada QR; conserva historial de imágenes. Cliente elige entre activos. Elección en sessionStorage acotada al pedido; se limpia al comenzar otra compra.
-- RPC privado `report_payment_qr` envuelve el contrato privado existente de pago, usando sus validaciones/bloqueos. Almacena slot, etiqueta del servidor e ID de configuración en el pago pendiente. Un error posterior revierte íntegramente la transacción. Reintentos conservan el mismo pago y snapshot; cambiar el QR ya reportado requiere intervención de tienda. No confirma pagos, crea clientes ni consume stock por la elección.
-- WhatsApp incorpora etiqueta devuelta por servidor. El cliente sigue enviando manualmente; admin confirma/rechaza manualmente. El snapshot aparece en seguimiento, panel de pedidos y presentación de auditoría. Pagos anteriores permanecen sin QR conocido; no se inventa retrospectivamente.
-- Backup candidato en `supabase/backup/`, calendario GitHub desactivado por defecto. S3 privado configurable, cifrado AES-GCM antes de subir, verificación por descarga/SHA-256 y retención posterior. Detalles y exclusiones de Auth/Storage/cron en su README. No se necesita elegir proveedor ahora.
+Docker 29.8.2 respondió tras cerrar exclusivamente procesos Docker Desktop y su distro WSL docker-desktop; el reinicio limpio había fallado. Se observaron seis laboratorios/72 contenedores simultáneos y unos 210 MB de RAM libre. Se detuvieron los contenedores sin eliminar ninguno ni sus volúmenes; luego se levantaron servicios mínimos. El log tenía menciones OOM: presión de memoria es la causa probable, no una atribución definitiva. No se cambió código para resolver Docker.
 
-## Evidencia confirmada
+Laboratorios sin project-ref: origen API/DB localhost 59621/59622; replay/delta 60621/60622; restore 61621/61622. App QA localhost:3114 detenida después de probarla. Laboratorios anteriores conservados con servicios detenidos.
 
-- Replay completo diez migraciones + seed: PASS en laboratorio nuevo `NOVA-LOCAL-TWO-QR`, API localhost:59621, DB localhost:59622, sin project-ref remoto.
-- `ISOLATED_SECURITY_TESTS.sql`: PASS PostgreSQL real, rollback.
-- `TWO_PAYMENT_QR_TESTS.sql`: PASS PostgreSQL real, rollback. Incluye ACL anon/authenticated, cero/uno/dos QR, selección QR2, etiqueta confiable, teléfono incorrecto, rollback sin QR, reintento sin duplicar, snapshot después de renombrar/desactivar, confirmación/rechazo y pedido gratuito. Se corrigieron errores del fixture (nombre de columna y orden de argumentos), sin parches a la base ni cambios históricos.
-- `npm test`: 481/481, 35 archivos. Los cinco tests de backup son locales (cifrado/autenticación GCM, integridad, guards, retención y selección de catálogo); **no prueban S3 ni PostgreSQL restore**. Los mocks HTTP no sustituyen pruebas reales.
-- Lint: 0 errores / 0 warnings. TypeScript y build: PASS con variables locales. Secret scan: sin hallazgos. Legacy: 39/39 hashes intactos.
-- HTTP/Auth real: cuatro comprobaciones completadas (login admin, login empleado, sin QR público 404, empleado configuración 403). La siguiente comprobación encontró redirección a login para anon; el harness ahora admite la redirección sin confundirla con JSON. Todavía no se ha completado la repetición.
+## Resultados reales
 
-## Incidencia del laboratorio y pruebas pendientes
+| Prueba | Resultado |
+|---|---|
+| Replay diez migraciones + seed, 60622 | PASS, exit 0 |
+| Delta nueve migraciones + QR antiguo sintético + décima | PASS: mismo ID, ruta, URL de imagen, etiqueta, estado y created_at; un registro; qr_1 |
+| ISOLATED_SECURITY_TESTS.sql / TWO_PAYMENT_QR_TESTS.sql | PASS PostgreSQL real; ambos con rollback |
+| HTTP/Auth | 49 comprobaciones PASS; admin, empleado, normal/inactivo y anon; sin mocks |
+| Navegador | 390/768/1280 reales: QR1 solo, QR2 solo, ambos y total cero; sin overflow; QR2 persiste tras recarga; otra compra limpia selección |
+| Pago manual | QR1 confirmado HTTP; QR2 rechazado; cliente/consumo solo tras confirmación, sin duplicados; snapshot en auditoría/seguimiento y recibo posterior |
+| Pedido gratuito | HTTP y navegador: confirmado, total cero, sin QR ni pago |
+| Backup DB | PostgreSQL custom cifrado AES-GCM; manifest/tamaño/SHA-256 privados |
+| Restore DB | Exit 0; 72 tablas con conteo y SHA-256 iguales al snapshot; once grupos de esquema/ACL/secuencias iguales |
+| Storage | Bundle cifrado separado; dos imágenes restauradas y descargadas con SHA-256 idéntico; ID/bucket/rutas preservados |
+| Auth restaurado | Login real del admin sintético PASS; usuarios, identidades, hashes/sesiones presentes incluidos |
+| Calidad | 483 tests/35 archivos; lint 0 errores/0 warnings; tsc/build PASS; secret scan sin hallazgos; legacy 39/39 intactas |
 
-Al arrancar un segundo laboratorio vacío en localhost:60621/60622, Docker dejó de responder: error 500 de su API y timeouts de Auth/API localhost. `docker desktop restart --timeout 60` también falló al detener sus procesos. Esto impidió continuar y no demuestra un bug comercial.
+HTTP cubrió ausencia de QR, QR1/QR2 únicos, ambos, inactivos no expuestos, etiquetas/bytes, selección, teléfono incorrecto, UUID inexistente, reintento, cambio posterior de QR bloqueado y rechazo liberando reservas. No se alteró el rate limit: el harness alcanzó 429 (5 intentos/5 minutos), se esperó el vencimiento natural y se reanudó. Fue una incidencia del harness.
 
-Pendiente: delta sobre QR antiguo (imagen/ID conservados), batería completa HTTP/Auth, navegador 390/768/1280 con selección tras recarga y WhatsApp, confirmación/rechazo vía HTTP y backup/restore integral en otra plataforma local vacía. Reparar Docker antes de repetir. No usar mocks para declarar esas pruebas aprobadas. No aprobar merge/deploy por este informe.
+En navegador “Ya pagué” dejó pago pendiente y enlace WhatsApp con `Pago reportado mediante: TEST HTTP qr_2`, target `_blank` y envío manual. La integración no expuso la ventana emergente automática: apertura externa efectiva pendiente en navegador convencional. No se envió WhatsApp real. Sin errores de consola observados. Una captura falló por la herramienta; otras se guardaron fuera de Git.
 
-Los datos creados son exclusivamente sintéticos del nuevo laboratorio: dos usuarios TEST TWO QR, producto TEST TWO QR HTTP PRODUCT e insumo/entrada TEST TWO QR HTTP STOCK. Sus IDs/resultados/credenciales permanecen en AppData privado del laboratorio; no se borraron ni se incluyeron en Git. Las pruebas SQL se revirtieron. La plataforma delta puede estar parcialmente arrancada; no contiene datos de negocio reales ni vínculo remoto.
+## Defectos corregidos exclusivamente en herramientas candidatas
 
-S3: no hay proveedor ni variables protegidas configuradas, no hubo dump productivo ni subida. El calendario está desactivado. La comprobación real de privacidad, versionado, cifrado del proveedor, permisos mínimos, upload/download y alertas requiere elegir proveedor y aprobación posterior. No solicitar claves por chat. Los archivos de Storage necesitan una copia separada antes de considerar completa la recuperación de imágenes.
+1. Guardia de restore exigía historial ausente en plataforma vacía: ahora detecta su existencia e importa estructura cuando falta.
+2. Postgres local no es superusuario: triggers Auth y DEFAULT ACL de otros roles fallaban. Datos/post-data usan supabase_admin LOCAL; negocio conserva propietarios postgres.
+3. psql elegía base supabase_admin al cambiar de rol: ahora explicita postgres.
+4. Defaults de plataforma ampliaban ACL, incluso EXECUTE del RPC privado para anon. Ahora se neutralizan defaults antes de crear objetos y se aplican ACL del archive. Se reconstruyó destino tras cada fallo. Resultado efectivo: report_payment_qr anon=false, authenticated=false, service_role=true.
+
+No se parcheó una restauración parcial para presentarla como exitosa. No cambió código comercial ni ninguna de las diez migraciones, seed o legacy en este cierre. Cambios limitados a herramientas QA/backup, tests y documentación.
+
+## Datos y límites
+
+Snapshot final: productos 2, clientes 3, pedidos/items 6/6, pagos 3, insumos/lotes 2/2, movimientos inventario 5, reservas 6, promociones 1, configuraciones QR 2 y perfiles 4. Caja sesiones/movimientos y devoluciones tienen cero filas: se compararon estructura y contenido vacío, sin afirmar prueba positiva de registros en esos módulos. Datos sintéticos TEST/000...; resultados, claves, dumps, credenciales y capturas privados fuera de Git. No se borraron automáticamente esos registros. Evidencia delta capturada antes de reconstruir ese laboratorio desechable para replay.
+
+Auth/Storage usan estructura compatible provisionada por Supabase. SMTP/OAuth/JWT/secret keys, roles/passwords PostgreSQL, otros esquemas y jobs pg_cron requieren recuperación separada. URLs públicas conservan host de origen: revisar cambio al recuperar en otro proyecto. Datos se compararon antes de login/upload, que actualizan timestamps/sesiones/versión Storage.
+
+S3 preparado por variables: endpoint, región, bucket, prefijo y access/secret key protegidas; privacidad, cifrado previo, verificación por descarga y retención posterior. Privacidad/versionado/IAM/upload/retención reales del proveedor NO probados. Pendiente elegir proveedor, aprobar variables/permisos y automatizar copia independiente productiva de archivos. No declarar recuperación productiva completa ni activar calendario. Detenerse para revisión sin merge/deploy.

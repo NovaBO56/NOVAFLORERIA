@@ -5,6 +5,7 @@ import { join } from "node:path";
 // Pure local tests: no database, credentials, S3 or production requests.
 import { archiveName, decryptDump, encryptDump, encryptionKey, retentionCandidates, sha256, validateBucket, validateSource, verifyDownloaded } from "../supabase/backup/backup-core.mjs";
 import { validateRestore, restoreList } from "../supabase/backup/restore-local.mjs";
+import { storageRestore } from "../supabase/backup/storage-local.mjs";
 
 describe("Backup privado", () => {
   it("cifra, recupera y detecta corrupción sin S3 (archivos locales)", async () => {
@@ -47,5 +48,15 @@ describe("Backup privado", () => {
     const selected = restoreList("1; 1 1 SCHEMA - public postgres\n2; 1 1 TABLE public orders postgres\n3; 1 1 TABLE auth users supabase_auth_admin\n4; 1 1 TABLE DATA auth users supabase_auth_admin\n5; 1 1 TABLE DATA auth schema_migrations supabase_auth_admin\n6; 1 1 TRIGGER auth users on_auth_user_created postgres\n7; 1 1 POLICY storage objects payment_qr_public_read postgres");
     expect(selected).toContain("TABLE public orders"); expect(selected).toContain("TABLE DATA auth users"); expect(selected).toContain("TRIGGER auth users"); expect(selected).toContain("POLICY storage");
     expect(selected).not.toContain("SCHEMA - public"); expect(selected).not.toContain("TABLE auth users"); expect(selected).not.toContain("DATA auth schema_migrations");
+  });
+  it("incluye el esquema/historial si la plataforma vacía aún no tiene supabase_migrations", () => {
+    const toc = "1; 1 1 SCHEMA - supabase_migrations postgres\n2; 1 1 TABLE supabase_migrations schema_migrations postgres\n3; 1 1 TABLE DATA supabase_migrations schema_migrations postgres";
+    expect(restoreList(toc)).toContain("SCHEMA - supabase_migrations");
+    expect(restoreList(toc, true)).not.toContain("TABLE supabase_migrations");
+    expect(restoreList(toc, true)).toContain("TABLE DATA supabase_migrations");
+  });
+  it("el restore de imágenes rechaza destinos remotos antes de cualquier solicitud", async () => {
+    await expect(storageRestore({ url: "https://example.com", key: "unused", encryption: "unused", input: "unused", acknowledge: "DISPOSABLE_LOCAL" })).rejects.toThrow("LOCAL");
+    await expect(storageRestore({ url: "http://127.0.0.1:61621", key: "unused", encryption: "unused", input: "unused", acknowledge: "NO" })).rejects.toThrow("Confirmación");
   });
 });
