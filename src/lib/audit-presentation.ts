@@ -13,6 +13,7 @@ export function auditPresentation(entry: Record<string, unknown>) {
   if (after.quantity !== undefined) facts.push(`Cantidad: ${Number(after.quantity).toLocaleString("es-BO", { maximumFractionDigits: 3 })}${entry.unit ? ` ${entry.unit}` : ""}`);
   if (amount !== undefined) facts.push(`${after.unit_cost !== undefined ? "Costo unitario" : "Monto"}: Bs ${Number(amount).toLocaleString("es-BO", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`);
   if (after.key === "store_location") { const value = after.value as Record<string,unknown>; facts.push("Ubicación de la tienda"); if (value?.address) facts.push(`Dirección: ${value.address}`); if (value?.reference) facts.push(`Referencia: ${value.reference}`); }
+  if (after.qr_label) facts.push(`QR indicado: ${after.qr_label} (${after.qr_slot}) · Información auxiliar`);
   if (entry.reason) facts.push(`Motivo: ${entry.reason}`);
   return { title, facts, user: String(entry.user_name || "Sistema / usuario no disponible") };
 }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { reportQrSelectionSchema } from "@/validations/payments";
 import { trackOrderSchema } from "@/validations/public-catalog";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -20,6 +21,8 @@ export async function POST(request: Request, context: RouteContext) {
     }
     const parsed = trackOrderSchema.safeParse({ order_id: id, customer_phone: body && typeof body === "object" && "customer_phone" in body ? body.customer_phone : undefined });
     if (!parsed.success) return NextResponse.json({ success: false, message: "El teléfono o pedido no es válido." }, { status: 400 });
+    const selection = reportQrSelectionSchema.safeParse(body);
+    if (!selection.success) return NextResponse.json({ success: false, message: "QR no válido." }, { status: 400 });
     const supabase = await createClient();
     const allowed = await checkRateLimit(supabase, request, "reportPayment");
 
@@ -30,9 +33,10 @@ export async function POST(request: Request, context: RouteContext) {
     // Solo el servidor puede ejecutar el contrato nuevo. La función comprueba
     // teléfono, estado y monto bajo el mismo bloqueo que serializa los reintentos.
     const admin = createAdminClient();
-    const { data, error } = await admin.rpc("create_payment", {
+    const { data, error } = await admin.rpc("report_payment_qr", {
       p_order_id: id,
       p_customer_phone: parsed.data.customer_phone,
+      p_qr_slot: selection.data.qr_slot ?? null,
     });
 
     if (error) {

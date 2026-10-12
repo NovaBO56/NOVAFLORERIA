@@ -78,6 +78,7 @@ export type WeekDay = {
 
 export type CustomizationOption = { id: string; option_type: string; name: string; value: string; extra_price: number };
 export type PublicOrder = {
+  reported_qr?: import("./payment-qrs").PaymentQr | null;
   receipt_token?: string | null;
   id: string; order_number: number; status: string; subtotal: number; discount_total: number; total: number;
   customer_message: string | null; created_at: string; reserved_until: string | null; payment_status: string | null;

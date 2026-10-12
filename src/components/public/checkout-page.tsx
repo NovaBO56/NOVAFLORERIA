@@ -1,6 +1,7 @@
 "use client";
 import { phoneInput, PHONE_ERROR } from "@/lib/public/phone";
 import { paymentNotice } from "@/lib/public/payment-notice";
+import { selectedPaymentQr, readPaymentQrSelection, savePaymentQrSelection, type PaymentQr, type QrSlot } from "@/lib/public/payment-qrs";
 import Link from "next/link";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import { useEffect, useRef, useState } from "react";
@@ -21,7 +22,9 @@ export default function CheckoutPage() {
   const cart = useCart();
   const [details, setDetails] = useState<CheckoutDetails>(emptyDetails);
   const [meta, setMeta] = useState<{ status: BusinessStatus | null; promotions: PublicPromotion[]; whatsapp: string | null }>({ status: null, promotions: [], whatsapp: null });
-  const [qr, setQr] = useState<{ qr_public_url: string; account_label: string | null } | null>(null);
+  const [qrs, setQrs] = useState<PaymentQr[]>([]);
+  const [qrSlot, setQrSlot] = useState<QrSlot | null>(null);
+
   const [qrError, setQrError] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
@@ -29,6 +32,7 @@ export default function CheckoutPage() {
   const [review, setReview] = useState(false);
   const [recovery, setRecovery] = useState<Recovery | null>(null);
   const [order, setOrder] = useState<PublicOrder | null>(null);
+  const qr = order?.reported_qr ?? selectedPaymentQr(qrs, qrSlot);
   const flight = useRef(singleFlight());
   const attempt = useRef<{ fingerprint: string; key: string } | null>(null);
   const reporting = useRef(false);
@@ -38,7 +42,7 @@ export default function CheckoutPage() {
     void (async () => {
       try {
         const saved = JSON.parse(sessionStorage.getItem(recoveryKey) || "null");
-        if (saved && typeof saved.id === "string" && typeof saved.phone === "string" && active) setRecovery(saved);
+        if (saved && typeof saved.id === "string" && typeof saved.phone === "string" && active) { setRecovery(saved); setQrSlot(readPaymentQrSelection(sessionStorage, saved.id)); }
         if (!saved) { const draft = readCheckoutDraft(sessionStorage); if (draft && active) setDetails(draft); }
         attempt.current = JSON.parse(sessionStorage.getItem(attemptKey) || "null");
       } catch { /* Storage is optional. */ }
@@ -46,13 +50,13 @@ export default function CheckoutPage() {
         publicRequest<{ status: BusinessStatus }>("/api/business-hours"),
         publicRequest<{ promotions: PublicPromotion[] }>("/api/promotions"),
         publicRequest<{ whatsapp: { phone_number: string } }>("/api/whatsapp-config"),
-        publicRequest<{ qr: NonNullable<typeof qr> }>("/api/payment-qr"),
+        publicRequest<{ qrs: PaymentQr[] }>("/api/payment-qr"),
         refreshCartItems(),
       ]);
       if (!active) return;
       const [hours, promotions, whatsapp, paymentQr] = results;
       setMeta({ status: hours.status === "fulfilled" ? hours.value.status : null, promotions: promotions.status === "fulfilled" ? promotions.value.promotions : [], whatsapp: whatsapp.status === "fulfilled" ? whatsapp.value.whatsapp.phone_number : null });
-      if (paymentQr.status === "fulfilled" && paymentQr.value.qr.qr_public_url) setQr(paymentQr.value.qr);
+      if (paymentQr.status === "fulfilled" && paymentQr.value.qrs.length) setQrs(paymentQr.value.qrs);
       else setQrError("El QR no está disponible. Coordina el pago con la tienda por WhatsApp.");
       setReady(true);
     })();
@@ -101,7 +105,7 @@ export default function CheckoutPage() {
     });
   }
   async function reportPayment() {
-    if (reporting.current || busy || !order || !recovery || !requiresPayment(order)) return;
+    if (reporting.current || busy || !order || !recovery || !requiresPayment(order) || !qr) return;
     reporting.current = true;
     // Open from the click while browsers still permit a popup; never send a message.
     const target = meta.whatsapp ? whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone)) : null;
@@ -110,7 +114,8 @@ export default function CheckoutPage() {
     let opened = false;
     try { await run(async () => {
       try {
-        await publicRequest(`/api/orders/${recovery.id}/payment`, { customer_phone: recovery.phone });
+        const result = await publicRequest<{ payment: { qr_label: string } }>(`/api/orders/${recovery.id}/payment`, { customer_phone: recovery.phone, qr_slot: qr.qr_slot });
+        const target = whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone, result.payment.qr_label));
         // Persist the milestone even if the subsequent summary request fails.
         const saved = { ...recovery, confirmationReached: true };
         try { sessionStorage.setItem(recoveryKey, JSON.stringify(saved)); } catch { /* Optional storage. */ }
@@ -133,10 +138,11 @@ export default function CheckoutPage() {
         {order && Number(order.total) === 0 && !["cancelado", "rechazado"].includes(order.status) ? <p role="status">Pedido gratuito. No necesitas transferir ni reportar un pago. Puedes consultar su preparación en el seguimiento.</p> : null}
         {order && requiresPayment(order) ? <details open={order.payment_status !== "pendiente"} className="space-y-4 rounded-2xl border bg-white p-5"><summary className="cursor-pointer font-bold">{order.payment_status === "pendiente" ? "Consultar el QR usado para este pedido" : "Realizar el pago"}</summary>
           <h2 className="text-xl font-bold">Pago por QR</h2>
-          {qr ? <><p>Paga exactamente {formatMoney(order.total)} a {qr.account_label || "la cuenta de Floristería Anabelle"}.</p><Image unoptimized src={qr.qr_public_url} alt="QR de pago de Floristería Anabelle" width={320} height={320} className="nova-fade mx-auto max-w-full" /><a href={qr.qr_public_url} target="_blank" rel="noopener noreferrer" className="underline">Abrir QR para guardarlo</a><p>Después de realizar la transferencia, reporta tu pago. La confirmación depende de la revisión de la tienda.</p></> : <p>{qrError || "Cargando QR…"}</p>}
+          {!order.reported_qr && order.payment_status !== "pendiente" && qrs.length > 1 ? <fieldset className="grid min-w-0 gap-3 sm:grid-cols-2"><legend className="mb-2 font-semibold">Elige el QR utilizado para pagar</legend>{qrs.map(option => <label key={option.qr_slot} className="min-w-0 cursor-pointer rounded-xl border border-purple-200 p-3 has-[:checked]:border-purple-600 has-[:checked]:bg-purple-50"><span className="flex items-center gap-2"><input type="radio" name="payment-qr" value={option.qr_slot} checked={qrSlot === option.qr_slot} onChange={() => { setQrSlot(option.qr_slot); savePaymentQrSelection(sessionStorage, recovery.id, option.qr_slot); }} />{option.account_label}</span><Image unoptimized src={option.qr_public_url} alt={`QR de pago: ${option.account_label}`} width={220} height={220} className="mx-auto mt-3 h-auto max-w-full object-contain" /></label>)}</fieldset> : null}
+          {qr ? <><p>Paga exactamente {formatMoney(order.total)} a {qr.account_label || "la cuenta de Floristería Anabelle"}.</p><Image unoptimized src={qr.qr_public_url} alt="QR de pago de Floristería Anabelle" width={320} height={320} className="nova-fade mx-auto max-w-full" /><a href={qr.qr_public_url} target="_blank" rel="noopener noreferrer" className="underline">Abrir QR para guardarlo</a><p>Después de realizar la transferencia, reporta tu pago. La confirmación depende de la revisión de la tienda.</p></> : <p>{qrError || (qrs.length > 1 ? "Selecciona el QR con el que realizaste la transferencia." : "Cargando QR…")}</p>}
           {order.payment_status !== "pendiente" && qr ? <button disabled={busy} className={buttonClass} onClick={() => void reportPayment()}>{busy ? "Procesando…" : "Ya pagué: reportar pago"}</button> : null}
         </details> : null}
-        <div className="grid gap-3 sm:grid-cols-2"><Link href="/seguimiento" className={`${buttonClass} text-center`}>Ver estado de mi pedido</Link>{order?.receipt_token ? <a href={`/api/orders/receipt/${order.receipt_token}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-purple-300 p-3 text-center font-bold">Ver / descargar recibo</a> : null}<button disabled={busy} onClick={() => void run(refreshOrder)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-purple-300 p-3 font-bold"><RotateCcw aria-hidden size={18} />Actualizar pedido</button><Link href="/" className="rounded-xl border border-purple-300 p-3 text-center font-bold">Volver a la tienda</Link><button className="min-h-12 rounded-xl border border-purple-300 p-3 font-bold" disabled={busy || !order} onClick={() => { clearCheckoutSession(sessionStorage); setRecovery(null); setOrder(null); setReview(false); setDetails(emptyDetails); setError(""); attempt.current = null; }}>Comenzar otra compra</button></div><p className="text-sm">Conserva tu número de pedido y celular para consultar el seguimiento.</p>
+        <div className="grid gap-3 sm:grid-cols-2"><Link href="/seguimiento" className={`${buttonClass} text-center`}>Ver estado de mi pedido</Link>{order?.receipt_token ? <a href={`/api/orders/receipt/${order.receipt_token}`} target="_blank" rel="noopener noreferrer" className="rounded-xl border border-purple-300 p-3 text-center font-bold">Ver / descargar recibo</a> : null}<button disabled={busy} onClick={() => void run(refreshOrder)} className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl border border-purple-300 p-3 font-bold"><RotateCcw aria-hidden size={18} />Actualizar pedido</button><Link href="/" className="rounded-xl border border-purple-300 p-3 text-center font-bold">Volver a la tienda</Link><button className="min-h-12 rounded-xl border border-purple-300 p-3 font-bold" disabled={busy || !order} onClick={() => { clearCheckoutSession(sessionStorage); setRecovery(null); setOrder(null); setQrSlot(null); setReview(false); setDetails(emptyDetails); setError(""); attempt.current = null; }}>Comenzar otra compra</button></div><p className="text-sm">Conserva tu número de pedido y celular para consultar el seguimiento.</p>
       </> : cart.items.length === 0 ? <p>Tu carrito está vacío. <Link className="underline" href="/#catalogo">Ver catálogo</Link></p> : <form className="grid gap-5 md:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)] md:items-start" onSubmit={event => { event.preventDefault(); const parsed = checkoutDetailsSchema.safeParse(details); if (!parsed.success) { setError(parsed.error.issues[0]?.message || "Revisa tus datos."); return; } if (!review) { setError(""); setReview(true); } else void createOrder(); }}>
         <fieldset disabled={busy} className="space-y-4 rounded-2xl border bg-white p-5">
           <legend className="font-bold">1. Datos · 2. Entrega</legend>

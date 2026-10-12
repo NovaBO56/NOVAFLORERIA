@@ -10,7 +10,7 @@ const ORDER_SELECT = `
   id, order_number, customer_id, order_type, status, subtotal, discount_total, total,
   customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason,
   deleted_at, created_at, updated_at, guest_name, guest_phone, guest_whatsapp, receipt_token,
-  payments(id, order_id, method, amount, reference, status, confirmed_at),
+  payments(id, order_id, method, amount, reference, status, confirmed_at, qr_slot, qr_label),
   customer:customers (id, name, phone, whatsapp)
 `;
 

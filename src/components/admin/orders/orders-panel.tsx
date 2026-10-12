@@ -71,6 +71,8 @@ type OrderDetail = OrderRow & {
 };
 
 type PendingPayment = {
+  qr_slot?: string | null;
+  qr_label?: string | null;
   id: string;
   order_id: string;
   method: "qr" | "efectivo";
@@ -578,6 +580,7 @@ function OrderDetailModal({
                   </Button>
                 )}
 
+                {pendingPayment?.qr_label ? <p className="max-w-full break-words text-sm">QR indicado: {pendingPayment.qr_label} ({pendingPayment.qr_slot}). Información auxiliar; verifica la transferencia.</p> : null}
                 {order.order_type === "online" && order.status === "pendiente_pago" && pendingPayment && (
                   <>
                     <Button

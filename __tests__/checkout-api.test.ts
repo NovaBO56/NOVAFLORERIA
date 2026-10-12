@@ -45,13 +45,13 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     mocks.adminRpc.mockResolvedValue({ error: { code: "P0002" }, data: null });
     expect((await pay(request({ customer_phone: "70000001" }), { params: Promise.resolve({ id }) })).status).toBe(404);
     expect(mocks.rpc).not.toHaveBeenCalled();
-    expect(mocks.adminRpc).toHaveBeenCalledWith("create_payment", { p_order_id: id, p_customer_phone: "70000001" });
+    expect(mocks.adminRpc).toHaveBeenCalledWith("report_payment_qr", { p_qr_slot: null, p_order_id: id, p_customer_phone: "70000001" });
   });
   it("registra el pago pendiente sin marcarlo como confirmado", async () => {
     mocks.adminRpc.mockResolvedValue({ data: [{ id, order_number: 1, amount: 100, status: "pendiente" }], error: null });
     const response = await pay(request({ customer_phone: "70000000" }), { params: Promise.resolve({ id }) });
     expect(await response.json()).toMatchObject({ success: true, payment: { status: "pendiente" } });
-    expect(mocks.adminRpc).toHaveBeenLastCalledWith("create_payment", { p_order_id: id, p_customer_phone: "70000000" });
+    expect(mocks.adminRpc).toHaveBeenLastCalledWith("report_payment_qr", { p_qr_slot: null, p_order_id: id, p_customer_phone: "70000000" });
     expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it("rechaza pago sin teléfono antes del RPC", async () => {
@@ -73,7 +73,7 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
   it("ignora monto y pedido ajeno adicionales enviados por el cliente", async () => {
     mocks.adminRpc.mockResolvedValue({ data: [{ id, amount: 100, status: "pendiente" }], error: null });
     await pay(request({ customer_phone: "70000000", p_order_id: "otro", amount: 0.01 }), { params: Promise.resolve({ id }) });
-    expect(mocks.adminRpc).toHaveBeenCalledWith("create_payment", { p_order_id: id, p_customer_phone: "70000000" });
+    expect(mocks.adminRpc).toHaveBeenCalledWith("report_payment_qr", { p_qr_slot: null, p_order_id: id, p_customer_phone: "70000000" });
   });
   it("rechazo de estado/reserva del RPC se presenta como 400", async () => {
     mocks.adminRpc.mockResolvedValue({ error: { code: "P0001", message: "La reserva del pedido venció." }, data: null });

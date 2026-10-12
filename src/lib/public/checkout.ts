@@ -1,3 +1,4 @@
+import { paymentQrSessionKey } from "./payment-qrs";
 import { z } from "zod";
 import { createOrderSchema } from "@/validations/orders";
 import type { CartItem } from "./cart-logic";
@@ -52,7 +53,7 @@ export function checkoutStep(order: Parameters<typeof reachedConfirmation>[0] | 
   return confirmedBefore || (order && reachedConfirmation(order)) ? 3 : recovery ? 2 : review ? 1 : 0;
 }
 
-export const checkoutSessionKeys = { recovery: "nova-checkout-order-v1", attempt: "nova-checkout-attempt-v1", draft: "nova-checkout-draft-v1" } as const;
+export const checkoutSessionKeys = { recovery: "nova-checkout-order-v1", attempt: "nova-checkout-attempt-v1", draft: "nova-checkout-draft-v1", qr: paymentQrSessionKey } as const;
 // Drafts may be incomplete. Keep only bounded form fields, never an order/token/cart copy.
 const draftSchema = z.object({ customer_name: z.string().max(200), customer_phone: z.string().max(8), delivery: z.enum(["retiro", "entrega"]), address: z.string().max(400), reference: z.string().max(400).optional(), notes: z.string().max(400), promotion_id: z.string().uuid().or(z.literal("")) });
 export function readCheckoutDraft(storage: Pick<Storage, "getItem">): CheckoutDetails | null {
