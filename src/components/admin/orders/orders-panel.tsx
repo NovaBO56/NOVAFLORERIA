@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { OrderReturns } from "./order-returns";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Search, TriangleAlert } from "lucide-react";
 import { Badge, type OrderStatus } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -41,6 +41,7 @@ type OrderRow = {
   reserved_until: string | null;
   cancellation_reason: string | null;
   created_at: string;
+  payments: (PendingPayment & { status: string })[];
   customer: OneOrMany<CustomerRef>;
 };
 
@@ -96,8 +97,6 @@ const TYPE_CHIPS: { value: "todos" | "online" | "fisica"; label: string }[] = [
   { value: "fisica", label: "Física" },
 ];
 
-const ACTIVE_STATUSES: OrderStatus[] = ["pendiente_pago", "confirmado", "en_preparacion", "listo"];
-
 const NEXT_STATUS: Partial<Record<OrderStatus, { value: "en_preparacion" | "listo" | "finalizado"; label: string }>> =
   {
     confirmado: { value: "en_preparacion", label: "Marcar en preparación" },
@@ -123,40 +122,38 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
   const [pendingOnly, setPendingOnly] = useState(Boolean(initialPendingPaymentOnly));
   const [search, setSearch] = useState("");
 
+  const [page, setPage] = useState(1);
+  const [pagination, setPagination] = useState({ total: 0, total_pages: 1 });
+  const requestVersion = useRef(0);
+
   const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  async function loadOrders() {
+  const loadOrders = useCallback(async () => {
+    const version = ++requestVersion.current;
     try {
       setLoading(true);
       setError("");
-      const [ordersResponse, paymentsResponse] = await Promise.all([
-        fetch("/api/admin/orders"),
-        fetch("/api/admin/payments?status=pendiente"),
-      ]);
-      const ordersBody = await ordersResponse.json();
-      const paymentsBody = await paymentsResponse.json();
-
-      if (!ordersResponse.ok || !ordersBody.success) {
-        throw new Error(ordersBody.message ?? "No se pudieron obtener los pedidos.");
-      }
-      if (!paymentsResponse.ok || !paymentsBody.success) {
-        throw new Error(paymentsBody.message ?? "No se pudieron obtener los pagos pendientes.");
-      }
-
-      setOrders(ordersBody.orders ?? []);
-      setPendingPayments(paymentsBody.payments ?? []);
+      const query = new URLSearchParams({ status: statusFilter, type: typeFilter, pending_payment: String(pendingOnly), search, page: String(page), limit: "50" });
+      const response = await fetch(`/api/admin/orders?${query}`);
+      const body = await response.json();
+      if (version !== requestVersion.current) return;
+      if (!response.ok || !body.success) throw new Error(body.message ?? "No se pudieron obtener los pedidos.");
+      const rows: OrderRow[] = body.orders ?? [];
+      setOrders(rows);
+      setPendingPayments(rows.flatMap(order => (order.payments ?? []).filter(payment => payment.status === "pendiente")));
+      setPagination(body.pagination);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "No se pudieron obtener los pedidos.");
+      if (version === requestVersion.current) setError(err instanceof Error ? err.message : "No se pudieron obtener los pedidos.");
     } finally {
-      setLoading(false);
+      if (version === requestVersion.current) setLoading(false);
     }
-  }
+  }, [statusFilter, typeFilter, pendingOnly, search, page]);
 
   useEffect(() => {
-    void (async () => {
-      await loadOrders();
-    })();
-  }, []);
+    const version = requestVersion;
+    const timer = setTimeout(() => void loadOrders(), 250);
+    return () => { clearTimeout(timer); version.current++; };
+  }, [loadOrders]);
 
   const pendingPaymentByOrder = useMemo(() => {
     const map = new Map<string, PendingPayment>();
@@ -164,26 +161,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
     return map;
   }, [pendingPayments]);
 
-  const filteredOrders = useMemo(() => {
-    if (!orders) return [];
-    const term = search.trim().toLowerCase();
-
-    return orders.filter((order) => {
-      if (statusFilter === "activos" && !ACTIVE_STATUSES.includes(order.status)) return false;
-      if (statusFilter === "expirados" && !(order.status === "cancelado" && order.cancellation_reason === "Reserva de inventario vencida.")) return false;
-      if (statusFilter !== "activos" && statusFilter !== "todos" && statusFilter !== "expirados" && order.status !== statusFilter) return false;
-      if (typeFilter !== "todos" && order.order_type !== typeFilter) return false;
-      if (pendingOnly && !pendingPaymentByOrder.has(order.id)) return false;
-
-      if (term) {
-        const customer = first(order.customer);
-        const haystack = `${order.order_number} ${customer?.name ?? ""} ${customer?.phone ?? ""}`.toLowerCase();
-        if (!haystack.includes(term)) return false;
-      }
-
-      return true;
-    });
-  }, [orders, statusFilter, typeFilter, pendingOnly, search, pendingPaymentByOrder]);
+  const filteredOrders = orders ?? [];
 
   return (
     <div className="flex flex-col gap-4">
@@ -194,7 +172,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
               key={chip.value}
               size="sm"
               variant={statusFilter === chip.value ? "default" : "outline"}
-              onClick={() => setStatusFilter(chip.value)}
+              onClick={() => { setPage(1); setStatusFilter(chip.value); }}
             >
               {chip.label}
             </Button>
@@ -206,7 +184,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
               key={chip.value}
               size="sm"
               variant={typeFilter === chip.value ? "secondary" : "ghost"}
-              onClick={() => setTypeFilter(chip.value)}
+              onClick={() => { setPage(1); setTypeFilter(chip.value); }}
             >
               {chip.label}
             </Button>
@@ -214,7 +192,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
           <Button
             size="sm"
             variant={pendingOnly ? "secondary" : "ghost"}
-            onClick={() => setPendingOnly((current) => !current)}
+            onClick={() => { setPage(1); setPendingOnly((current) => !current); }}
           >
             Con pago por verificar
           </Button>
@@ -224,11 +202,11 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
               className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary"
             />
             <Input
-              aria-label="Buscar por número o cliente"
-              placeholder="Buscar por número o cliente"
+              aria-label="Buscar por número, cliente o teléfono"
+              placeholder="Buscar por número, cliente o teléfono"
               className="pl-9"
               value={search}
-              onChange={(event) => setSearch(event.target.value)}
+              onChange={(event) => { setPage(1); setSearch(event.target.value); }}
             />
           </div>
         </div>
@@ -329,6 +307,14 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
           </div>
         </>
       )}
+
+      <nav aria-label="Paginación de pedidos" className="flex flex-wrap items-center justify-between gap-3">
+        <span className="text-sm text-text-secondary">{pagination.total} pedidos · Página {page} de {pagination.total_pages}</span>
+        <div className="flex gap-2">
+          <Button variant="outline" disabled={loading || page <= 1} onClick={() => setPage(current => current - 1)}>Anterior</Button>
+          <Button variant="outline" disabled={loading || page >= pagination.total_pages} onClick={() => setPage(current => current + 1)}>Siguiente</Button>
+        </div>
+      </nav>
 
       <OrderDetailModal
         orderId={selectedId}

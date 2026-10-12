@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { orderQuantitySchema } from "./database-values";
 import { boliviaPhoneSchema } from "@/lib/public/phone";
 
 const orderItemSchema = z.object({
   product_id: z.string().uuid("El producto no es válido."),
-  quantity: z.coerce.number().positive("La cantidad debe ser mayor que cero."),
+  quantity: orderQuantitySchema,
   // Ids reales de customization_options elegidas para este producto.
   // El servidor valida que existan, estén activas y pertenezcan al
   // producto, y suma su extra_price real — nunca se confía en un

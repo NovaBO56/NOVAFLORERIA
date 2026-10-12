@@ -89,7 +89,10 @@ export async function POST(request: Request) {
   try {
     await requireEmployeeOrAdmin();
 
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ success: false, message: "El cuerpo de la solicitud no es JSON válido." }, { status: 400 });
+    }
     const result = createProductSchema.safeParse(body);
 
     if (!result.success) {

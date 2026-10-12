@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uuidSchema } from "@/validations/database-values";
 import { createClient } from "@/lib/supabase/server";
 
 type RouteContext = { params: Promise<{ id: string }> };
@@ -21,6 +22,7 @@ const PRODUCT_DETAIL_SELECT = `
 export async function GET(_request: Request, context: RouteContext) {
   try {
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
     const supabase = await createClient();
 
     const { data, error } = await supabase

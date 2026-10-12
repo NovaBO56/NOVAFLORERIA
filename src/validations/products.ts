@@ -1,9 +1,10 @@
 import { z } from "zod";
+import { productPriceSchema } from "./database-values";
 
 export const createProductSchema = z.object({
   name: z.string().trim().min(1, "El nombre del producto es obligatorio.").max(200),
   description: z.string().trim().max(2000).optional().nullable(),
-  price: z.coerce.number().positive("El precio debe ser mayor a cero."),
+  price: productPriceSchema,
   category_id: z.string().uuid().optional().nullable(),
   occasion: z.string().trim().max(120).optional().nullable(),
   season_id: z.string().uuid().optional().nullable(),
@@ -23,7 +24,7 @@ export const updateProductSchema = z
   .object({
     name: z.string().trim().min(1).max(200),
     description: z.string().trim().max(2000).nullable(),
-    price: z.coerce.number().positive("El precio debe ser mayor a cero."),
+    price: productPriceSchema,
     category_id: z.string().uuid().nullable(),
     occasion: z.string().trim().max(120).nullable(),
     season_id: z.string().uuid().nullable(),

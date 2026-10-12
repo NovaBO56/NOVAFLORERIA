@@ -4,6 +4,9 @@ import { createClient } from "@/lib/supabase/server";
 
 import { businessDate, businessDayStart } from "@/lib/business-date";
 
+import { readAllPages } from "@/lib/db/read-all-pages";
+import { sumMoney } from "@/lib/money";
+
 const ACTIVE_STATUSES = ["confirmado", "en_preparacion", "listo", "finalizado"];
 
 export async function GET() {
@@ -14,18 +17,13 @@ export async function GET() {
     const todayStart = businessDayStart();
 
     // 1. Ventas de hoy
-    const { data: todayOrders, error: todayOrdersError } = await supabase
+    const todayOrders = await readAllPages<{ total: number }>((start, end) => supabase
       .from("orders")
-      .select("total")
+      .select("total", { count: "exact" })
       .gte("created_at", todayStart.toISOString())
-      .in("status", ACTIVE_STATUSES);
+      .in("status", ACTIVE_STATUSES).order("id", { ascending: true }).range(start, end));
 
-    if (todayOrdersError) {
-      console.error("Error obteniendo ventas de hoy:", todayOrdersError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
-
-    const ventas_hoy = (todayOrders ?? []).reduce((sum, o) => sum + Number(o.total), 0);
+    const ventas_hoy = sumMoney(todayOrders.map(order => order.total));
 
     // 2. Pedidos pendientes de pago
     const { count: pedidos_pendientes, error: pendingOrdersError } = await supabase
@@ -50,15 +48,10 @@ export async function GET() {
     }
 
     // 4. Alertas de inventario
-    const { data: inventoryItems, error: inventoryError } = await supabase
+    const inventoryItems = await readAllPages<{ name: string; current_stock: number; minimum_stock: number }>((start, end) => supabase
       .from("inventory_items")
-      .select("name, current_stock, minimum_stock")
-      .eq("is_active", true);
-
-    if (inventoryError) {
-      console.error("Error obteniendo inventario:", inventoryError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
+      .select("name, current_stock, minimum_stock", { count: "exact" })
+      .eq("is_active", true).order("id", { ascending: true }).range(start, end));
 
     const bajo_stock = (inventoryItems ?? [])
       .filter((i) => Number(i.current_stock) > 0 && Number(i.current_stock) <= Number(i.minimum_stock))
@@ -90,15 +83,10 @@ export async function GET() {
       return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
     }
 
-    const { data: customersWithBirthday, error: birthdayError } = await supabase
+    const customersWithBirthday = await readAllPages<{ name: string; birthday: string }>((start, end) => supabase
       .from("customers")
-      .select("name, birthday")
-      .not("birthday", "is", null);
-
-    if (birthdayError) {
-      console.error("Error obteniendo cumpleaños:", birthdayError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
+      .select("name, birthday", { count: "exact" })
+      .not("birthday", "is", null).order("id", { ascending: true }).range(start, end));
 
     const today = businessDate();
     const cumpleanos_hoy = (customersWithBirthday ?? [])
@@ -112,42 +100,19 @@ export async function GET() {
     // 7. Productos más vendidos (últimos 30 días)
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
 
-    const { data: recentOrders, error: recentOrdersError } = await supabase
-      .from("orders")
-      .select("id")
-      .gte("created_at", thirtyDaysAgo)
-      .in("status", ACTIVE_STATUSES);
-
-    if (recentOrdersError) {
-      console.error("Error obteniendo pedidos recientes:", recentOrdersError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
+    const recentOrderItems = await readAllPages<{ product_name_snapshot: string; quantity: number }>((start, end) => supabase
+      .from("order_items")
+      .select("id, product_name_snapshot, quantity, order:orders!inner(status, created_at)", { count: "exact" })
+      .gte("order.created_at", thirtyDaysAgo)
+      .in("order.status", ACTIVE_STATUSES)
+      .order("id", { ascending: true }).range(start, end));
+    const totals = new Map<string, number>();
+    for (const item of recentOrderItems) {
+      totals.set(item.product_name_snapshot, (totals.get(item.product_name_snapshot) ?? 0) + Math.round(Number(item.quantity) * 1000));
     }
-
-    const recentOrderIds = (recentOrders ?? []).map((o) => o.id);
-    let productos_mas_vendidos: { name: string; quantity: number }[] = [];
-
-    if (recentOrderIds.length > 0) {
-      const { data: recentOrderItems, error: itemsError } = await supabase
-        .from("order_items")
-        .select("product_name_snapshot, quantity")
-        .in("order_id", recentOrderIds);
-
-      if (itemsError) {
-        console.error("Error obteniendo productos vendidos:", itemsError);
-        return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-      }
-
-      const totals = new Map<string, number>();
-      for (const item of recentOrderItems ?? []) {
-        const key = item.product_name_snapshot;
-        totals.set(key, (totals.get(key) ?? 0) + Number(item.quantity));
-      }
-
-      productos_mas_vendidos = Array.from(totals.entries())
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([name, quantity]) => ({ name, quantity }));
-    }
+    const productos_mas_vendidos = Array.from(totals.entries())
+      .sort((a, b) => b[1] - a[1]).slice(0, 5)
+      .map(([name, quantity]) => ({ name, quantity: quantity / 1000 }));
 
     return NextResponse.json({
       success: true,
@@ -165,7 +130,9 @@ export async function GET() {
       },
     });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "Acceso no autorizado.";
-    return NextResponse.json({ success: false, message }, { status: 403 });
+    console.error("Error consultando datos administrativos:", error);
+    const message = error instanceof Error ? error.message : "";
+    const unauthorized = /^(Usuario|Rol|Acceso)/.test(message);
+    return NextResponse.json({ success: false, message: unauthorized ? message : "No se pudieron obtener los datos." }, { status: unauthorized ? 403 : 500 });
   }
 }

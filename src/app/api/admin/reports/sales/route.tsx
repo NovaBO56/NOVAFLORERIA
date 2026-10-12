@@ -9,6 +9,9 @@ import {
   type SalesReportSummary,
 } from "@/lib/reports/sales-report-pdf";
 
+import { readAllPages } from "@/lib/db/read-all-pages";
+import { sumMoney } from "@/lib/money";
+
 const ACTIVE_STATUSES = ["confirmado", "en_preparacion", "listo", "finalizado"];
 
 async function renderSalesReportPdf(summary: SalesReportSummary, rows: SalesReportOrderRow[]) {
@@ -46,20 +49,18 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    const { data: orders, error } = await supabase
+    const orders = await readAllPages<RawSalesOrderRow>((fromRow, toRow) => supabase
       .from("orders")
       .select(
         "order_number, order_type, status, total, created_at, customer:customers(name), payments(method, status)",
+        { count: "exact" },
       )
       .gte("created_at", `${from}T00:00:00-04:00`)
       .lte("created_at", `${to}T23:59:59.999999-04:00`)
       .in("status", ACTIVE_STATUSES)
-      .order("created_at", { ascending: true });
-
-    if (error) {
-      console.error("Error obteniendo reporte de ventas:", error);
-      return NextResponse.json({ success: false, message: "No se pudo generar el reporte." }, { status: 500 });
-    }
+      .order("created_at", { ascending: true })
+      .order("id", { ascending: true })
+      .range(fromRow, toRow));
 
     const rows: SalesReportOrderRow[] = (orders ?? []).map((o: RawSalesOrderRow) => {
       const paymentsList = Array.isArray(o.payments) ? o.payments : [];
@@ -80,13 +81,13 @@ export async function GET(request: Request) {
     const by_payment_method: Record<string, number> = {};
     for (const r of rows) {
       const key = r.payment_method ?? "sin_pago_confirmado";
-      by_payment_method[key] = (by_payment_method[key] ?? 0) + r.total;
+      by_payment_method[key] = sumMoney([by_payment_method[key] ?? 0, r.total]);
     }
 
     const summary: SalesReportSummary = {
       from,
       to,
-      total_sales: rows.reduce((sum, r) => sum + r.total, 0),
+      total_sales: sumMoney(rows.map(r => r.total)),
       count_online: rows.filter((r) => r.order_type === "online").length,
       count_fisica: rows.filter((r) => r.order_type === "fisica").length,
       by_payment_method,
@@ -106,7 +107,9 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ success: true, summary, orders: rows });
   } catch (error) {
-    const message = error instanceof Error ? error.message : "No se pudo generar el reporte.";
-    return NextResponse.json({ success: false, message }, { status: 403 });
+    console.error("Error consultando datos administrativos:", error);
+    const message = error instanceof Error ? error.message : "";
+    const unauthorized = /^(Usuario|Rol|Acceso)/.test(message);
+    return NextResponse.json({ success: false, message: unauthorized ? message : "No se pudieron obtener los datos." }, { status: unauthorized ? 403 : 500 });
   }
 }

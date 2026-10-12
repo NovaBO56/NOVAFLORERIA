@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { receivedAtSchema } from "./database-values";
 
 export const createInventoryItemSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio.").max(200),
@@ -29,7 +30,7 @@ export const createInventoryEntrySchema = z.object({
   unit_cost: z.coerce.number().min(0).optional().nullable(),
   supplier_name: z.string().trim().max(200).optional().nullable(),
   notes: z.string().trim().max(1000).optional().nullable(),
-  received_at: z.string().optional(),
+  received_at: receivedAtSchema.optional(),
 });
 
 export const createInventoryWasteSchema = z.object({

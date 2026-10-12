@@ -104,10 +104,10 @@ export function ProductDetailSection({
           </h2>
         </div>
 
-        <div className="grid min-w-0 gap-8 break-words lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
+        <div className="grid min-w-0 gap-8 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
           <div
             className={`grid gap-4 ${
-              images.length > 1 ? "grid-cols-[84px_1fr]" : "grid-cols-1"
+              images.length > 1 ? "grid-cols-[84px_minmax(0,1fr)]" : "grid-cols-1"
             }`}
           >
             {images.length > 1 ? (
@@ -159,7 +159,7 @@ export function ProductDetailSection({
             </div>
           </div>
 
-          <div className="flex flex-col justify-center">
+          <div className="flex min-w-0 flex-col justify-center">
             {categoryName ? (
               <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#78657f]">
                 {categoryName}

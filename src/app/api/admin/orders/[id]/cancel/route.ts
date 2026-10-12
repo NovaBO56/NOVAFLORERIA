@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uuidSchema } from "@/validations/database-values";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { cancelOrderSchema } from "@/validations/orders";
@@ -9,6 +10,7 @@ export async function POST(request: Request, context: RouteContext) {
   try {
     await requireEmployeeOrAdmin();
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
 
     const body = await request.json();
     const result = cancelOrderSchema.safeParse(body);
@@ -27,6 +29,7 @@ export async function POST(request: Request, context: RouteContext) {
     });
 
     if (error) {
+      if (error.code === "P0002" || error.message === "El pago no existe." || error.message === "El pedido no existe.") return NextResponse.json({ success: false, message: "El recurso no existe." }, { status: 404 });
       if (error.code === "P0001") {
         return NextResponse.json({ success: false, message: error.message }, { status: 400 });
       }

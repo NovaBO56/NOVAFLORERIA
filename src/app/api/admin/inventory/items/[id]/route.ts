@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uuidSchema } from "@/validations/database-values";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { updateInventoryItemSchema } from "@/validations/inventory";
@@ -12,6 +13,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     await requireEmployeeOrAdmin();
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
 
     if (!id) {
       return NextResponse.json({ success: false, message: "Ítem no válido." }, { status: 400 });

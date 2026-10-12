@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uuidSchema } from "@/validations/database-values";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { updateProductSchema } from "@/validations/products";
@@ -35,18 +36,22 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     await requireEmployeeOrAdmin();
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
 
     if (!id) {
       return NextResponse.json({ success: false, error: "ID de producto requerido." }, { status: 400 });
     }
 
-    const rawBody = await request.json();
+    let rawBody: unknown;
+    try { rawBody = await request.json(); } catch {
+      return NextResponse.json({ success: false, error: "El cuerpo de la solicitud no es JSON válido." }, { status: 400 });
+    }
 
     if (!rawBody || typeof rawBody !== "object" || Array.isArray(rawBody)) {
       return NextResponse.json({ success: false, error: "Los datos enviados no son válidos." }, { status: 400 });
     }
 
-    const result = updateProductSchema.safeParse(normalizeBody(rawBody));
+    const result = updateProductSchema.safeParse(normalizeBody(rawBody as Record<string, unknown>));
 
     if (!result.success) {
       return NextResponse.json(
@@ -72,8 +77,9 @@ export async function PATCH(request: Request, context: RouteContext) {
       .single();
 
     if (error) {
+      if (error.code === "PGRST116") return NextResponse.json({ success: false, error: "El producto no existe." }, { status: 404 });
       console.error("Error actualizando producto:", error);
-      return NextResponse.json({ success: false, error: error.message }, { status: 500 });
+      return NextResponse.json({ success: false, error: "No se pudo actualizar el producto." }, { status: 500 });
     }
 
     return NextResponse.json({ success: true, product });

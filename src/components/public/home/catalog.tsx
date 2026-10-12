@@ -41,7 +41,7 @@ function ProductCard({
   const purchasable = isPurchasable(product);
 
   return (
-    <article className="nova-product-card group min-w-0">
+    <article className="nova-product-card group min-w-0 [overflow-wrap:anywhere]">
       <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#eee5f0]">
         <button
           type="button"
@@ -108,7 +108,7 @@ function ProductCard({
               <button
                 type="button"
                 onClick={onOpenDetail}
-                className="-my-0.5 inline-block py-0.5 text-left hover:text-[#65358e]"
+                className="-my-0.5 inline-block max-w-full py-0.5 text-left hover:text-[#65358e]"
               >
                 {product.name}
               </button>

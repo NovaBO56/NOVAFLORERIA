@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { uuidSchema } from "@/validations/database-values";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { updateCustomerSchema } from "@/validations/promotions";
@@ -12,6 +13,7 @@ export async function GET(_request: Request, context: RouteContext) {
   try {
     await requireEmployeeOrAdmin();
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
     const supabase = await createClient();
 
     const { data: customer, error: customerError } = await supabase
@@ -50,6 +52,7 @@ export async function PATCH(request: Request, context: RouteContext) {
   try {
     await requireEmployeeOrAdmin();
     const { id } = await context.params;
+    if (!uuidSchema.safeParse(id).success) return NextResponse.json({ success: false, message: "ID no válido." }, { status: 400 });
 
     const body = await request.json();
     const result = updateCustomerSchema.safeParse(body);
