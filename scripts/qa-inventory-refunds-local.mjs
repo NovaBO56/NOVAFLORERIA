@@ -1,0 +1,110 @@
+// Directed functional QA. Synthetic data only, fixed unlinked disposable LOCAL lab.
+import fs from 'node:fs';
+import path from 'node:path';
+import crypto from 'node:crypto';
+import { execFileSync } from 'node:child_process';
+import { createClient } from '@supabase/supabase-js';
+import { createServerClient } from '@supabase/ssr';
+import sharp from 'sharp';
+const finalReplay = process.argv.includes('--final-replay');
+const lab = path.join(process.env.LOCALAPPDATA, 'NOVA-Floreria', finalReplay ? 'inventory-refunds-final-replay' : 'two-qr-delta');
+const cfg = JSON.parse(fs.readFileSync(path.join(lab, 'status.private.json'), 'utf8'));
+if (cfg.API_URL !== (finalReplay ? 'http://127.0.0.1:62621' : 'http://127.0.0.1:60621') || fs.existsSync(path.join(lab, 'supabase/.temp/project-ref'))) throw Error('Unlinked LOCAL target required');
+const app = finalReplay ? 'http://127.0.0.1:3116' : 'http://127.0.0.1:3115';
+const sql = text => execFileSync('docker', ['exec', finalReplay ? 'supabase_db_NOVA-LOCAL-INTEGRITY' : 'supabase_db_NOVA-LOCAL-TWO-QR-DELTA', 'psql', '-U', 'postgres', '-d', 'postgres', '-v', 'ON_ERROR_STOP=1', '-At', '-c', text], { encoding: 'utf8', timeout: 30000 }).trim();
+const file = path.join(lab, 'inventory-refunds-results.private.json');
+const report = { checks: [], fixtures: {}, app, api: cfg.API_URL };
+function save() { fs.writeFileSync(file, JSON.stringify(report, null, 2)); }
+function check(name, pass) { report.checks.push({ name, pass }); save(); console.log(`${pass ? 'PASS' : 'FAIL'} ${name}`); if (!pass) throw Error('LOCAL QA failed: ' + name); }
+if (sql('SELECT (SELECT count(*) FROM profiles)+(SELECT count(*) FROM orders)') !== '0') throw Error('Run only after empty LOCAL replay/rollback fixtures; never reset automatically');
+const service = createClient(cfg.API_URL, cfg.SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
+const cookies = {}, clients = {};
+for (const role of ['admin', 'employee']) {
+ const credential = { email: `inventory-${role}-${crypto.randomUUID()}@example.invalid`, password: crypto.randomBytes(24).toString('base64url') };
+ const result = await service.auth.admin.createUser({ ...credential, email_confirm: true, user_metadata: { full_name: `TEST INTEGRITY ${role}` } });
+ if (result.error) throw Error('LOCAL synthetic Auth bootstrap failed');
+ const profile = await service.from('profiles').update({ role: role === 'admin' ? 'administrador' : 'empleado', is_active: true }).eq('id', result.data.user.id);
+ if (profile.error) throw Error('LOCAL synthetic profile failed');
+ fs.writeFileSync(path.join(lab, `${role}.credentials.private.json`), JSON.stringify(credential));
+ const jar = new Map();
+ clients[role] = createServerClient(cfg.API_URL, cfg.ANON_KEY, { cookies: { getAll: () => [...jar].map(([name, value]) => ({ name, value })), setAll: values => values.forEach(({ name, value }) => jar.set(name, value)) } });
+ const login = await clients[role].auth.signInWithPassword(credential);
+ check(`real Auth ${role}`, !login.error);
+ cookies[role] = [...jar].map(([name, value]) => `${name}=${value}`).join('; ');
+ report.fixtures[role] = result.data.user.id;
+}
+async function http(route, body, role = 'anon', method = body === undefined ? 'GET' : 'POST') {
+ const form = body instanceof FormData;
+ const response = await fetch(app + route, { method, redirect: 'manual', signal: AbortSignal.timeout(60000), headers: { ...(form ? {} : { 'content-type': 'application/json' }), ...(cookies[role] ? { cookie: cookies[role] } : {}) }, body: body === undefined ? undefined : form ? body : JSON.stringify(body) });
+ return { status: response.status, data: response.headers.get('content-type')?.includes('application/json') ? await response.json() : null };
+}
+const uuid = () => crypto.randomUUID();
+const item = uuid(), product = uuid(); report.fixtures.item = item; report.fixtures.product = product;
+sql(`INSERT INTO inventory_items(id,name,item_type,minimum_stock) VALUES('${item}','TEST INTEGRITY HTTP STOCK','flor',25); INSERT INTO inventory_entries(inventory_item_id,quantity,created_by) VALUES('${item}',20,'${report.fixtures.admin}'); UPDATE system_settings SET value='{"enabled":true}' WHERE key='accept_orders_outside_hours';`);
+const created = await http('/api/admin/products', { name: 'TEST ANABELLE ' + 'Nombre largo '.repeat(14), price: 90 }, 'admin');
+check('new product inactive by default', created.status === 201 && !created.data.product.is_active && !created.data.product.is_available);
+const createdId = created.data.product.id; report.fixtures.product = createdId;
+check('activation without recipe fails400', (await http(`/api/admin/products/${createdId}`, { is_active: true, is_available: true }, 'admin', 'PATCH')).status === 400);
+check('blocked activation leaves no saleable product', sql(`SELECT NOT is_active AND NOT is_available FROM products WHERE id='${createdId}'`) === 't');
+check('recipe configured explicitly', (await http(`/api/admin/products/${createdId}/inventory-requirements`, { inventory_item_id: item, quantity: 1 }, 'admin')).status === 201);
+check('configured product can activate', (await http(`/api/admin/products/${createdId}`, { is_active: true, is_available: true }, 'admin', 'PATCH')).status === 200);
+const register = sql('SELECT id FROM cash_registers WHERE is_active ORDER BY id LIMIT 1');
+const session = await http('/api/admin/cash-sessions', { cash_register_id: register, opening_amount: 20 }, 'admin');
+check('cash opens', session.status === 201); report.fixtures.cash_session = sql("SELECT id FROM cash_sessions WHERE status='abierta'");
+const physical = await http('/api/admin/sales', { items: [{ product_id: createdId, quantity: 1 }], payment_method: 'efectivo' }, 'admin');
+check('physical sale90', physical.status === 201 && Number(physical.data.sale.total) === 90); const sale = physical.data.sale.id; report.fixtures.sale = sale;
+const today = sql("SELECT (now() AT TIME ZONE 'America/La_Paz')::date"), range = `from=${today}&to=${today}`;
+let sales = await http(`/api/admin/reports/sales?${range}`, undefined, 'admin');
+check('report before refund90/0/90', sales.status === 200 && sales.data.summary.gross_sales === 90 && sales.data.summary.refunds === 0 && sales.data.summary.net_sales === 90);
+const payload = { type: 'devolucion', amount: 90, reason: 'TEST HTTP total90', idempotency_key: uuid() };
+const returns = await Promise.all([http(`/api/admin/orders/${sale}/returns`, payload, 'admin'), http(`/api/admin/orders/${sale}/returns`, payload, 'admin')]);
+check('concurrent refund retries same record', returns.every(result => result.status === 201) && returns[0].data.return_id === returns[1].data.return_id);
+check('stock restored once', sql(`SELECT current_stock FROM inventory_items WHERE id='${item}'`) === '20.000');
+check('cash refund exactly once', sql(`SELECT count(*) FROM cash_movements WHERE order_id='${sale}' AND movement_type='devolucion'`) === '1');
+check('original order and payment preserved', sql(`SELECT count(*) FROM orders o JOIN payments p ON p.order_id=o.id WHERE o.id='${sale}' AND o.total=90 AND o.status='finalizado' AND p.status='confirmado'`) === '1');
+sales = await http(`/api/admin/reports/sales?${range}`, undefined, 'admin');
+const dash = await http(`/api/admin/dashboard?${range}`, undefined, 'admin');
+check('report90/90/0 with traceable refund', sales.status === 200 && sales.data.summary.gross_sales === 90 && sales.data.summary.refunds === 90 && sales.data.summary.net_sales === 0 && sales.data.refunds[0].order_id === sale && sales.data.refunds[0].actor_name === 'TEST INTEGRITY admin');
+check('dashboard and reports identical same date range', dash.status === 200 && ['gross_sales', 'refunds', 'net_sales'].every(key => dash.data.dashboard.financial[key] === sales.data.summary[key]));
+check('employee cannot refund', (await http(`/api/admin/orders/${sale}/returns`, payload, 'employee')).status === 403);
+check('anonymous cannot read sales ledger', (await createClient(cfg.API_URL, cfg.ANON_KEY).from('sales_ledger').select('*')).error !== null);
+check('employee cannot invoke refund RPC', !!(await clients.employee.rpc('create_sale_return', { p_order_id: sale, p_type: 'reintegro', p_amount: 1, p_reason: 'TEST unauthorized', p_idempotency_key: uuid() })).error);
+for (const slot of ['qr_1', 'qr_2']) {
+ const bytes = await sharp({ create: { width: 240, height: 240, channels: 3, background: slot === 'qr_1' ? '#f2e5ff' : '#e5fff2' } }).png().toBuffer();
+ const form = new FormData(); form.set('file', new Blob([bytes], { type: 'image/png' }), 'test-local-qr.png'); form.set('qr_slot', slot); form.set('account_label', 'TEST ' + slot); form.set('is_active', 'true');
+ check(`synthetic ${slot} configured`, (await http('/api/admin/payment-qr', form, 'admin')).status === 201);
+}
+// Only inspect prepared WhatsApp links in the browser, never navigate/send externally.
+sql("INSERT INTO whatsapp_config(phone_number,is_active) VALUES('70000000',true)");
+check('both QR available', (await http('/api/payment-qr')).data.qrs.length === 2);
+const create = (phone, key = uuid(), promotion_id) => http('/api/orders', { customer_name: 'TEST INTEGRITY CLIENT', customer_phone: phone, idempotency_key: key, promotion_id, items: [{ product_id: createdId, quantity: 1 }] });
+const normal = await create('00013101'); check('normal checkout creates reserved order', normal.status === 201); report.fixtures.normal = normal.data.order_id;
+check('no client materialized before confirmation', sql("SELECT count(*) FROM customers WHERE phone='00013101'") === '0');
+check('reservation not definitive consumption', sql(`SELECT current_stock FROM inventory_items WHERE id='${item}'`) === '20.000');
+const payment = await http(`/api/orders/${normal.data.order_id}/payment`, { customer_phone: '00013101', qr_slot: 'qr_2' });
+check('Ya pague reports pending with trusted QR2 snapshot', payment.status === 200 && payment.data.payment.status === 'pendiente' && payment.data.payment.qr_label === 'TEST qr_2');
+let track = await http('/api/orders/track', { order_id: normal.data.order_id, customer_phone: '00013101' });
+check('report not automatic confirmation/no receipt', track.data.order.status === 'pendiente_pago' && !track.data.order.receipt_token);
+check('wrong phone cannot see receipt/order', (await http('/api/orders/track', { order_id: normal.data.order_id, customer_phone: '00013199' })).status === 404);
+const confirmations = await Promise.all([http(`/api/admin/payments/${payment.data.payment.id}/confirm`, {}, 'admin'), http(`/api/admin/payments/${payment.data.payment.id}/confirm`, {}, 'admin')]);
+check('concurrent confirmation one winner one safe rejection', confirmations.map(result => result.status).sort().join(',') === '200,400');
+check('confirmation consumes once', sql(`SELECT current_stock FROM inventory_items WHERE id='${item}'`) === '19.000');
+check('customer created only after confirmation', sql("SELECT count(*) FROM customers WHERE phone='00013101'") === '1');
+track = await http('/api/orders/track', { order_id: normal.data.order_id, customer_phone: '00013101' }); check('receipt appears after confirmation', !!track.data.order.receipt_token && track.data.order.status === 'confirmado');
+const promotion = uuid(); report.fixtures.promotion = promotion;
+sql(`INSERT INTO promotions(id,name,promotion_type,discount_type,discount_value,is_active) VALUES('${promotion}','TEST INTEGRITY FREE','producto','porcentaje',100,true); INSERT INTO promotion_products(promotion_id,product_id) VALUES('${promotion}','${createdId}');`);
+const free = await create('00013102', uuid(), promotion); check('free order creates', free.status === 201); report.fixtures.free = free.data.order_id;
+track = await http('/api/orders/track', { order_id: free.data.order_id, customer_phone: '00013102' });
+check('free confirmed without payment', Number(track.data.order.total) === 0 && track.data.order.status === 'confirmado' && sql(`SELECT count(*) FROM payments WHERE order_id='${free.data.order_id}'`) === '0');
+check('free consumes one unit', sql(`SELECT current_stock FROM inventory_items WHERE id='${item}'`) === '18.000');
+const sameKey = uuid(); const duplicates = await Promise.all([create('00013103', sameKey), create('00013103', sameKey)]);
+check('concurrent idempotent order same UUID', duplicates.every(result => result.status === 201) && duplicates[0].data.order_id === duplicates[1].data.order_id);
+check('one reservation for idempotent order', sql(`SELECT count(*) FROM inventory_reservations WHERE order_id='${duplicates[0].data.order_id}'`) === '1');
+const noStock = await http('/api/orders', { customer_name: 'TEST INTEGRITY STOCK', customer_phone: '00013104', idempotency_key: uuid(), items: [{ product_id: createdId, quantity: 100 }] });
+check('stock error commercial no numeric internals', noStock.status === 400 && noStock.data.message.includes('Reduce la cantidad') && !/UUID|SQL|RPC|\d\.\d{3}|inventory_items/.test(noStock.data.message));
+const expired = await create('00013105'); check('expiry fixture order created', expired.status === 201);
+sql(`UPDATE orders SET reserved_until=clock_timestamp()-interval '1 minute' WHERE id='${expired.data.order_id}'; UPDATE inventory_reservations SET expires_at=clock_timestamp()-interval '1 minute' WHERE order_id='${expired.data.order_id}'; SELECT release_expired_reservations(NULL);`);
+check('expired order cancels without consumption', sql(`SELECT status FROM orders WHERE id='${expired.data.order_id}'`) === 'cancelado' && sql(`SELECT count(*) FROM inventory_movements WHERE reference_id='${expired.data.order_id}' AND movement_type='salida'`) === '0');
+report.fixtures.browser_phone = '00013106'; report.fixtures.browser_free_phone = '00013107';
+check('catalog and admin QA routes load', (await http('/api/products?limit=1')).status === 200 && (await http('/api/admin/dashboard', undefined, 'admin')).status === 200);
+save(); console.log(`LOCAL HTTP/Auth/SQL: ${report.checks.length} PASS. Synthetic fixtures retained only in the selected disposable LOCAL lab for browser QA.`);

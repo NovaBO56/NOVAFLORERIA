@@ -77,6 +77,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .single();
 
     if (error) {
+      if (error.code === "P0001") return NextResponse.json({ success: false, error: error.message, message: error.message }, { status: 400 });
       if (error.code === "PGRST116") return NextResponse.json({ success: false, error: "El producto no existe." }, { status: 404 });
       console.error("Error actualizando producto:", error);
       return NextResponse.json({ success: false, error: "No se pudo actualizar el producto." }, { status: 500 });

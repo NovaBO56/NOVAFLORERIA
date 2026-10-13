@@ -1,138 +1,41 @@
 import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
-
-import { businessDate, businessDayStart } from "@/lib/business-date";
-
+import { businessDate } from "@/lib/business-date";
 import { readAllPages } from "@/lib/db/read-all-pages";
-import { sumMoney } from "@/lib/money";
+import { readSalesLedger } from "@/lib/reports/sales-ledger";
+import { salesReportQuerySchema } from "@/validations/reports";
 
-const ACTIVE_STATUSES = ["confirmado", "en_preparacion", "listo", "finalizado"];
-
-export async function GET() {
-  try {
-    await requireEmployeeOrAdmin();
-    const supabase = await createClient();
-
-    const todayStart = businessDayStart();
-
-    // 1. Ventas de hoy
-    const todayOrders = await readAllPages<{ total: number }>((start, end) => supabase
-      .from("orders")
-      .select("total", { count: "exact" })
-      .gte("created_at", todayStart.toISOString())
-      .in("status", ACTIVE_STATUSES).order("id", { ascending: true }).range(start, end));
-
-    const ventas_hoy = sumMoney(todayOrders.map(order => order.total));
-
-    // 2. Pedidos pendientes de pago
-    const { count: pedidos_pendientes, error: pendingOrdersError } = await supabase
-      .from("orders")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pendiente_pago");
-
-    if (pendingOrdersError) {
-      console.error("Error obteniendo pedidos pendientes:", pendingOrdersError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
-
-    // 3. Pagos pendientes de verificación
-    const { count: pagos_pendientes, error: pendingPaymentsError } = await supabase
-      .from("payments")
-      .select("id", { count: "exact", head: true })
-      .eq("status", "pendiente");
-
-    if (pendingPaymentsError) {
-      console.error("Error obteniendo pagos pendientes:", pendingPaymentsError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
-
-    // 4. Alertas de inventario
-    const inventoryItems = await readAllPages<{ name: string; current_stock: number; minimum_stock: number }>((start, end) => supabase
-      .from("inventory_items")
-      .select("name, current_stock, minimum_stock", { count: "exact" })
-      .eq("is_active", true).order("id", { ascending: true }).range(start, end));
-
-    const bajo_stock = (inventoryItems ?? [])
-      .filter((i) => Number(i.current_stock) > 0 && Number(i.current_stock) <= Number(i.minimum_stock))
-      .map((i) => ({ name: i.name, current_stock: i.current_stock, minimum_stock: i.minimum_stock }));
-
-    const agotados = (inventoryItems ?? [])
-      .filter((i) => Number(i.current_stock) <= 0)
-      .map((i) => ({ name: i.name }));
-
-    // 5. Estado de caja
-    const { data: openSession, error: sessionError } = await supabase
-      .from("cash_sessions")
-      .select("opening_amount, opened_at")
-      .eq("status", "abierta")
-      .maybeSingle();
-
-    if (sessionError) {
-      console.error("Error obteniendo estado de caja:", sessionError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
-
-    // 6. Clientes totales y cumpleaños de hoy
-    const { count: clientes_total, error: customersError } = await supabase
-      .from("customers")
-      .select("id", { count: "exact", head: true });
-
-    if (customersError) {
-      console.error("Error obteniendo clientes:", customersError);
-      return NextResponse.json({ success: false, message: "No se pudo generar el dashboard." }, { status: 500 });
-    }
-
-    const customersWithBirthday = await readAllPages<{ name: string; birthday: string }>((start, end) => supabase
-      .from("customers")
-      .select("name, birthday", { count: "exact" })
-      .not("birthday", "is", null).order("id", { ascending: true }).range(start, end));
-
-    const today = businessDate();
-    const cumpleanos_hoy = (customersWithBirthday ?? [])
-      .filter((c) => {
-        if (!c.birthday) return false;
-        const b = new Date(c.birthday);
-        return b.toISOString().slice(5, 10) === today.slice(5, 10);
-      })
-      .map((c) => ({ name: c.name, birthday: c.birthday }));
-
-    // 7. Productos más vendidos (últimos 30 días)
-    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-
-    const recentOrderItems = await readAllPages<{ product_name_snapshot: string; quantity: number }>((start, end) => supabase
-      .from("order_items")
-      .select("id, product_name_snapshot, quantity, order:orders!inner(status, created_at)", { count: "exact" })
-      .gte("order.created_at", thirtyDaysAgo)
-      .in("order.status", ACTIVE_STATUSES)
-      .order("id", { ascending: true }).range(start, end));
-    const totals = new Map<string, number>();
-    for (const item of recentOrderItems) {
-      totals.set(item.product_name_snapshot, (totals.get(item.product_name_snapshot) ?? 0) + Math.round(Number(item.quantity) * 1000));
-    }
-    const productos_mas_vendidos = Array.from(totals.entries())
-      .sort((a, b) => b[1] - a[1]).slice(0, 5)
-      .map(([name, quantity]) => ({ name, quantity: quantity / 1000 }));
-
-    return NextResponse.json({
-      success: true,
-      dashboard: {
-        ventas_hoy,
-        pedidos_pendientes: pedidos_pendientes ?? 0,
-        pagos_pendientes: pagos_pendientes ?? 0,
-        inventario: { bajo_stock, agotados },
-        caja: openSession
-          ? { abierta: true, opening_amount: openSession.opening_amount, opened_at: openSession.opened_at }
-          : { abierta: false },
-        clientes_total: clientes_total ?? 0,
-        cumpleanos_hoy,
-        productos_mas_vendidos,
-      },
-    });
-  } catch (error) {
-    console.error("Error consultando datos administrativos:", error);
-    const message = error instanceof Error ? error.message : "";
-    const unauthorized = /^(Usuario|Rol|Acceso)/.test(message);
-    return NextResponse.json({ success: false, message: unauthorized ? message : "No se pudieron obtener los datos." }, { status: unauthorized ? 403 : 500 });
+export async function GET(request: Request) {
+ try {
+  await requireEmployeeOrAdmin();
+  const params = new URL(request.url).searchParams, today = businessDate();
+  const parsed = salesReportQuerySchema.safeParse({from:params.get("from")??today,to:params.get("to")??today});
+  if (!parsed.success || new Date(parsed.data.to).getTime()-new Date(parsed.data.from).getTime()>365*86400000) {
+   return NextResponse.json({success:false,message:"Selecciona un rango válido de hasta 366 días."},{status:400});
   }
+  const client=await createClient(); const {from,to}=parsed.data;
+  const [ledger,orders,inventory,pending]=await Promise.all([
+   readSalesLedger(client,from,to),
+   readAllPages<{status:string;created_at:string}>((start,end)=>client.from("orders").select("status,created_at",{count:"exact"}).is("deleted_at",null).order("id").range(start,end)),
+   readAllPages<{id:string;name:string;current_stock:number;minimum_stock:number;unit:string}>((start,end)=>client.from("inventory_items").select("id,name,current_stock,minimum_stock,unit",{count:"exact"}).eq("is_active",true).order("id").range(start,end)),
+   client.from("payments").select("id",{count:"exact",head:true}).eq("status","pendiente"),
+  ]);
+  if(pending.error)throw pending.error;
+  const statuses=Object.fromEntries(["pendiente_pago","confirmado","en_preparacion","listo","finalizado"].map(status=>[status,orders.filter(order=>order.status===status).length]));
+  const products=new Map<string,{name:string;quantity:number}>();
+  const ids=ledger.events.filter(event=>event.kind==="sale").map(event=>event.order_id);
+  for(let index=0;index<ids.length;index+=100){
+   const items=await readAllPages<{product_id:string;product_name_snapshot:string;quantity:number}>((start,end)=>client.from("order_items").select("product_id,product_name_snapshot,quantity",{count:"exact"}).in("order_id",ids.slice(index,index+100)).order("id").range(start,end));
+   for(const item of items){const prior=products.get(item.product_id)??{name:item.product_name_snapshot,quantity:0};prior.quantity+=Math.round(Number(item.quantity)*1000);products.set(item.product_id,prior);}
+  }
+  const recent=await client.from("orders").select("id,order_number,status,updated_at").in("status",["listo","finalizado"]).order("updated_at",{ascending:false}).limit(6);
+  if(recent.error)throw recent.error;
+  return NextResponse.json({success:true,dashboard:{financial:ledger.summary,today_orders:orders.filter(order=>businessDate(new Date(order.created_at))===today).length,pending_payments:pending.count??0,statuses,
+   inventory:inventory.filter(item=>Number(item.current_stock)<=Number(item.minimum_stock)).sort((a,b)=>Number(a.current_stock)-Number(b.current_stock)),
+   bestsellers:[...products.values()].sort((a,b)=>b.quantity-a.quantity).slice(0,5).map(item=>({...item,quantity:item.quantity/1000})),activity:ledger.events.slice(-8).reverse(),recent_statuses:recent.data}});
+ }catch(error){
+  console.error("Error generando dashboard:",error);const message=error instanceof Error?error.message:"";const unauthorized=/^(Usuario|Rol|Acceso)/.test(message);
+  return NextResponse.json({success:false,message:unauthorized?message:"No se pudo generar el dashboard."},{status:unauthorized?403:500});
+ }
 }

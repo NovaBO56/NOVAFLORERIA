@@ -9,24 +9,13 @@ import {
   type SalesReportSummary,
 } from "@/lib/reports/sales-report-pdf";
 
-import { readAllPages } from "@/lib/db/read-all-pages";
-import { sumMoney } from "@/lib/money";
+import { readSalesLedger } from "@/lib/reports/sales-ledger";
 
-const ACTIVE_STATUSES = ["confirmado", "en_preparacion", "listo", "finalizado"];
 
-async function renderSalesReportPdf(summary: SalesReportSummary, rows: SalesReportOrderRow[]) {
-  return renderToBuffer(<SalesReportDocument summary={summary} orders={rows} />);
+async function renderSalesReportPdf(summary: SalesReportSummary, rows: SalesReportOrderRow[], refunds: import("@/lib/reports/sales-ledger").SalesEvent[]) {
+  return renderToBuffer(<SalesReportDocument summary={summary} orders={rows} refunds={refunds} />);
 }
 
-type RawSalesOrderRow = {
-  order_number: number;
-  order_type: string;
-  status: string;
-  total: number;
-  created_at: string;
-  customer: { name: string } | { name: string }[] | null;
-  payments: { method: string; status: string }[] | null;
-};
 export async function GET(request: Request) {
   try {
     await requireEmployeeOrAdmin();
@@ -49,52 +38,16 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    const orders = await readAllPages<RawSalesOrderRow>((fromRow, toRow) => supabase
-      .from("orders")
-      .select(
-        "order_number, order_type, status, total, created_at, customer:customers(name), payments(method, status)",
-        { count: "exact" },
-      )
-      .gte("created_at", `${from}T00:00:00-04:00`)
-      .lte("created_at", `${to}T23:59:59.999999-04:00`)
-      .in("status", ACTIVE_STATUSES)
-      .order("created_at", { ascending: true })
-      .order("id", { ascending: true })
-      .range(fromRow, toRow));
-
-    const rows: SalesReportOrderRow[] = (orders ?? []).map((o: RawSalesOrderRow) => {
-      const paymentsList = Array.isArray(o.payments) ? o.payments : [];
-      const confirmedPayment = paymentsList.find((p) => p.status === "confirmado");
-      const customer = Array.isArray(o.customer) ? o.customer[0] : o.customer;
-
-      return {
-        order_number: o.order_number,
-        order_type: o.order_type,
-        status: o.status,
-        total: Number(o.total),
-        created_at: o.created_at,
-        customer_name: customer?.name ?? null,
-        payment_method: confirmedPayment?.method ?? null,
-      };
-    });
-
-    const by_payment_method: Record<string, number> = {};
-    for (const r of rows) {
-      const key = r.payment_method ?? "sin_pago_confirmado";
-      by_payment_method[key] = sumMoney([by_payment_method[key] ?? 0, r.total]);
-    }
-
-    const summary: SalesReportSummary = {
-      from,
-      to,
-      total_sales: sumMoney(rows.map(r => r.total)),
-      count_online: rows.filter((r) => r.order_type === "online").length,
-      count_fisica: rows.filter((r) => r.order_type === "fisica").length,
-      by_payment_method,
-    };
+    const { events, summary } = await readSalesLedger(supabase, from, to);
+    const rows: SalesReportOrderRow[] = events.filter(event => event.kind === "sale").map(event => ({
+      order_number: event.order_number, order_type: event.order_type, status: event.order_status,
+      total: Number(event.amount), created_at: event.occurred_at, customer_name: event.customer_name,
+      payment_method: event.payment_method,
+    }));
+    const refunds = events.filter(event => event.kind === "refund");
 
     if (format === "pdf") {
-      const buffer = await renderSalesReportPdf(summary, rows);
+      const buffer = await renderSalesReportPdf(summary, rows, refunds);
 
       return new NextResponse(new Uint8Array(buffer), {
         status: 200,
@@ -105,7 +58,7 @@ export async function GET(request: Request) {
       });
     }
 
-    return NextResponse.json({ success: true, summary, orders: rows });
+    return NextResponse.json({ success: true, summary, orders: rows, refunds });
   } catch (error) {
     console.error("Error consultando datos administrativos:", error);
     const message = error instanceof Error ? error.message : "";

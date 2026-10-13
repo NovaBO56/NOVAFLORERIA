@@ -36,6 +36,7 @@ INSERT INTO public.products (id,name,price)
 VALUES ('00000000-0000-4000-8000-000000000030','TEST SECURITY PRODUCT',100);
 INSERT INTO public.product_inventory_requirements (product_id,inventory_item_id,quantity)
 VALUES ('00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',1);
+UPDATE public.products SET is_active=true,is_available=true WHERE id='00000000-0000-4000-8000-000000000030';
 INSERT INTO public.orders (id,customer_id,subtotal,total,reserved_until)
 VALUES ('00000000-0000-4000-8000-000000000040','00000000-0000-4000-8000-000000000010',100,100,now()+interval '30 minutes'),
        ('00000000-0000-4000-8000-000000000041','00000000-0000-4000-8000-000000000011',100,100,now()+interval '30 minutes'),

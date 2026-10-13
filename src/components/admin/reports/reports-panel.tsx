@@ -49,11 +49,15 @@ type SalesReport = {
     from: string;
     to: string;
     total_sales: number;
+    gross_sales: number;
+    refunds: number;
+    net_sales: number;
     count_online: number;
     count_fisica: number;
     by_payment_method: Record<string, number>;
   };
   orders: SalesOrderRow[];
+  refunds: import("@/lib/reports/sales-ledger").SalesEvent[];
 };
 
 type CashSessionRow = {
@@ -172,7 +176,7 @@ export function ReportsPanel() {
 
       switch (key) {
         case "sales":
-          setSales({ summary: body.summary, orders: body.orders });
+          setSales({ summary: body.summary, orders: body.orders, refunds: body.refunds });
           break;
         case "cash":
           setCash({ sessions: body.sessions });
@@ -295,12 +299,14 @@ const PAYMENT_METHOD_LABEL: Record<string, string> = {
 };
 
 function SalesReportView({ data }: { data: SalesReport }) {
-  const { summary, orders } = data;
+  const { summary, orders, refunds } = data;
 
   return (
     <div className="flex flex-col gap-6">
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard icon={<Receipt />} label="Total vendido" value={`Bs ${formatMoney(summary.total_sales)}`} />
+        <StatCard icon={<Receipt />} label="Ventas netas" value={`Bs ${formatMoney(summary.net_sales)}`} />
+        <StatCard icon={<Receipt />} label="Ventas brutas" value={`Bs ${formatMoney(summary.gross_sales)}`} />
+        <StatCard icon={<Banknote />} label="Reintegros monetarios" value={`Bs ${formatMoney(summary.refunds)}`} />
         <StatCard icon={<Flower2 />} label="Pedidos online" value={String(summary.count_online)} />
         <StatCard icon={<Banknote />} label="Ventas físicas" value={String(summary.count_fisica)} />
         <StatCard
@@ -313,6 +319,10 @@ function SalesReportView({ data }: { data: SalesReport }) {
         />
       </div>
 
+      <p className="text-sm text-text-secondary">Ventas reconocidas al confirmar; reintegros en su fecha de registro (America/La_Paz). Un reintegro de una venta anterior puede dejar el período con ventas netas negativas. Las devoluciones solo físicas no reducen estos importes.</p>
+      <SectionCard title="Reintegros monetarios" description="Conservan la venta original; no realizan transferencias bancarias automáticas.">
+        {!refunds?.length ? <p>Sin reintegros en este período.</p> : <div className="space-y-3">{refunds.map(refund => <article key={refund.event_id} className="min-w-0 rounded-xl border border-border-decorative p-4 [overflow-wrap:anywhere]"><p className="font-semibold">Pedido #{refund.order_number} · {refund.return_type === "devolucion" ? "Dinero y retorno físico" : "Solo dinero"}</p><p>Venta original: Bs {formatMoney(Number(refund.original_total))} · Reintegro: Bs {formatMoney(Number(refund.amount))}</p><p>Impacto en ventas netas del período: Bs {formatMoney(Number(refund.financial_effect))}</p><p className="text-sm text-text-secondary">{formatDateTime(refund.occurred_at)} · {refund.actor_name || "Administrador"}</p><p className="text-sm">{refund.reason}</p></article>)}</div>}
+      </SectionCard>
       <SectionCard title="Pedidos en el período" description={`${summary.from} al ${summary.to}`}>
         {orders.length === 0 ? (
           <EmptyState icon={<Receipt />} title="Sin ventas en este período" />

@@ -125,8 +125,8 @@ export async function POST(request: Request) {
     if (error) {
       console.error("Error creando producto:", error);
       return NextResponse.json(
-        { success: false, message: "No se pudo crear el producto." },
-        { status: 500 },
+        { success: false, message: error.code === "P0001" ? error.message : "No se pudo crear el producto." },
+        { status: error.code === "P0001" ? 400 : 500 },
       );
     }
 

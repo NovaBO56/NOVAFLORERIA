@@ -32,12 +32,14 @@ beforeEach(() => {
     const chain: Record<string, unknown> = {};
     let single = false;
     chain.select = (select: string) => { record.select = select; return chain; };
-    for (const method of ["eq", "is", "not", "in", "or", "gte", "lte", "order"]) chain[method] = (...args: unknown[]) => { record.filters.push([method, ...args]); return chain; };
+    for (const method of ["eq", "is", "not", "in", "or", "gte", "lte", "order", "limit"]) chain[method] = (...args: unknown[]) => { record.filters.push([method, ...args]); return chain; };
     chain.range = (start: number, end: number) => { record.range = [start, end]; return chain; };
     for (const method of ["update", "insert"]) chain[method] = (...args: unknown[]) => { mocks.writes(...args); return chain; };
     for (const method of ["single", "maybeSingle"]) chain[method] = () => { single = true; return chain; };
     chain.then = (resolve: (value: unknown) => void) => {
-      const data = mocks.tables[table] ?? [];
+      let data = mocks.tables[table] ?? [];
+      const ids=record.filters.find(filter=>Array.isArray(filter)&&filter[0]==="in"&&filter[1]==="order_id") as [string,string,string[]]|undefined;
+      if(ids)data=data.filter(row=>ids[2].includes(String(row.order_id)));
       return Promise.resolve({ data: single ? data[0] ?? null : record.range ? data.slice(record.range[0], record.range[1] + 1) : data, count: data.length, error: mocks.queryError }).then(resolve);
     };
     return chain;
@@ -71,6 +73,7 @@ describe("administrative validation before DB", () => {
 });
 
 describe("volume regressions (unit mocks, real HTTP/SQL checked separately)", () => {
+  function ledgerRows(){return rows().map(row=>({...row,kind:"sale",event_id:row.id,order_id:row.id,amount:row.total,original_total:row.total,occurred_at:"2026-10-12T12:00:00Z",order_status:row.status,customer_name:null,payment_method:null,actor_id:null,actor_name:null,return_type:null,reason:null}));}
   function rows(count = 1160) { return Array.from({ length: count }, (_, i) => ({ id: String(i), order_number: i + 1, total: i === 0 ? 31136797.68 : 10, order_type: i % 2 ? "online" : "fisica", status: "finalizado", created_at: "2026-10-12", customer: null, payments: [] })); }
   it("orders returns page metadata beyond first 1000", async () => {
     mocks.tables.orders = rows(); const response = await listOrders(new Request("http://localhost/api/admin/orders?page=23&limit=50"));
@@ -81,11 +84,11 @@ describe("volume regressions (unit mocks, real HTTP/SQL checked separately)", ()
     const query = mocks.queries[0]; expect(query.select).toContain("payments!inner"); expect(query.filters).toContainEqual(["eq", "cancellation_reason", "Reserva de inventario vencida."]); expect(JSON.stringify(query.filters)).toContain("order_number.eq.1104");
   });
   it("sales JSON collects all 1160 and full monetary total", async () => {
-    mocks.tables.orders = rows(); const response = await sales(new Request("http://localhost?from=2026-01-01&to=2027-12-31&format=json")); const body = await response.json();
+    mocks.tables.sales_ledger = ledgerRows(); const response = await sales(new Request("http://localhost?from=2026-01-01&to=2027-12-31&format=json")); const body = await response.json();
     expect(body.orders).toHaveLength(1160); expect(body.summary.total_sales).toBe(31148387.68); expect(body.summary.count_online).toBe(580); expect(body.summary.count_fisica).toBe(580); expect(mocks.queries.map(x => x.range)).toEqual([[0,499],[500,999],[1000,1499]]);
   });
   it("sales PDF uses the complete result", async () => {
-    mocks.tables.orders = rows(); const response = await sales(new Request("http://localhost?from=2026-01-01&to=2027-12-31&format=pdf")); expect(response.headers.get("content-type")).toBe("application/pdf"); expect(mocks.queries).toHaveLength(3);
+    mocks.tables.sales_ledger = ledgerRows(); const response = await sales(new Request("http://localhost?from=2026-01-01&to=2027-12-31&format=pdf")); expect(response.headers.get("content-type")).toBe("application/pdf"); expect(mocks.queries).toHaveLength(3);
   });
   it.each(["json", "pdf"])("products-sold %s joins parent orders and collects all items", async format => {
     mocks.tables.order_items = Array.from({length: 1160}, () => ({product_name_snapshot: "TEST", quantity: 0.5, line_total: 0.1}));
@@ -93,10 +96,11 @@ describe("volume regressions (unit mocks, real HTTP/SQL checked separately)", ()
     if (format === "json") expect((await response.json()).products).toEqual([{ product_name: "TEST", quantity: 580, revenue: 116 }]);
     expect(mocks.queries).toHaveLength(3); expect(mocks.queries[0].select).toContain("orders!inner"); expect(mocks.queries.flatMap(x => x.filters).filter(x => Array.isArray(x) && x[0] === "in")).toEqual(Array(3).fill(["in", "order.status", ["confirmado", "en_preparacion", "listo", "finalizado"]]));
   });
-  it("dashboard uses all recent items without sending order UUIDs", async () => {
-    mocks.tables.orders = rows(); mocks.tables.order_items = Array.from({length:1160}, () => ({product_name_snapshot:"TEST",quantity:1}));
-    const response = await dashboard(); const body = await response.json(); expect(response.status).toBe(200); expect(body.dashboard.ventas_hoy).toBe(31148387.68); expect(body.dashboard.productos_mas_vendidos).toEqual([{name:"TEST",quantity:1160}]);
-    expect(mocks.queries.filter(x=>x.table==='order_items')).toHaveLength(3);
+  it("dashboard collects all ledger and order item pages with bounded internal ID batches", async () => {
+    mocks.tables.orders=rows(); mocks.tables.sales_ledger=ledgerRows(); mocks.tables.order_items=rows().map(row=>({order_id:row.id,product_id:"test-product",product_name_snapshot:"TEST",quantity:1}));
+    const response=await dashboard(new Request("http://localhost?from=2026-10-12&to=2026-10-12")); const body=await response.json();
+    expect(response.status).toBe(200); expect(body.dashboard.financial.gross_sales).toBe(31148387.68); expect(body.dashboard.bestsellers).toEqual([{name:"TEST",quantity:1160}]);
+    expect(mocks.queries.filter(query=>query.table==='order_items')).toHaveLength(12);
   });
   it("a later page error never becomes partial success", async () => {
     await expect(readAllPages(async start => start ? {data:null,error:{message:"DB failure"},count:null} : {data:Array(500).fill(1),error:null,count:1160})).rejects.toThrow("DB failure");

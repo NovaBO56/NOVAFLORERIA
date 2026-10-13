@@ -9,13 +9,13 @@ describe("Validaciones de devoluciones y eliminación (Zod real de producción)"
   describe("createSaleReturnSchema", () => {
     it("acepta una devolución válida", () => {
       expect(
-        createSaleReturnSchema.safeParse({ type: "devolucion", amount: 40, reason: "Producto dañado" }).success,
+        createSaleReturnSchema.safeParse({ idempotency_key: "00000000-0000-4000-8000-000000000001", type: "devolucion", amount: 40, reason: "Producto dañado" }).success,
       ).toBe(true);
     });
 
     it("acepta un reintegro válido", () => {
       expect(
-        createSaleReturnSchema.safeParse({ type: "reintegro", amount: 10, reason: "Descuento por error" }).success,
+        createSaleReturnSchema.safeParse({ idempotency_key: "00000000-0000-4000-8000-000000000001", type: "reintegro", amount: 10, reason: "Descuento por error" }).success,
       ).toBe(true);
     });
 
@@ -26,12 +26,12 @@ describe("Validaciones de devoluciones y eliminación (Zod real de producción)"
     });
 
     it("rechaza monto cero o negativo", () => {
-      expect(createSaleReturnSchema.safeParse({ type: "reintegro", amount: 0, reason: "Motivo" }).success).toBe(false);
-      expect(createSaleReturnSchema.safeParse({ type: "reintegro", amount: -5, reason: "Motivo" }).success).toBe(false);
+      expect(createSaleReturnSchema.safeParse({ idempotency_key: "00000000-0000-4000-8000-000000000001", type: "reintegro", amount: 0, reason: "Motivo" }).success).toBe(false);
+      expect(createSaleReturnSchema.safeParse({ idempotency_key: "00000000-0000-4000-8000-000000000001", type: "reintegro", amount: -5, reason: "Motivo" }).success).toBe(false);
     });
 
     it("rechaza sin motivo", () => {
-      expect(createSaleReturnSchema.safeParse({ type: "reintegro", amount: 10, reason: "" }).success).toBe(false);
+      expect(createSaleReturnSchema.safeParse({ idempotency_key: "00000000-0000-4000-8000-000000000001", type: "reintegro", amount: 10, reason: "" }).success).toBe(false);
     });
   });
 

@@ -3,6 +3,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createOrderSchema } from "@/validations/orders";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
+import { publicOrderError } from "@/lib/public/order-error";
 
 export async function POST(request: Request) {
   try {
@@ -57,8 +58,9 @@ export async function POST(request: Request) {
 
     if (error) {
       if (error.code === "P0001") {
+        console.error("Pedido rechazado:", error);
         return NextResponse.json(
-          { success: false, message: error.message },
+          { success: false, message: publicOrderError(error.message) },
           { status: 400 },
         );
       }

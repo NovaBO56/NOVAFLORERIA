@@ -12,6 +12,7 @@ INSERT INTO inventory_items(id,name,item_type) VALUES('00000000-0000-4000-8000-0
 INSERT INTO inventory_entries(inventory_item_id,quantity,created_by) VALUES('00000000-0000-4000-8000-000000000020',20,'00000000-0000-4000-8000-000000000001');
 INSERT INTO products(id,name,price) VALUES('00000000-0000-4000-8000-000000000030','TEST TWO QR PRODUCT',100);
 INSERT INTO product_inventory_requirements(product_id,inventory_item_id,quantity) VALUES('00000000-0000-4000-8000-000000000030','00000000-0000-4000-8000-000000000020',1);
+UPDATE products SET is_active=true,is_available=true WHERE id='00000000-0000-4000-8000-000000000030';
 UPDATE system_settings SET value='{"enabled":true}' WHERE key='accept_orders_outside_hours';
 
 SET LOCAL ROLE anon;

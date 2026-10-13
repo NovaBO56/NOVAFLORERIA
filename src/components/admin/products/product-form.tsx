@@ -66,10 +66,10 @@ function getInitialForm(product: Product | null): ProductFormData {
       occasion: "",
       seasonId: "",
       isFeatured: false,
-      isAvailable: true,
+      isAvailable: false,
       isSoldOut: false,
       catalogOrder: "0",
-      isActive: true,
+      isActive: false,
     };
   }
 
@@ -176,6 +176,7 @@ export default function ProductForm({
       if (!response.ok || !result.success || !result.product) {
         throw new Error(
           result.message ||
+            result.error ||
             `No se pudo ${editingProduct ? "actualizar" : "crear"} el producto.`,
         );
       }
@@ -202,7 +203,7 @@ export default function ProductForm({
         <p className="mt-1 text-sm text-text-secondary">
           {isEditing
             ? "Actualiza la información del producto."
-            : "Registra un nuevo producto en el catálogo."}
+            : "Crea el producto inactivo. Después abre su Receta, configura el consumo y actívalo para vender."}
         </p>
       </div>
 
@@ -356,6 +357,7 @@ export default function ProductForm({
           Activo
         </label>
       </div>
+      <p className="text-sm text-text-secondary">Para activar un producto, configura primero sus insumos y cantidades en Productos → Receta. Sin receta válida no puede ponerse a la venta.</p>
 
       <div className="flex flex-wrap justify-end gap-2 border-t border-border-decorative pt-4">
         {isEditing && (

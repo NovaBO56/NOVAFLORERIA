@@ -11,10 +11,6 @@ export default async function AdminDashboardPage() {
 
   return (
     <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1>Dashboard</h1>
-        <p className="text-text-secondary">Un vistazo rápido a lo que necesita tu atención hoy.</p>
-      </div>
       <DashboardPanel />
     </div>
   );

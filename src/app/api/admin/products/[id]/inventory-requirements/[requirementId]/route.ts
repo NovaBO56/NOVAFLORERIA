@@ -30,6 +30,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .maybeSingle();
 
     if (error) {
+      if (error.code === "P0001") return NextResponse.json({ success: false, message: error.message }, { status: 400 });
       console.error("Error actualizando ingrediente de la receta:", error);
       return NextResponse.json({ success: false, message: "No se pudo actualizar el ingrediente." }, { status: 500 });
     }
@@ -57,6 +58,7 @@ export async function DELETE(_request: Request, context: RouteContext) {
       .eq("product_id", id);
 
     if (error) {
+      if (error.code === "P0001") return NextResponse.json({ success: false, message: error.message }, { status: 400 });
       console.error("Error eliminando ingrediente de la receta:", error);
       return NextResponse.json({ success: false, message: "No se pudo eliminar el ingrediente." }, { status: 500 });
     }

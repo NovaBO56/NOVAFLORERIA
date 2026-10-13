@@ -9,6 +9,7 @@ export function formatMoney(value: number | string): string {
 
 export function formatDateTime(value: string): string {
   return new Date(value).toLocaleString("es-BO", {
+    timeZone: "America/La_Paz",
     day: "2-digit",
     month: "2-digit",
     year: "numeric",

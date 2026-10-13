@@ -1,6 +1,12 @@
 # Estado vigente de Supabase
 
-La fuente oficial es supabase/migrations/ (nueve versiones activas) y supabase/seed.sql. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+La fuente oficial es supabase/migrations/ y supabase/seed.sql. En esta rama hay diez versiones de la base de referencia más la candidata incremental 20261013000100, probada solo localmente y pendiente de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+
+## Revisión actual: inventario, reintegros y Dashboard (2026-10-13)
+
+Base Git 05f5338ab117da5b770b462fd120ab06b2006e92; rama codex/inventory-refunds-dashboard-2. Replay local de once migraciones + seed correcto en NOVA-LOCAL-INTEGRITY (62621/62622). Suite: 521 tests en 38 archivos; lint 0 errores/0 warnings; TypeScript y build correctos. Regresiones dirigidas reales: 70 comprobaciones HTTP/Auth/SQL. Tres fixtures SQL con rollback correctos, incluidos seguridad y dos QR. Legacy 39/39; diez migraciones anteriores y seed sin cambios. Detalle y límites en [el informe de revisión](../docs/INVENTORY_REFUNDS_DASHBOARD_REVIEW.md).
+
+Los apartados siguientes son evidencia histórica; sus cifras y referencias a migraciones pendientes describen aquellas rondas, no el estado productivo actual. Esta tarea no consultó ni modificó producción.
 
 ## Cadena local
 
@@ -13,7 +19,10 @@ La fuente oficial es supabase/migrations/ (nueve versiones activas) y supabase/s
 7. 20261009000100_guest_customers_secure_receipts.sql
 8. 20261009000200_receipt_rate_limit.sql
 9. 20261009000300_tracking_rpc_server_only.sql
-10. seed.sql (la CLI local ejecuta los seeds después de todas las migraciones).
+10. 20261012000100_two_payment_qr.sql
+11. 20261013000100_inventory_refunds_sales_ledger.sql (candidata pendiente de autorización productiva)
+
+seed.sql permanece separado (la CLI local ejecuta los seeds después de todas las migraciones).
 
 Destino validado: NOVA-LOCAL-VALIDATION, API http://127.0.0.1:55421, PostgreSQL localhost:55422, sin project-ref. migrations es una junction al repositorio y seed un hardlink. No se ejecutó SQL remoto, link, db push ni repair.
 

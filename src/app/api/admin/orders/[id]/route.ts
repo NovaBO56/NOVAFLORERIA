@@ -6,7 +6,7 @@ import { orderContact } from "@/lib/public/order-contact";
 
 const ORDER_SELECT = `
   id, order_number, customer_id, order_type, status, subtotal, discount_total, total,
-  customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason,
+  customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason, inventory_review_required,
   created_at, updated_at, guest_name, guest_phone, guest_whatsapp, receipt_token,
   payments(status, confirmed_at),
   customer:customers (id, name, phone, whatsapp),

@@ -65,6 +65,7 @@ type OrderItem = {
 };
 
 type OrderDetail = OrderRow & {
+  inventory_review_required?: boolean;
   customer_message: string | null;
   internal_note: string | null;
   order_items: OrderItem[];
@@ -516,11 +517,12 @@ function OrderDetailModal({
               </div>
             )}
 
+            {order.inventory_review_required && <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">Este pedido antiguo tenía una receta incompleta. Revisa Productos → Receta y su reserva original antes de resolverlo con el administrador. Cambiar la receta ahora no reconstruye su consumo histórico; la confirmación está bloqueada para proteger el inventario.</p>}
             {order.cancellation_reason && (
               <p className="text-sm text-text-secondary">Motivo: {order.cancellation_reason}</p>
             )}
 
-            {order.status === "finalizado" && <OrderReturns key={order.id} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
+            {(order.status === "finalizado" || (order.status === "cancelado" && order.payments.some(payment => payment.status === "confirmado"))) && <OrderReturns key={order.id} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} cancelled={order.status === "cancelado"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
             {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
             {pendingAction ? (
@@ -592,6 +594,7 @@ function OrderDetailModal({
                     <Button
                       loading={busy}
                       onClick={() => void runAction(`/api/admin/payments/${pendingPayment.id}/confirm`)}
+                      disabled={Boolean(order.inventory_review_required)}
                     >
                       Confirmar pago
                     </Button>

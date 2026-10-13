@@ -1,6 +1,6 @@
 # Supabase: fuente oficial
 
-La única cadena activa local certificada está en `migrations/`:
+La única fuente SQL está en `migrations/`. Esta rama incorpora una candidata incremental 11 validada LOCALMENTE, pendiente de revisión y autorización productiva:
 
 1. `20261007000100_baseline_initial.sql`
 2. `20261007000200_checkout_public_summary.sql`
@@ -11,6 +11,8 @@ La única cadena activa local certificada está en `migrations/`:
 7. `20261009000100_guest_customers_secure_receipts.sql`
 8. `20261009000200_receipt_rate_limit.sql`
 9. `20261009000300_tracking_rpc_server_only.sql`
+10. `20261012000100_two_payment_qr.sql`
+11. `20261013000100_inventory_refunds_sales_ledger.sql` (pendiente de aprobación productiva).
 
 `seed.sql` se ejecuta después y contiene configuración mínima idempotente: buckets sin archivos, Caja principal sin abrir, siete días cerrados y pedidos fuera de horario desactivados. No contiene clientes, usuarios, productos reales, QR ni WhatsApp privados.
 
@@ -22,6 +24,8 @@ Para validar se usa `NOVA-LOCAL-VALIDATION`, API `http://127.0.0.1:55421` y DB `
 
 Las claves locales de pruebas están en archivos privados ignorados por Git; nunca usar credenciales productivas. `tests/ISOLATED_SECURITY_TESTS.sql` requiere base local vacía y opt-in `nova.security_test=isolated`; sus fixtures se revierten con ROLLBACK. Las dos consultas de `tools/` son genéricas y no contienen datos remotos capturados. El escáner genérico es `tools/scan-review-files.mjs`.
 
-Crear cambios futuros con timestamp único mayor que `20261009000300` y nombres snake_case. No reactivar históricos ni sobrescribir migraciones certificadas. Las nuevas versiones son incrementales; las versiones anteriores y seed permanecen intactos. Las versiones pendientes de producción requieren revisión y autorización separadas. Ambos RPC de seguimiento son privados; el público utiliza `/api/orders/track`, con validación y rate limiting antes del RPC.
+Crear cambios futuros con timestamp único mayor que `20261013000100` y nombres snake_case. No reactivar históricos ni sobrescribir migraciones certificadas. Las nuevas versiones son incrementales; las versiones anteriores y seed permanecen intactos. Las versiones pendientes de producción requieren revisión y autorización separadas. Ambos RPC de seguimiento son privados; el público utiliza `/api/orders/track`, con validación y rate limiting antes del RPC.
+
+La candidata 11 se probó en NOVA-LOCAL-INTEGRITY (API 62621, DB 62622, sin vínculo remoto), con copias de la cadena y seed. Su revisión, reglas financieras y decisiones de cuarentena de productos/pedidos están en [el informe de inventario, reintegros y Dashboard](../docs/INVENTORY_REFUNDS_DASHBOARD_REVIEW.md). No reutilizar un laboratorio con datos necesarios para un reset.
 
 El [estado vigente](MIGRATION_STATE.md) contiene los resultados de calidad y la clasificación de artefactos retirados. Los informes y snapshots anteriores se conservaron en backup privado e historial Git; no son documentación vigente ni necesarios para ejecutar la aplicación.

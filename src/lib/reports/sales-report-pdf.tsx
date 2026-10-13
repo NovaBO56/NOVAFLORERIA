@@ -1,4 +1,5 @@
 import { Document, Page, Text, View, StyleSheet } from "@react-pdf/renderer";
+import type { SalesEvent } from "./sales-ledger";
 
 const styles = StyleSheet.create({
   page: { padding: 30, fontSize: 10, fontFamily: "Helvetica" },
@@ -25,6 +26,9 @@ export type SalesReportSummary = {
   from: string;
   to: string;
   total_sales: number;
+  gross_sales: number;
+  refunds: number;
+  net_sales: number;
   count_online: number;
   count_fisica: number;
   by_payment_method: Record<string, number>;
@@ -33,9 +37,11 @@ export type SalesReportSummary = {
 export function SalesReportDocument({
   summary,
   orders,
+  refunds = [],
 }: {
   summary: SalesReportSummary;
   orders: SalesReportOrderRow[];
+  refunds?: SalesEvent[];
 }) {
   return (
     <Document>
@@ -47,9 +53,12 @@ export function SalesReportDocument({
 
         <View style={styles.summaryBox}>
           <View style={styles.summaryRow}>
-            <Text>Total vendido</Text>
+            <Text>Ventas brutas</Text>
             <Text>Bs. {summary.total_sales.toFixed(2)}</Text>
           </View>
+          <View style={styles.summaryRow}><Text>Reintegros monetarios</Text><Text>Bs. {summary.refunds.toFixed(2)}</Text></View>
+          <View style={styles.summaryRow}><Text>Ventas netas</Text><Text>Bs. {summary.net_sales.toFixed(2)}</Text></View>
+          <Text>Ventas reconocidas al confirmar; reintegros según fecha de registro (America/La_Paz).</Text>
           <View style={styles.summaryRow}>
             <Text>Pedidos online</Text>
             <Text>{summary.count_online}</Text>
@@ -80,10 +89,12 @@ export function SalesReportDocument({
             <Text style={styles.col}>{o.order_type}</Text>
             <Text style={styles.col}>{o.status}</Text>
             <Text style={styles.col}>{o.customer_name || "-"}</Text>
-            <Text style={styles.col}>{new Date(o.created_at).toLocaleDateString("es-BO")}</Text>
+            <Text style={styles.col}>{new Date(o.created_at).toLocaleDateString("es-BO", { timeZone: "America/La_Paz" })}</Text>
             <Text style={styles.col}>Bs. {o.total.toFixed(2)}</Text>
           </View>
         ))}
+        <Text style={styles.title}>Reintegros monetarios</Text>
+        {refunds.length===0 ? <Text>Sin reintegros en el período.</Text> : refunds.map(refund => <View style={styles.tableRow} key={refund.event_id}><Text style={styles.col}>#{refund.order_number} · {refund.return_type}</Text><Text style={styles.col}>{new Date(refund.occurred_at).toLocaleDateString("es-BO", {timeZone:"America/La_Paz"})}</Text><Text style={styles.col}>Original: Bs {Number(refund.original_total).toFixed(2)}</Text><Text style={styles.col}>Reintegro: Bs {Number(refund.amount).toFixed(2)} · Impacto neto: Bs {Number(refund.financial_effect).toFixed(2)}</Text><Text style={styles.col}>{refund.actor_name || "Administrador"} · {refund.reason}</Text></View>)}
       </Page>
     </Document>
   );

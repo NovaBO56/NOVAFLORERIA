@@ -21,7 +21,7 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
   });
   it("devuelve un error de stock comprensible", async () => {
     mocks.adminRpc.mockResolvedValue({ error: { code: "P0001", message: "Stock insuficiente" }, data: null });
-    const response = await create(request(payload)); expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ message: "Stock insuficiente" });
+    const response = await create(request(payload)); expect(response.status).toBe(400); expect(await response.json()).toMatchObject({ message: "No contamos con suficiente stock para completar esta cantidad. Reduce la cantidad o elige otro producto para continuar." });
   });
   it("limita consultas públicas y no consulta datos si supera el límite", async () => {
     mocks.allowed.mockResolvedValue(false); expect((await track(request({ order_number: 1, customer_phone: "70000000" }))).status).toBe(429); expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.adminFactory).not.toHaveBeenCalled();

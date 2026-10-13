@@ -3,7 +3,8 @@
   "git": {
     "deploymentEnabled": {
       "fix/production-round-1": false,
-      "codex/weekly-backup-two-qr": false
+      "codex/weekly-backup-two-qr": false,
+      "codex/inventory-refunds-dashboard-2": false
     }
   }
 }

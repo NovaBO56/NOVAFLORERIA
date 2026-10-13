@@ -1,234 +1,41 @@
 "use client";
-
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import {
-  Cake,
-  ChartColumn,
-  CircleX,
-  ClipboardList,
-  Hourglass,
-  Receipt,
-  TriangleAlert,
-  Users,
-  Wallet,
-} from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { formatMoney } from "@/lib/format";
+import { ArrowUpRight, CircleAlert, Receipt, RotateCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { formatMoney, formatDateTime } from "@/lib/format";
+import { businessDate } from "@/lib/business-date";
+import type { SalesEvent, salesTotals } from "@/lib/reports/sales-ledger";
 
-type DashboardData = {
-  ventas_hoy: number;
-  pedidos_pendientes: number;
-  pagos_pendientes: number;
-  inventario: {
-    bajo_stock: { name: string; current_stock: number; minimum_stock: number }[];
-    agotados: { name: string }[];
-  };
-  caja: { abierta: boolean; opening_amount?: number; opened_at?: string };
-  clientes_total: number;
-  cumpleanos_hoy: { name: string; birthday: string }[];
-  productos_mas_vendidos: { name: string; quantity: number }[];
-};
+type Dashboard={financial:ReturnType<typeof salesTotals>;today_orders:number;pending_payments:number;statuses:Record<string,number>;inventory:{id:string;name:string;current_stock:number;unit:string}[];bestsellers:{name:string;quantity:number}[];activity:SalesEvent[];recent_statuses:{id:string;order_number:number;status:string;updated_at:string}[]};
+const statusLabels:Record<string,string>={pendiente_pago:"Esperando pago",confirmado:"Confirmados",en_preparacion:"En preparación",listo:"Listos para entregar",finalizado:"Entregados"};
+const panel="min-w-0 rounded-2xl border border-border-decorative bg-white p-5 sm:p-6";
+function range(days:number){const to=businessDate(),start=new Date(`${to}T12:00:00Z`);start.setUTCDate(start.getUTCDate()-days+1);return{from:start.toISOString().slice(0,10),to};}
 
-/**
- * Dashboard — Fase 15 §4.2. Cada tarjeta es un acceso directo a su sección;
- * Inventario y Clientes todavía no tienen pantalla (Paso 4), así que sus
- * tarjetas son solo informativas por ahora.
- */
-export function DashboardPanel() {
-  const [data, setData] = useState<DashboardData | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-
-    async function load() {
-      try {
-        setLoading(true);
-        const response = await fetch("/api/admin/dashboard");
-        const body = await response.json();
-        if (!response.ok || !body.success) {
-          throw new Error(body.message ?? "No se pudo generar el dashboard.");
-        }
-        if (!cancelled) setData(body.dashboard);
-      } catch (err) {
-        if (!cancelled) {
-          setError(err instanceof Error ? err.message : "No se pudo generar el dashboard.");
-        }
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    }
-
-    void load();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        {Array.from({ length: 4 }).map((_, index) => (
-          <Card key={index} className="h-28 animate-pulse" />
-        ))}
-      </div>
-    );
-  }
-
-  if (error || !data) {
-    return (
-      <Card className="items-center gap-2 text-center">
-        <TriangleAlert aria-hidden="true" className="size-8 stroke-[1.5] text-danger" />
-        <p className="text-text-secondary">{error || "No se pudo generar el dashboard."}</p>
-      </Card>
-    );
-  }
-
-  const inventoryAlerts = data.inventario.bajo_stock.length + data.inventario.agotados.length;
-
-  return (
-    <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
-        <StatCard
-          icon={Receipt}
-          label="Ventas de hoy"
-          value={formatMoney(data.ventas_hoy)}
-          href="/admin/pedidos"
-        />
-        <StatCard
-          icon={Hourglass}
-          label="Pedidos pendientes"
-          value={String(data.pedidos_pendientes)}
-          href="/admin/pedidos?estado=pendiente_pago"
-        />
-        <StatCard
-          icon={ClipboardList}
-          label="Pagos por verificar"
-          value={String(data.pagos_pendientes)}
-          href="/admin/pedidos?pago=pendiente"
-        />
-        <StatCard
-          icon={Wallet}
-          label="Caja"
-          value={data.caja.abierta ? "Abierta" : "Cerrada"}
-          href="/admin/caja"
-        />
-      </div>
-
-      <div className="grid gap-4 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <TriangleAlert aria-hidden="true" className="size-5 stroke-[1.5] text-text-secondary" />
-              Alertas de inventario
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {inventoryAlerts === 0 ? (
-              <p className="text-text-secondary">Sin alertas por ahora.</p>
-            ) : (
-              <ul className="flex flex-col gap-2 text-sm">
-                {data.inventario.agotados.map((item) => (
-                  <li key={`agotado-${item.name}`} className="flex items-center gap-2">
-                    <CircleX aria-hidden="true" className="size-4 shrink-0 stroke-[1.5] text-danger" />
-                    <span className="text-text">{item.name}</span>
-                    <span className="text-text-secondary">— agotado</span>
-                  </li>
-                ))}
-                {data.inventario.bajo_stock.map((item) => (
-                  <li key={`bajo-${item.name}`} className="flex items-center gap-2">
-                    <TriangleAlert aria-hidden="true" className="size-4 shrink-0 stroke-[1.5] text-[#B98900]" />
-                    <span className="text-text">{item.name}</span>
-                    <span className="text-text-secondary">
-                      — {item.current_stock} de {item.minimum_stock} mínimo
-                    </span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <ChartColumn aria-hidden="true" className="size-5 stroke-[1.5] text-text-secondary" />
-              Más vendidos (30 días)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {data.productos_mas_vendidos.length === 0 ? (
-              <p className="text-text-secondary">Sin ventas en este período.</p>
-            ) : (
-              <ul className="flex flex-col gap-2 text-sm">
-                {data.productos_mas_vendidos.map((item) => (
-                  <li key={item.name} className="flex items-center justify-between gap-2">
-                    <span className="text-text">{item.name}</span>
-                    <span className="tabular-nums text-text-secondary">{item.quantity} und.</span>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Users aria-hidden="true" className="size-5 stroke-[1.5] text-text-secondary" />
-              Clientes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <p className="min-w-0 [overflow-wrap:anywhere] text-2xl font-semibold tabular-nums text-text">{data.clientes_total}</p>
-            <p className="text-text-secondary">clientes registrados en total</p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base">
-              <Cake aria-hidden="true" className="size-5 stroke-[1.5] text-text-secondary" />
-              Cumpleaños de hoy
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {data.cumpleanos_hoy.length === 0 ? (
-              <p className="text-text-secondary">Nadie cumple años hoy.</p>
-            ) : (
-              <ul className="flex flex-col gap-1 text-sm text-text">
-                {data.cumpleanos_hoy.map((customer) => (
-                  <li key={customer.name}>{customer.name}</li>
-                ))}
-              </ul>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  );
+export function DashboardPanel(){
+ const[dates,setDates]=useState(()=>range(7));const[data,setData]=useState<Dashboard|null>(null);const[error,setError]=useState("");const[loading,setLoading]=useState(true);const[refresh,setRefresh]=useState(0);
+ useEffect(()=>{const abort=new AbortController();void(async()=>{setLoading(true);setError("");try{const response=await fetch(`/api/admin/dashboard?${new URLSearchParams(dates)}`,{signal:abort.signal});const body=await response.json();if(!response.ok||!body.success)throw Error(body.message||"No se pudo cargar el dashboard.");if(!abort.signal.aborted)setData(body.dashboard);}catch(cause){if(!abort.signal.aborted)setError(cause instanceof Error?cause.message:"No se pudo cargar el dashboard.");}finally{if(!abort.signal.aborted)setLoading(false);}})();return()=>abort.abort();},[dates,refresh]);
+ return <div className="min-w-0 space-y-6 [overflow-wrap:anywhere]" aria-busy={loading}>
+  <header className="flex min-w-0 flex-wrap items-end justify-between gap-4"><div><p className="text-sm text-text-secondary">Floristería Anabelle · Tu negocio de un vistazo</p><h1 className="mt-1 text-2xl font-semibold tracking-tight sm:text-3xl">Resumen de ventas</h1><p className="mt-2 text-sm text-text-secondary">Importes del período · America/La_Paz</p></div><Button variant="outline" disabled={loading} onClick={()=>setRefresh(value=>value+1)}><RotateCcw aria-hidden size={16}/>Actualizar</Button></header>
+  <div className="flex min-w-0 flex-wrap items-center gap-3"><div className="flex gap-1 rounded-xl border border-border-decorative bg-white p-1">{[1,7,30].map(days=>{const selection=range(days),selected=dates.from===selection.from&&dates.to===selection.to;return <button key={days} aria-pressed={selected} className={`min-h-10 rounded-lg px-3 text-sm font-medium ${selected?"bg-brand text-white":"text-text-secondary hover:bg-brand-soft"}`} onClick={()=>setDates(selection)}>{days===1?"Hoy":`${days} días`}</button>;})}</div><label className="min-w-0 text-sm">Desde<input aria-label="Desde" type="date" value={dates.from} max={dates.to} className="ml-2 min-h-10 max-w-full rounded-lg border border-border-field bg-white px-2" onChange={event=>{if(event.target.value)setDates(current=>({...current,from:event.target.value}));}}/></label><label className="min-w-0 text-sm">Hasta<input aria-label="Hasta" type="date" value={dates.to} min={dates.from} className="ml-2 min-h-10 max-w-full rounded-lg border border-border-field bg-white px-2" onChange={event=>{if(event.target.value)setDates(current=>({...current,to:event.target.value}));}}/></label></div>
+  {error?<div role="alert" className={`${panel} text-danger`}><CircleAlert aria-hidden className="mb-2"/>{error}<Button variant="outline" className="mt-3" onClick={()=>setRefresh(value=>value+1)}>Reintentar</Button></div>:loading?<div role="status" className="grid gap-4 sm:grid-cols-3"><span className="sr-only">Cargando resumen de ventas…</span>{[0,1,2].map(index=><div key={index} className={`${panel} h-36 animate-pulse bg-brand-soft/30`}/>)}</div>:data?<>
+   <div className="grid min-w-0 gap-4 sm:grid-cols-2 xl:grid-cols-3"><Metric label="Ventas netas" value={`Bs ${formatMoney(data.financial.net_sales)}`} main hint="Ventas brutas menos reintegros monetarios"/><Metric label="Ventas brutas" value={`Bs ${formatMoney(data.financial.gross_sales)}`} hint="Ventas originales reconocidas al confirmar"/><Metric label="Devoluciones monetarias" value={`Bs ${formatMoney(data.financial.refunds)}`} hint="Reintegros registrados en este período"/><Metric label="Pedidos de hoy" value={String(data.today_orders)} href="/admin/pedidos"/><Metric label="Pagos por verificar" value={String(data.pending_payments)} href="/admin/pedidos?pago=pendiente"/><Metric label="Stock crítico" value={String(data.inventory.length)} href="/admin/inventario"/></div>
+   <section className={panel}><div className="flex flex-wrap items-center justify-between gap-3"><div><h3 className="text-lg font-semibold">Evolución de ventas</h3><p className="mt-1 text-sm text-text-secondary">{dates.from} al {dates.to} · Los reintegros afectan el día en que se registran.</p></div><Link className="text-sm font-medium text-brand underline" href="/admin/reportes">Ver reportes</Link></div><SalesChart series={data.financial.series}/></section>
+   <div className="grid min-w-0 gap-5 lg:grid-cols-2">
+    <section className={panel}><h3 className="mb-4 text-lg font-semibold">Pedidos que necesitan atención</h3><div className="space-y-2">{Object.entries(statusLabels).map(([status,label])=><Link key={status} href={`/admin/pedidos?estado=${status}`} className="flex min-h-12 items-center justify-between gap-3 rounded-xl bg-[#faf8fb] px-4 py-3 hover:bg-brand-soft"><span>{label}</span><span className="flex shrink-0 items-center gap-2 font-semibold">{data.statuses[status]??0}<ArrowUpRight size={16} aria-hidden/></span></Link>)}</div><p className="mt-3 text-xs text-text-secondary">Estado actual de todos los pedidos, independiente del rango financiero.</p></section>
+    <section className={panel}><h3 className="mb-4 text-lg font-semibold">Inventario que requiere atención</h3>{data.inventory.length===0?<p className="text-text-secondary">Sin alertas de stock.</p>:<ul className="space-y-3">{data.inventory.slice(0,6).map(item=><li key={item.id} className="flex min-w-0 items-center justify-between gap-3 border-b border-border-decorative pb-3"><span className="min-w-0 break-words">{item.name}<span className="mt-1 block text-xs text-danger">{Number(item.current_stock)<=0?"Agotado":"Stock bajo"}</span></span><span className="shrink-0 text-sm font-semibold">{item.current_stock} {item.unit}</span></li>)}</ul>}<Link className="mt-4 inline-flex min-h-10 items-center text-sm font-medium text-brand underline" href="/admin/inventario">Revisar inventario{data.inventory.length>6?` (${data.inventory.length} alertas)`:""}</Link></section>
+    <section className={panel}><h3 className="mb-4 text-lg font-semibold">Productos más vendidos</h3><p className="mb-4 text-sm text-text-secondary">Unidades vendidas en el período; no representan ingresos netos.</p>{data.bestsellers.length===0?<p className="text-text-secondary">Todavía no hay ventas en este período.</p>:<ol className="space-y-4">{data.bestsellers.map((item,index)=><li key={item.name+index} className="flex min-w-0 items-center gap-3"><span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-soft font-semibold text-brand">{index+1}</span><span className="min-w-0 flex-1 break-words">{item.name}</span><span className="shrink-0 font-semibold">{item.quantity} u.</span></li>)}</ol>}</section>
+    <section className={panel}><h3 className="mb-4 text-lg font-semibold">Actividad reciente</h3>{data.activity.length===0&&data.recent_statuses.length===0?<p className="text-text-secondary">Sin actividad para mostrar.</p>:<ul className="space-y-4">{data.activity.slice(0,5).map(event=><li key={event.event_id} className="flex min-w-0 gap-3"><Receipt className="mt-1 size-4 shrink-0 text-brand" aria-hidden/><div className="min-w-0"><Link href="/admin/pedidos" className="font-medium">{event.kind==="refund"?"Reintegro registrado":"Venta confirmada"} · #{event.order_number}</Link><p className="text-sm text-text-secondary">Bs {formatMoney(Number(event.amount))} · {formatDateTime(event.occurred_at)}</p></div></li>)}{data.recent_statuses.slice(0,3).map(order=><li key={order.id} className="text-sm"><Link href="/admin/pedidos">Pedido #{order.order_number} · {order.status==="listo"?"Listo para entregar":"Entregado"}</Link><p className="text-xs text-text-secondary">{formatDateTime(order.updated_at)}</p></li>)}</ul>}</section>
+   </div>
+  </>:null}
+ </div>;
 }
-
-function StatCard({
-  icon: Icon,
-  label,
-  value,
-  href,
-}: {
-  icon: typeof Receipt;
-  label: string;
-  value: string;
-  href: string;
-}) {
-  return (
-    <Link href={href} className="block">
-      <Card interactive className="gap-2">
-        <Icon aria-hidden="true" className="size-5 stroke-[1.5] text-brand" />
-        <p className="min-w-0 [overflow-wrap:anywhere] text-2xl font-semibold tabular-nums text-text">{value}</p>
-        <p className="text-text-secondary">{label}</p>
-      </Card>
-    </Link>
-  );
+function Metric({label,value,hint,main,href}:{label:string;value:string;hint?:string;main?:boolean;href?:string}){
+ const content=<><p className={`text-sm ${main?"text-white/85":"text-text-secondary"}`}>{label}</p><p className="mt-3 break-words text-3xl font-semibold leading-tight tracking-tight tabular-nums sm:text-4xl">{value}</p>{hint&&<p className={`mt-3 text-xs ${main?"text-white/80":"text-text-secondary"}`}>{hint}</p>}</>;
+ const className=`${main?panel.replace("bg-white","bg-brand"):panel} ${main?"border-brand text-white":"text-text"}`;return href?<Link href={href} className={className}>{content}</Link>:<section className={className}>{content}</section>;
+}
+function SalesChart({series}:{series:Dashboard["financial"]["series"]}){
+ const min=Math.min(0,...series.map(day=>day.net_sales)),max=Math.max(1,...series.map(day=>day.gross_sales),...series.map(day=>day.refunds));const y=(value:number)=>180-(value-min)/(max-min)*150;
+ const points=(key:"net_sales"|"gross_sales"|"refunds")=>series.map((day,index)=>`${40+index/Math.max(1,series.length-1)*650},${y(day[key])}`).join(" ");const colors={net_sales:"#65358e",gross_sales:"#23866f",refunds:"#c06c39"};
+ return <div className="mt-5 min-w-0"><svg className="h-52 w-full" preserveAspectRatio="none" viewBox="0 0 720 195" role="img" aria-label="Evolución de ventas brutas, netas y reintegros. Los importes exactos están disponibles en la tabla de datos."><line x1="40" x2="690" y1={y(0)} y2={y(0)} stroke="#ddd5e1"/>{Object.entries(colors).map(([key,color])=><polyline key={key} points={points(key as keyof typeof colors)} fill="none" stroke={color} strokeWidth="3" vectorEffect="non-scaling-stroke"/>)}{series.length===1&&Object.entries(colors).map(([key,color])=><circle key={key} cx="40" cy={y(series[0][key as keyof typeof colors])} r="4" fill={color}/>)}</svg><div className="mb-4 flex justify-between gap-3 text-xs text-text-secondary"><span>{series[0]?.date}</span><span>{series.at(-1)?.date}</span></div><div className="flex flex-wrap gap-4 text-sm">{[["Netas",colors.net_sales],["Brutas",colors.gross_sales],["Reintegros",colors.refunds]].map(([label,color])=><span key={label} className="flex items-center gap-2"><span className="size-2 rounded-full" style={{backgroundColor:color}}/>{label}</span>)}</div><details className="mt-4 text-sm"><summary className="min-h-10 cursor-pointer text-brand">Ver importes por día</summary><div className="max-h-64 overflow-auto"><table className="w-full text-left"><caption className="sr-only">Importes diarios en bolivianos</caption><thead><tr>{["Fecha","Brutas","Reintegros","Netas"].map(label=><th key={label} className="p-2">{label}</th>)}</tr></thead><tbody>{series.map(day=><tr key={day.date}><td className="p-2">{day.date}</td>{[day.gross_sales,day.refunds,day.net_sales].map((amount,index)=><td className="p-2 tabular-nums" key={index}>{formatMoney(amount)}</td>)}</tr>)}</tbody></table></div></details></div>;
 }

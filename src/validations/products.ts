@@ -9,7 +9,7 @@ export const createProductSchema = z.object({
   occasion: z.string().trim().max(120).optional().nullable(),
   season_id: z.string().uuid().optional().nullable(),
   is_featured: z.boolean().optional().default(false),
-  is_available: z.boolean().optional().default(true),
+  is_available: z.boolean().optional().default(false),
   is_sold_out: z.boolean().optional().default(false),
   catalog_order: z.coerce
     .number()
@@ -17,7 +17,7 @@ export const createProductSchema = z.object({
     .min(0)
     .optional()
     .default(0),
-  is_active: z.boolean().optional().default(true),
+  is_active: z.boolean().optional().default(false),
 });
 
 export const updateProductSchema = z

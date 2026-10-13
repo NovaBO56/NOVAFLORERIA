@@ -34,7 +34,10 @@ export async function POST(request: Request, context: RouteContext) {
     await requireAdmin();
     const { id } = await context.params;
 
-    const body = await request.json();
+    let body: unknown;
+    try { body = await request.json(); } catch {
+      return NextResponse.json({ success: false, message: "El cuerpo de la solicitud no es JSON válido." }, { status: 400 });
+    }
     const result = createSaleReturnSchema.safeParse(body);
 
     if (!result.success) {
@@ -50,6 +53,7 @@ export async function POST(request: Request, context: RouteContext) {
       p_type: result.data.type,
       p_amount: result.data.amount,
       p_reason: result.data.reason,
+      p_idempotency_key: result.data.idempotency_key,
     });
 
     if (error) {
