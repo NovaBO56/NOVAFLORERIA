@@ -53,12 +53,13 @@ export async function decryptDump(input, output, key) {
   const file = await open(input, 'r');
   try {
     const size = (await file.stat()).size;
-    if (size <= magic.length + 28) throw new Error('Archivo cifrado incompleto.');
+    if (size < magic.length + 28) throw new Error('Archivo cifrado incompleto.');
     const header = Buffer.alloc(magic.length + 12); await file.read(header, 0, header.length, 0);
     if (!header.subarray(0, magic.length).equals(magic)) throw new Error('Formato no reconocido.');
     const tag = Buffer.alloc(16); await file.read(tag, 0, 16, size - 16);
     const decipher = createDecipheriv('aes-256-gcm', key, header.subarray(magic.length)); decipher.setAuthTag(tag);
-    await pipeline(createReadStream(input, { start: header.length, end: size - 17 }), decipher, createWriteStream(output, { flags: 'wx', mode: 0o600 }));
+    const source = size === header.length + 16 ? (await import('node:stream')).Readable.from([]) : createReadStream(input, { start: header.length, end: size - 17 });
+    await pipeline(source, decipher, createWriteStream(output, { flags: 'wx', mode: 0o600 }));
   } finally { await file.close(); }
 }
 export async function verifyDownloaded(source, downloaded, head) {

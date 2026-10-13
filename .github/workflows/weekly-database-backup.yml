@@ -1,4 +1,4 @@
-name: Weekly encrypted database backup
+name: Weekly encrypted database and Storage backup
 on:
   schedule:
     # Domingo 03:00 UTC = sábado 23:00 America/La_Paz.
@@ -12,10 +12,10 @@ concurrency:
 jobs:
   backup:
     # Remains disabled until the private provider and protected variables are reviewed.
-    if: vars.BACKUP_ENABLED == 'true'
+    if: vars.BACKUP_ENABLED == 'true' && false
     environment: production-backup
     runs-on: ubuntu-24.04
-    timeout-minutes: 90
+    timeout-minutes: 360
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -30,9 +30,11 @@ jobs:
           /usr/lib/postgresql/17/bin/pg_dump --version
           aws --version
           echo '/usr/lib/postgresql/17/bin' >> "$GITHUB_PATH"
-      - name: Dump, encrypt, upload, verify and retain
+      - name: DB, Storage, verify both, joint recovery marker, then retention
         run: node supabase/backup/weekly-backup.mjs
         env:
+          # Review branch: hard stop even if repository variables are enabled.
+          BACKUP_ENABLED: 'false'
           BACKUP_MODE: production
           BACKUP_PROJECT_REF: groyjvbtcuhjbltmmdfl
           PGHOST: ${{ secrets.BACKUP_PG_HOST }}
@@ -50,6 +52,11 @@ jobs:
           BACKUP_S3_ADDRESSING_STYLE: ${{ vars.BACKUP_S3_ADDRESSING_STYLE }}
           BACKUP_S3_BUCKET: ${{ vars.BACKUP_S3_BUCKET }}
           BACKUP_S3_PREFIX: ${{ vars.BACKUP_S3_PREFIX }}
+          BACKUP_S3_STORAGE_PREFIX: ${{ vars.BACKUP_S3_STORAGE_PREFIX }}
+          BACKUP_S3_WEEKLY_PREFIX: ${{ vars.BACKUP_S3_WEEKLY_PREFIX }}
+          BACKUP_STORAGE_URL: ${{ vars.BACKUP_STORAGE_URL }}
+          BACKUP_STORAGE_API_KEY: ${{ secrets.BACKUP_STORAGE_API_KEY }}
+          BACKUP_STORAGE_READ_TOKEN: ${{ secrets.BACKUP_STORAGE_READ_TOKEN }}
           BACKUP_BUCKET_PRIVATE_CONFIRMED: ${{ vars.BACKUP_BUCKET_PRIVATE_CONFIRMED }}
           BACKUP_S3_VERSIONING: ${{ vars.BACKUP_S3_VERSIONING }}
           BACKUP_S3_POLICY_STATUS: ${{ vars.BACKUP_S3_POLICY_STATUS }}
