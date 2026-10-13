@@ -1,15 +1,21 @@
 "use client";
 import { useEffect, useState } from "react";
-import { mapsDestination, type StoreLocation } from "@/validations/store-location";
+import { storeLocationSchema, type StoreLocation } from "@/validations/store-location";
+import { LocationCard } from "./location-card";
 
-export function PublicStoreLocation() {
+export function PublicStoreLocation({ hours = null }: { hours?: string | null }) {
   const [location, setLocation] = useState<StoreLocation | null>(null);
-  useEffect(() => { const controller = new AbortController(); void fetch("/api/store-location", { signal: controller.signal }).then(response => response.json()).then(data => { if (data.success) setLocation(data.location); }).catch(() => {}); return () => controller.abort(); }, []);
-  if (!location || (!location.address && !location.maps_url && location.latitude === null)) return null;
-  const maps = mapsDestination(location);
-  return <section aria-label="Ubicación de la tienda" className="mx-auto mt-6 max-w-lg space-y-3 rounded-2xl border border-purple-200 bg-white p-5 text-[#403344]">
-    <h3 className="font-bold">Floristería Anabelle{location.branch_name ? ` · ${location.branch_name}` : ""}</h3>
-    {location.address ? <p>{location.address}</p> : null}{location.reference ? <p className="text-sm">{location.reference}</p> : null}{location.directions ? <p>{location.directions}</p> : null}
-    {maps ? <div className="flex flex-wrap justify-center gap-3"><a className="rounded-xl bg-[#65358e] px-4 py-3 font-bold text-white" href={maps} target="_blank" rel="noopener noreferrer">Cómo llegar</a><a className="rounded-xl border border-purple-200 px-4 py-3" href={maps} target="_blank" rel="noopener noreferrer">Abrir en Google Maps</a></div> : null}
-  </section>;
+  const [loading, setLoading] = useState(true);
+  const [unavailable, setUnavailable] = useState(false);
+  useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/store-location", { signal: controller.signal }).then(async response => {
+      const data = await response.json();
+      if (!response.ok || !data.success) throw Error("Location unavailable");
+      const parsed = storeLocationSchema.safeParse(data.location);
+      if (!controller.signal.aborted) setLocation(parsed.success ? parsed.data : null);
+    }).catch(() => { if (!controller.signal.aborted) setUnavailable(true); }).finally(() => { if (!controller.signal.aborted) setLoading(false); });
+    return () => controller.abort();
+  }, []);
+  return <LocationCard location={location} hours={hours} loading={loading} unavailable={unavailable} />;
 }

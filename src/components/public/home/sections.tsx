@@ -6,7 +6,6 @@ import { SafeImage as Image } from "@/components/public/safe-image";
 import {
   ArrowRight,
   ChevronRight,
-  Clock,
   Heart,
   MessageCircle,
   Sparkles,
@@ -437,7 +436,7 @@ export function ContactSection({
       id="contacto"
       className="scroll-mt-20 border-t border-[#e8e0ea] bg-[#f6f0f8] px-5 py-16 sm:px-8 sm:py-20"
     >
-      <div className="mx-auto max-w-[700px] text-center">
+      <div className="mx-auto max-w-[1180px] text-center">
         <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
           Contacto
         </p>
@@ -465,13 +464,7 @@ export function ContactSection({
           </a>
         ) : null}
 
-        <PublicStoreLocation />
-        {hours ? (
-          <p className="mt-5 inline-flex items-center gap-2 text-xs text-[#6a5e6e]">
-            <Clock size={14} aria-hidden="true" />
-            Horario de hoy: {hours}
-          </p>
-        ) : null}
+        <PublicStoreLocation hours={hours} />
       </div>
     </section>
   );
