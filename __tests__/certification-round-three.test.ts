@@ -101,6 +101,16 @@ describe("volume regressions (unit mocks, real HTTP/SQL checked separately)", ()
     const response=await dashboard(new Request("http://localhost?from=2026-10-12&to=2026-10-12")); const body=await response.json();
     expect(response.status).toBe(200); expect(body.dashboard.financial.gross_sales).toBe(31148387.68); expect(body.dashboard.bestsellers).toEqual([{name:"TEST",quantity:1160}]);
     expect(mocks.queries.filter(query=>query.table==='order_items')).toHaveLength(12);
+    expect(body.dashboard.recent_orders).toHaveLength(5);
+    expect(mocks.queries.find(query=>query.select?.includes("guest_name,customer:customers(name)"))?.range).toEqual([0,4]);
+  });
+  it("dashboard presents real cancelled/rejected counts and only safe recent-order fields", async () => {
+    mocks.tables.orders=[{id,order_number:17,status:"cancelado",total:90,created_at:"2026-10-12",guest_name:"TEST GUEST",guest_phone:"DO NOT EXPOSE",receipt_token:"DO NOT EXPOSE",customer:null},{id:"second",order_number:18,status:"rechazado",total:20,created_at:"2026-10-12",guest_name:"TEST",customer:{name:"TEST CUSTOMER"}}];
+    const response=await dashboard(new Request("http://localhost?from=2026-10-12&to=2026-10-12"));const body=await response.json();
+    expect(body.dashboard.statuses).toMatchObject({cancelado:1,rechazado:1,confirmado:0});
+    expect(body.dashboard.recent_orders.map((row:{customer_name:string})=>row.customer_name)).toEqual(["TEST GUEST","TEST CUSTOMER"]);
+    expect(JSON.stringify(body.dashboard.recent_orders)).not.toContain("DO NOT EXPOSE");
+    expect(mocks.writes).not.toHaveBeenCalled();expect(mocks.rpc).not.toHaveBeenCalled();
   });
   it("a later page error never becomes partial success", async () => {
     await expect(readAllPages(async start => start ? {data:null,error:{message:"DB failure"},count:null} : {data:Array(500).fill(1),error:null,count:1160})).rejects.toThrow("DB failure");

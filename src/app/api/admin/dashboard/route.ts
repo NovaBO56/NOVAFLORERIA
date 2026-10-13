@@ -22,7 +22,7 @@ export async function GET(request: Request) {
    client.from("payments").select("id",{count:"exact",head:true}).eq("status","pendiente"),
   ]);
   if(pending.error)throw pending.error;
-  const statuses=Object.fromEntries(["pendiente_pago","confirmado","en_preparacion","listo","finalizado"].map(status=>[status,orders.filter(order=>order.status===status).length]));
+  const statuses=Object.fromEntries(["pendiente_pago","confirmado","en_preparacion","listo","finalizado","cancelado","rechazado"].map(status=>[status,orders.filter(order=>order.status===status).length]));
   const products=new Map<string,{name:string;quantity:number}>();
   const ids=ledger.events.filter(event=>event.kind==="sale").map(event=>event.order_id);
   for(let index=0;index<ids.length;index+=100){
@@ -31,9 +31,17 @@ export async function GET(request: Request) {
   }
   const recent=await client.from("orders").select("id,order_number,status,updated_at").in("status",["listo","finalizado"]).order("updated_at",{ascending:false}).limit(6);
   if(recent.error)throw recent.error;
+  // Presentation only: latest non-deleted orders, under the existing staff RLS.
+  // No phone, address, payment reference or receipt token is sent to the dashboard.
+  const latest=await client.from("orders").select("id,order_number,status,total,created_at,guest_name,customer:customers(name)").is("deleted_at",null).order("created_at",{ascending:false}).order("id",{ascending:false}).range(0,4);
+  if(latest.error)throw latest.error;
+  const recentOrders=(latest.data??[]).map(order=>{
+   const customer=Array.isArray(order.customer)?order.customer[0]:order.customer;
+   return {id:order.id,order_number:order.order_number,status:order.status,total:order.total,created_at:order.created_at,customer_name:customer?.name??order.guest_name??null};
+  });
   return NextResponse.json({success:true,dashboard:{financial:ledger.summary,today_orders:orders.filter(order=>businessDate(new Date(order.created_at))===today).length,pending_payments:pending.count??0,statuses,
    inventory:inventory.filter(item=>Number(item.current_stock)<=Number(item.minimum_stock)).sort((a,b)=>Number(a.current_stock)-Number(b.current_stock)),
-   bestsellers:[...products.values()].sort((a,b)=>b.quantity-a.quantity).slice(0,5).map(item=>({...item,quantity:item.quantity/1000})),activity:ledger.events.slice(-8).reverse(),recent_statuses:recent.data}});
+   bestsellers:[...products.values()].sort((a,b)=>b.quantity-a.quantity).slice(0,5).map(item=>({...item,quantity:item.quantity/1000})),activity:ledger.events.slice(-8).reverse(),recent_statuses:recent.data,recent_orders:recentOrders}});
  }catch(error){
   console.error("Error generando dashboard:",error);const message=error instanceof Error?error.message:"";const unauthorized=/^(Usuario|Rol|Acceso)/.test(message);
   return NextResponse.json({success:false,message:unauthorized?message:"No se pudo generar el dashboard."},{status:unauthorized?403:500});
