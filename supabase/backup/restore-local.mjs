@@ -3,9 +3,10 @@ import { join } from 'node:path';
 import { tmpdir } from 'node:os';
 import { fileURLToPath } from 'node:url';
 import { runPg } from './pg-tools.mjs';
-import { decryptDump, encryptionKey } from './backup-core.mjs';
+import { decryptDump, encryptionKey, validateSource } from './backup-core.mjs';
 
 export function validateRestore(env) {
+  validateSource(env);
   if (env.BACKUP_MODE !== 'local' || !['127.0.0.1', 'localhost', '::1'].includes(env.PGHOST) || env.RESTORE_DISPOSABLE_LOCAL !== 'YES') throw new Error('Restauración permitida solo en localhost desechable, con confirmación explícita.');
 }
 // Restore on an empty, matching-version Supabase stack, never on plain PostgreSQL.

@@ -1,6 +1,8 @@
 # Dos QR y backup — cierre LOCAL del 12 de octubre de 2026
 
-Rama `codex/weekly-backup-two-qr`, base `b50cbf2139e1d125b6b67fd9be5cda84ba7a6dc4`. Sin merge, deploy, SQL remoto, bucket real ni cambios de credenciales productivas. La rama sigue excluida de deploys automáticos y el calendario de backup DESACTIVADO.
+Este informe conserva **evidencia histórica** de los dos QR y del ensayo LOCAL inicial; sus cifras pertenecen a ese ensayo. La decisión vigente de backup es manual de DB, sin imágenes ni workflow, documentada en [backup/README.md](backup/README.md). Los dos QR no cambian.
+
+Rama `codex/weekly-backup-two-qr`, base `b50cbf2139e1d125b6b67fd9be5cda84ba7a6dc4`. Sin merge, deploy, SQL remoto, bucket real ni cambios de credenciales productivas. La rama sigue excluida de deploys automáticos; el workflow de backup se retiró en la simplificación posterior.
 
 ## Infraestructura
 
@@ -44,6 +46,6 @@ Snapshot final: productos 2, clientes 3, pedidos/items 6/6, pagos 3, insumos/lot
 
 Auth/Storage usan estructura compatible provisionada por Supabase. SMTP/OAuth/JWT/secret keys, roles/passwords PostgreSQL, otros esquemas y jobs pg_cron requieren recuperación separada. URLs públicas conservan host de origen: revisar cambio al recuperar en otro proyecto. Datos se compararon antes de login/upload, que actualizan timestamps/sesiones/versión Storage.
 
-S3 preparado por variables: endpoint, región, bucket, prefijo y access/secret key protegidas; privacidad, cifrado previo, verificación por descarga y retención posterior. Privacidad/versionado/IAM/upload/retención reales del proveedor NO probados. Pendiente elegir proveedor, aprobar variables/permisos y automatizar copia independiente productiva de archivos. No declarar recuperación productiva completa ni activar calendario. Detenerse para revisión sin merge/deploy.
+La propuesta de proveedor externo y automatización de archivos se descartó por decisión posterior del propietario. No queda pendiente activarla. Su código y evidencia histórica se conservan en Git, resumidos en [backup/HISTORY.md](backup/HISTORY.md); no se solicitaron ni configuraron credenciales reales. El backup actual solo protege DB; las imágenes requieren recuperación manual separada.
 
 Una repetición final de Vitest dentro del sandbox no llegó a ejecutar tests: 35 errores EPERM de realpath sobre node_modules. Se repitió con acceso local autorizado y pasaron 483/483; no se cambió código para resolverlo. Permanece el aviso preexistente de deprecación CJS de Vite; lint sigue en 0 warnings.

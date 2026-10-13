@@ -8,6 +8,12 @@ La cadena limpia está activa en `supabase/migrations/`; los 39 originales se co
 
 ## Operación del backend
 
+### Backup semanal
+
+Una vez por semana, abrir PowerShell en el proyecto, configurar las variables privadas locales y ejecutar `npm run backup:manual`. Comprobar el mensaje de éxito y que la carpeta elegida fuera de Git contiene `.dump.enc` y su manifest/hash; copiar ambos opcionalmente a OneDrive/disco externo. Mantener la clave de cifrado separada. [Preparación y restore LOCAL](supabase/backup/README.md).
+
+**Este backup protege los datos de la base. No incluye las imágenes físicas almacenadas en Supabase Storage.** No hay automatización ni borrado automático de copias.
+
 El administrador activo configura QR, WhatsApp, horarios por día y pedidos fuera de horario en `/admin/configuracion`. QR acepta PNG/JPG/WebP decodificables de hasta 5 MB, con preview, reemplazo y desactivación. No hay configuraciones bancarias ni números ficticios en los seeds. `/admin/auditoria` muestra trazabilidad administrativa; la cabecera del panel incluye la bandeja compartida de notificaciones.
 
 Pedidos y reportes de pago públicos pasan por las APIs Next.js. Los RPC de creación de pedido y pago son privados del servidor; no se expone su clave al navegador. El servidor necesita `SUPABASE_SECRET_KEY`, además de la URL y clave pública de Supabase. Las escrituras fallan cerradas si falla el limitador; las lecturas pueden continuar. En el despliegue, el proxy confiable debe sobrescribir los headers de IP; no aceptar headers de IP arbitrarios desde Internet. Auth usa además los límites propios de Supabase.

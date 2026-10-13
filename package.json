@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "backup:manual": "node supabase/backup/manual-backup.mjs"
   },
   "dependencies": {
     "@react-pdf/renderer": "^4.9.0",

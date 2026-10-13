@@ -1,6 +1,6 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes } from 'node:crypto';
 import { createReadStream, createWriteStream } from 'node:fs';
-import { open, stat } from 'node:fs/promises';
+import { open } from 'node:fs/promises';
 import { pipeline } from 'node:stream/promises';
 
 export const productionRef = 'groyjvbtcuhjbltmmdfl';
@@ -12,6 +12,7 @@ export function encryptionKey(value) {
   return key;
 }
 export function validateSource(env) {
+  if (env.PGHOSTADDR || env.PGSERVICE || env.PGSERVICEFILE) throw new Error('No usar overrides de conexión PostgreSQL.');
   if (env.BACKUP_MODE === 'local') {
     if (!['127.0.0.1', 'localhost', '::1'].includes(env.PGHOST)) throw new Error('El modo local requiere localhost.');
     return;
@@ -22,19 +23,8 @@ export function validateSource(env) {
   if (!(direct || pooler) || env.PGSSLMODE !== 'verify-full') throw new Error('Host/SSL de producción inválido.');
   if (env.PGPORT === '6543') throw new Error('Usa conexión directa o pooler de sesión, no transaccional.');
 }
-export function validateBucket(env) {
-  const endpoint = new URL(env.BACKUP_S3_ENDPOINT);
-  if (endpoint.protocol !== 'https:' || endpoint.username || endpoint.password || endpoint.search || endpoint.hash) throw new Error('Endpoint S3 requiere HTTPS sin credenciales.');
-  if (!/^[a-z0-9][a-z0-9.-]{1,61}[a-z0-9]$/.test(env.BACKUP_S3_BUCKET || '')) throw new Error('Bucket inválido.');
-  if (!/^[a-zA-Z0-9][a-zA-Z0-9/_-]{0,150}\/$/.test(env.BACKUP_S3_PREFIX || '')) throw new Error('Prefijo acotado terminado en / requerido.');
-  if (env.BACKUP_BUCKET_PRIVATE_CONFIRMED !== 'true') throw new Error('Debe verificarse que el bucket es privado antes de activarlo.');
-  const retention = Number(env.BACKUP_RETENTION_WEEKS || 8);
-  if (!Number.isInteger(retention) || retention < 4 || retention > 52) throw new Error('Retención debe estar entre 4 y 52 semanas.');
-  if (!['required', 'unsupported'].includes(env.BACKUP_S3_VERSIONING || 'required')) throw new Error('Versionado inválido.');
-  return { endpoint: endpoint.href.replace(/\/$/, ''), bucket: env.BACKUP_S3_BUCKET, prefix: env.BACKUP_S3_PREFIX, retention };
-}
 export function archiveName(date = new Date(), suffix = randomBytes(6).toString('hex')) {
-  return `${date.toISOString().replace(/[:.]/g, '-')}-${suffix}.dump.enc`;
+  return `floristeria-anabelle-${date.toISOString().replace(/[:.]/g, '-')}-${suffix}.dump.enc`;
 }
 export async function sha256(path) {
   const hash = createHash('sha256');
@@ -61,16 +51,4 @@ export async function decryptDump(input, output, key) {
     const source = size === header.length + 16 ? (await import('node:stream')).Readable.from([]) : createReadStream(input, { start: header.length, end: size - 17 });
     await pipeline(source, decipher, createWriteStream(output, { flags: 'wx', mode: 0o600 }));
   } finally { await file.close(); }
-}
-export async function verifyDownloaded(source, downloaded, head) {
-  const digest = await sha256(source);
-  if (head.ContentLength !== (await stat(source)).size || head.Metadata?.sha256 !== digest || await sha256(downloaded) !== digest) throw new Error('La copia S3 no coincide; no ejecutar retención.');
-  return digest;
-}
-// Only previously verified copies are eligible. Unrelated/unverified objects survive.
-export function retentionCandidates(verified, newest, keep) {
-  if (!Number.isInteger(keep) || keep < 4 || !verified.includes(newest)) throw new Error('No existe una copia nueva verificada.');
-  const valid = verified.filter(name => /^\d{4}-\d{2}-\d{2}T\d{2}-\d{2}-\d{2}-\d{3}Z-[a-f0-9]{12}\.dump\.enc$/.test(name));
-  if (!valid.includes(newest)) throw new Error('Nombre de backup inválido.');
-  return [...new Set(valid)].sort().reverse().slice(keep).filter(name => name < newest);
 }

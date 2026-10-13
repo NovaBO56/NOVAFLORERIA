@@ -1,89 +1,101 @@
-# Recuperación semanal privada — desactivada
+# Backup manual de datos — Floristería Anabelle
 
-El workflow mantiene guardia explícita `&& false` y `BACKUP_ENABLED=false`. Ni el calendario ni una ejecución manual pueden activarlo mediante variables del repositorio. No hay proveedor conectado ni claves solicitadas. No quitar las dos guardias antes de una revisión posterior. Importar los módulos no ejecuta backups.
+La decisión vigente es realizar una copia **manual una vez por semana desde la laptop**. No hay workflow automático, proveedor externo ni copia de archivos Storage. Se conservan todas las copias; la herramienta nunca elimina backups anteriores.
 
-## Captura conjunta
+**Este backup protege los datos de la base. No incluye las imágenes físicas almacenadas en Supabase Storage.**
 
-GitHub Actions, fuera de Vercel, tiene frecuencia domingo 03:00 UTC (sábado 23:00 Bolivia). Usa PostgreSQL y AWS CLI oficiales; no añade dependencias a la aplicación ni sube GitHub Artifacts. El espacio temporal del sistema contiene los archivos privados; se elimina al terminar, incluso al fallar. Nunca se guarda un dump o imagen dentro del repositorio. Cada objeto se procesa por streaming; disco temporal necesario: dump + archivos cifrados/verificación y el objeto mayor. La RAM no contiene todos los bytes de Storage. Manifest NDJSON por streaming; los conjuntos de identidad usados para validar duplicados crecen con el número de objetos.
+## Backup semanal
 
-Orden de `weekly-backup.mjs`:
+Una vez por semana:
 
-1. Capturar inventario Storage mediante SELECT paginado, por clave `(bucket_id,name)` con collation C y páginas de 1.000. Leer **todos** los buckets y objetos, sin filtros que omitan futuros buckets de negocio. Carpetas son rutas completas, sin límite artificial de profundidad.
-2. Un único `pg_dump --format=custom` toma una instantánea consistente de `public`, `auth`, `storage` metadata y `supabase_migrations`; verificar TOC con `pg_restore --list`, cifrar y subir DB.
-3. Comparar nuevamente inventario con el anterior. Respaldar todos los bytes mediante API Storage autenticada, sin modificar originales. Cifrar/subir/verificar cada objeto. No existen los límites LOCAL de 5 MB/64 MB/5.000 objetos.
-4. Verificar nuevamente el dump externo y todos los objetos/manifest Storage.
-5. Comparar inventario una tercera vez; publicar y descargar/verificar el marcador conjunto cifrado de semana recuperable.
-6. Únicamente ahora realizar retención coordinada.
+1. Abrir PowerShell en el proyecto.
+2. Configurar las variables privadas de esta sesión, como se explica abajo.
+3. Ejecutar `npm run backup:manual`.
+4. Comprobar el mensaje `Backup manual cifrado creado y verificado correctamente.`
+5. Verificar en la carpeta elegida que existen el `.dump.enc` y su `.dump.enc.verified.json`.
+6. Copiar opcionalmente **ambos archivos** a OneDrive/disco externo. Mantener la clave de cifrado separada en un gestor privado.
+7. Limpiar las variables secretas y cerrar PowerShell. Si falla el comando, no contar ese intento como copia semanal.
 
-El manifest cifrado conserva bucket, ruta exacta, tamaño, content-type disponible y SHA-256 del contenido, además de key/tamaño/hash de cada archivo cifrado. Mantiene buckets vacíos. Los nombres externos son opacos por objeto; no exponen rutas ni nombres de clientes.
+## Preparación de la laptop
 
-Cada subida requiere HEAD (existencia/tamaño/metadatos), GET completo y SHA-256 coincidente. La verificación Storage adicional descifra autenticando AES-256-GCM y compara tamaño/hash original. Manifest corrupto, archivo ausente, diferencia SHA-256 o fallo de upload/download hace fallar la ejecución. No se publica marcador conjunto ni se inicia retención si falta una parte. Un fallo al transferir/verificar el propio marcador tampoco permite retención; un objeto huérfano no es una ejecución exitosa.
+Instalar Node.js y clientes oficiales PostgreSQL compatibles con la versión de la base (17 para el laboratorio validado), con `pg_dump`, `pg_restore` y `psql` en PATH. La conexión debe permitir leer completamente los cuatro esquemas. Un rol dedicado de lectura necesita CONNECT, USAGE, SELECT sobre tablas/secuencias y acceso íntegro a datos con RLS; no usar un rol que entregue una copia filtrada. Revisar ese acceso por separado antes de un primer backup productivo. No se configura ningún permiso remoto en esta rama.
 
-**Consistencia:** PostgreSQL tiene snapshot transaccional; Storage no ofrece aquí una transacción atómica conjunta con DB. Comparar ID/version/updated_at/metadata y conjunto de buckets/objetos antes/después detecta cambios concurrentes y aborta. Para una recuperación estrictamente coordinada, planificar una ventana sin escrituras de Storage ni migraciones durante la captura. No afirmar PITR atómico entre DB y archivos. No se silencian diferencias de inventario. Las operaciones comerciales de DB posteriores al snapshot no pertenecen a esa copia.
+El origen autorizado es exclusivamente `groyjvbtcuhjbltmmdfl`. Se admite su host directo `db.groyjvbtcuhjbltmmdfl.supabase.co` o pooler oficial **de sesión** cuyo usuario termine en `.groyjvbtcuhjbltmmdfl`. No usar puerto transaccional 6543, la base antigua ni otra base. TLS exige `verify-full` y certificado CA verificable; no desactivar SSL si falta un certificado. Variables `PGHOSTADDR`, `PGSERVICE` y `PGSERVICEFILE` se rechazan para evitar redirecciones accidentales.
 
-## Cifrado, privacidad y proveedor
+Elegir una carpeta privada absoluta de la laptop **fuera de cualquier repositorio Git**, con permisos de acceso del propietario. Puede contener espacios. La herramienta comprueba rutas reales/junctions antes de crear archivos. No hardcodea una carpeta personal ni lee `.env`. La carpeta temporal del sistema también debe estar fuera de Git, con espacio libre para dump, cifrado y comprobación. Contiene plaintext transitorio sensible, eliminado al terminar.
 
-AES-256-GCM con nonce aleatorio cifra dump, cada objeto, manifest y marcador **antes** de salir del runner. Solo archivos cifrados llegan a S3. Se exige bucket privado; nunca se fija ACL pública. Se rechazan grants públicos y políticas `IsPublic=true`. La confirmación protegida de privacidad exige revisión humana de bloqueo público y políticas, no la sustituye. SSE `AES256` o `aws:kms` agrega cifrado del proveedor; `client-only` es una excepción explícita para proveedores sin esa API y sigue conservando cifrado del cliente. Versionado habilitado por defecto; excepción `unsupported` requiere documentar la limitación del proveedor.
+## Variables de sesión PowerShell
 
-Tres prefijos configurables, obligatorios y no solapados:
+Después de revisar la conexión y guardar una clave de cifrado de 32 bytes aleatorios en base64 en un gestor privado, establecer estas variables. No generar otra clave cada semana ni perder la anterior. No enviar credenciales por chat ni pegar una connection string completa.
 
-| Variable | Ejemplo ilustrativo |
-| --- | --- |
-| `BACKUP_S3_PREFIX` | `nova/database/` |
-| `BACKUP_S3_STORAGE_PREFIX` | `nova/storage/` |
-| `BACKUP_S3_WEEKLY_PREFIX` | `nova/weekly/` |
+```powershell
+$env:BACKUP_MODE = 'production'
+$env:BACKUP_PROJECT_REF = 'groyjvbtcuhjbltmmdfl'
+$env:PGHOST = Read-Host 'Host DB autorizado (directo o pooler de sesión)'
+$env:PGPORT = '5432'
+$env:PGDATABASE = 'postgres'
+$env:PGUSER = Read-Host 'Usuario DB de lectura'
+$env:PGSSLMODE = 'verify-full'
+$env:PGSSLROOTCERT = Read-Host 'Ruta absoluta del certificado CA verificado'
+$env:BACKUP_OUTPUT_DIR = Read-Host 'Carpeta absoluta privada fuera de Git'
+$env:PGPASSWORD = [System.Net.NetworkCredential]::new('', (Read-Host 'Password DB' -AsSecureString)).Password
+$env:BACKUP_ENCRYPTION_KEY = [System.Net.NetworkCredential]::new('', (Read-Host 'Clave de cifrado base64 del gestor privado' -AsSecureString)).Password
 
-Cada generación tiene fecha/hora UTC + sufijo aleatorio. Layout: DB `<prefijo><generación>/database.dump.enc`; Storage `<prefijo><generación>/objects/N.enc` y `manifest.enc`; marcador `<prefijo><generación>.complete.enc`. No se hardcodea proveedor, bucket ni prefijos.
+npm run backup:manual
 
-## Variables protegidas
+Remove-Item -LiteralPath 'Env:PGPASSWORD', 'Env:BACKUP_ENCRYPTION_KEY'
+```
 
-Crear posteriormente environment GitHub `production-backup`, con revisión durante el alta. Nunca pegar secretos en Git, issues, logs o comandos visibles.
+Esos prompts no imprimen secretos ni los guardan en historial de comandos. Las variables viajan únicamente en el entorno privado del proceso; no se pasan como argumentos ni se guardan en Git/README/screenshots/logs. No configurar `BACKUP_LOCAL_CONTAINER` para producción. El cliente productivo es PostgreSQL nativo. Elegir el certificado de confianza correcto antes de ejecutar; no se incluye aquí una clave ni archivo privado.
 
-Secretos:
+También se puede escoger la carpeta como argumento, sin modificar código:
 
-- `BACKUP_PG_HOST`, `BACKUP_PG_PORT`, `BACKUP_PG_USER`, `BACKUP_PG_PASSWORD`.
-- `BACKUP_ENCRYPTION_KEY`: 32 bytes aleatorios en base64. Guardar copia independiente segura; perderla impide recuperar los backups.
-- `BACKUP_S3_ACCESS_KEY_ID`, `BACKUP_S3_SECRET_ACCESS_KEY`; `BACKUP_S3_KMS_KEY_ID` si corresponde.
-- `BACKUP_STORAGE_API_KEY` y `BACKUP_STORAGE_READ_TOKEN`: principal dedicado a lectura Storage. Token vigente durante la captura, nunca un token de cliente comercial. No otorgar upload/update/delete ni RPC comerciales.
+```powershell
+npm run backup:manual -- 'C:\Backups Floristeria Anabelle'
+```
 
-Variables: `BACKUP_ENABLED=false`, `BACKUP_STORAGE_URL`, `BACKUP_S3_ENDPOINT` (HTTPS sin credenciales/query), `BACKUP_S3_BUCKET`, los tres prefijos, `BACKUP_S3_REGION`, `BACKUP_S3_ADDRESSING_STYLE` (`path`/`virtual`/`auto`), `BACKUP_BUCKET_PRIVATE_CONFIRMED`, `BACKUP_S3_VERSIONING` (`required`/`unsupported`), `BACKUP_S3_POLICY_STATUS` (`required`/`unsupported`), `BACKUP_RETENTION_WEEKS` (8 por defecto, 4–52), `BACKUP_S3_SSE` (`AES256`/`aws:kms`/`client-only`). `unsupported` solo después de revisión privada del equivalente del proveedor.
+La ruta anterior es solo un ejemplo. El equivalente es `node supabase/backup/manual-backup.mjs`; ambos usan las variables privadas de la sesión. No se ejecutó un backup productivo durante esta revisión.
 
-El origen productivo exige exclusivamente `groyjvbtcuhjbltmmdfl`, su URL Storage exacta, host DB directo oficial o pooler de sesión cuyo usuario corresponda al ref, TLS `verify-full` y CA válida. Rechaza la Supabase antigua y pooler transaccional 6543. No desactivar TLS para conseguir una conexión.
+## Qué queda protegido
 
-## Permisos mínimos
+Un archivo custom de PostgreSQL contiene esquema y datos necesarios para restaurar: productos, pedidos, clientes, pagos, inventario/lotes/reservas, caja/devoluciones, promociones, configuración, QR 1/QR 2 y snapshots, más Auth y metadatos/historial. Se incluyen `public`, `auth`, `storage` metadata y `supabase_migrations`. Se conserva estructura comercial, secuencias, funciones, triggers, índices, constraints, RLS/policies y grants. Se utiliza un único `pg_dump`, no consultas parciales ni datos inventados. [Formato oficial pg_dump](https://www.postgresql.org/docs/17/app-pgdump.html).
 
-PostgreSQL: principal dedicado de lectura, CONNECT/USAGE y SELECT completo sobre tablas/secuencias presentes y futuras en los cuatro esquemas. Debe leer filas protegidas por RLS; `pg_dump` debe fallar antes que producir una copia filtrada. Revisar con Supabase el acceso íntegro sin escritura, administración ni EXECUTE comercial. `default_transaction_read_only=on` complementa, pero no sustituye, los permisos.
+**Las imágenes de productos y de QR no se copian.** Los registros de rutas/URLs permanecen en el dump; después de perder Storage será necesario volver a subir las imágenes. Un restore de DB no convierte esas URLs en archivos recuperados. Mantener los archivos originales de imágenes por el procedimiento manual que decida el propietario.
 
-Storage: token dedicado con SELECT sobre los objetos de todos los buckets de negocio; la enumeración utiliza la conexión DB de lectura. Revisar RLS y renovación del token. Las claves service-role locales del harness son exclusivamente sintéticas: no constituyen recomendación de privilegios para producción. No crear roles/policies remotos en esta rama.
+Fuera del dump: archivos `.env`, código, contraseñas de roles DB, secrets/JWT/SMTP/OAuth, configuración de proyecto/Vercel/dominios/certificados, otros esquemas y jobs pg_cron. Mantener esa configuración en un inventario privado independiente. Después de recuperar negocio, recrear supervisadamente el job de expiración si corresponde, sin reejecutar una migración entera ni activar emails/mensajes automáticamente.
 
-S3: principal dedicado a **los tres prefijos**, ListBucket condicionado a ellos, GetObject/PutObject/DeleteObject, GetBucketAcl/GetBucketPolicyStatus/GetBucketVersioning; AbortMultipartUpload y ListMultipartUploadParts si los exige el proveedor. No `s3:*`, administración del bucket, ACL públicas, eliminación de bucket ni DeleteObjectVersion. Con KMS, solo cifrado/descifrado de esa clave. Eliminar permisos de APIs declaradas unsupported solo tras revisión.
+## Formato y comprobación
 
-## Retención coordinada
+Salida:
 
-Ocho generaciones completas verificadas por defecto, configurable 4–52. Una ejecución manual también cuenta como copia. Solo se cuentan marcadores conjuntos autenticados, con DB, manifest y **todos** los objetos descargados/verificados de nuevo. Si una copia falla, se detiene antes de cualquier eliminación. Un DB nuevo sin Storage válido nunca cuenta.
+```text
+floristeria-anabelle-AAAA-MM-DDTHH-MM-SS-mmmZ-<sufijo>.dump.enc
+floristeria-anabelle-AAAA-MM-DDTHH-MM-SS-mmmZ-<sufijo>.dump.enc.verified.json
+```
 
-Se eliminan únicamente generaciones anteriores a la nueva, fuera de las copias retenidas. Primero se retira su marcador, luego sus objetos exactos, manifest y dump. Archivos ajenos, generaciones incompletas y antiguos dumps DB-only quedan intactos. No borrar huérfanos automáticamente para ocultar errores.
+La herramienta valida el origen, captura en modo lectura, comprueba `pg_restore --list` y contenido de los cuatro esquemas, cifra por streaming AES-256-GCM, verifica SHA-256 de la copia persistida y descifra temporalmente para comparar con el dump original. Solo después crea el manifest. No imprime diagnósticos con passwords/hosts/connection strings ni el contenido del dump. Si falla, limpia únicamente archivos nuevos incompletos de ese intento, nunca copias anteriores. No hay retención automática.
 
-Con versionado, DeleteObject crea delete markers; versiones anteriores requieren política adicional supervisada. No activar lifecycle que elimine la última copia válida. Revisar costes de GET/transferencia y duración: se verifican varias generaciones enteras. Un timeout no convierte una generación incompleta en recuperable. El límite del job es seis horas; dimensionar runner/almacenamiento y ventana después de conocer el volumen real. Un run verde certifica integridad de copia, no conectividad/privacidad de un proveedor todavía no probado.
+El manifest contiene formato, nombre/fecha, SHA-256/tamaño cifrado, SHA-256 original, esquemas, cifrado y `storage_files=false`. `restore_verified=false` significa que esa copia todavía debe probarse restaurando: TOC/hash/cifrado correctos no sustituyen comprobar datos y Auth. El manifest no contiene claves, passwords ni tokens.
 
-## Alcance de recuperación
+Para comprobar el hash sin abrir la DB:
 
-- Public: tablas/datos/secuencias/funciones/triggers/constraints/índices/RLS/policies/grants.
-- Auth: usuarios, identidades y demás datos del esquema. Restaurar sobre versión compatible de la plataforma, con sus roles y extensiones; no recrear estructura interna Auth arbitrariamente.
-- Storage: buckets, metadata/policies en DB **y bytes en el manifest separado**. [Esquema oficial Storage](https://supabase.com/docs/guides/storage/schema/design).
-- Historial: `supabase_migrations`.
-- Fuera: secretos/contraseñas de roles, configuración de proyecto/SMTP/OAuth/JWT, certificados, Vercel, otros esquemas y jobs pg_cron. Mantener inventario privado separado. Recrear supervisadamente `anabelle-expire-unreported-orders` después de recuperación; no reejecutar su migración completa ni activar tareas/correos automáticamente.
+```powershell
+$backupPath = Read-Host 'Ruta absoluta del archivo .dump.enc'
+$backupManifest = Get-Content -Raw -LiteralPath ($backupPath + '.verified.json') | ConvertFrom-Json
+if ((Get-FileHash -LiteralPath $backupPath -Algorithm SHA256).Hash.ToLowerInvariant() -ne $backupManifest.sha256) {
+    throw 'Hash diferente: no restaurar esta copia'
+}
+```
 
-## Restauración exclusivamente LOCAL/desechable
+## Restore exclusivamente LOCAL
 
-1. Obtener en un directorio privado fuera de Git el marcador semanal, dump, manifest y objetos cifrados; confirmar SHA-256 y autenticación GCM. Usar un principal S3 separado de lectura para recuperación. Nunca descargar `.env`.
-2. Crear Supabase LOCAL vacío, de versiones compatibles, sin migraciones de negocio ni seed. Confirmar localhost, `public`, `auth.users`, buckets/objetos e historial vacíos. No activar emails externos/jobs.
-3. Establecer variables solo en sesión privada: `BACKUP_MODE=local`, `PGHOST=127.0.0.1`, puerto DB local, `PGDATABASE=postgres`, credenciales locales, `RESTORE_DISPOSABLE_LOCAL=YES` y clave de descifrado. Ejecutar `node supabase/backup/restore-local.mjs <dump.enc>`. Guardias rechazan remoto y datos existentes. Se importan pre-data/datos/post-data sobre estructura de plataforma compatible; defaults se neutralizan **antes** de crear objetos para preservar ACL privados.
-4. Restaurar Storage con `restore-storage-local.mjs`: URL/API key/token del **destino LOCAL**, `RESTORE_STORAGE_LOCAL=DISPOSABLE_LOCAL`, los tres prefijos y acceso protegido de lectura S3. Ejecutar `node supabase/backup/restore-storage-local.mjs <key-del-marcador.complete.enc>`. La URL destino debe ser localhost; nunca productiva. Preflight valida manifest y todos los archivos antes de subir, compara buckets/rutas con la DB restaurada, sube por streaming y vuelve a descargar cada objeto para SHA-256/tamaño. Compara inventario final; rechaza objetos extras/faltantes. Las herramientas no modifican archivos origen.
-5. Recuperación sin proveedor: `local-archive-transport.mjs` permite verificar/restaurar el mismo formato desde un directorio privado descargado; `qa-weekly-storage-local.mjs` muestra el procedimiento sintético. No es prueba de S3 real.
-6. Comparar datos/tablas/secuencias/funciones/RLS/policies/grants con snapshot; comprobar login Auth real y permisos privados RPC. Verificar cada referencia de imágenes/QR contra bucket/ruta del manifest y descargar los objetos. URLs persistidas conservan el host original: adaptar solo después de comparar, antes de habilitar clientes, sin reemplazos silenciosos para aparentar equivalencia. Upload puede renovar versión/timestamps Storage; identidad bucket/ruta y bytes deben coincidir.
-7. Si falla, conservar evidencia privada y descartar el laboratorio parcial. No parchearlo para declarar restore exitoso. Nunca restaurar contra producción.
+1. Seleccionar el backup y verificar hash. Conservar el original; no restaurar contra producción.
+2. Crear laboratorio Supabase **LOCAL vacío y desechable**, de versiones compatibles, solo plataforma Auth/Storage, sin migraciones comerciales ni seed. `public`, `auth.users`, buckets/objetos e historial deben estar vacíos.
+3. En una sesión privada distinta, establecer `BACKUP_MODE=local`, `PGHOST=127.0.0.1`, puerto DB LOCAL, `PGDATABASE=postgres`, usuario/password locales, clave de descifrado y `RESTORE_DISPOSABLE_LOCAL=YES`. Quitar overrides de conexión. No reutilizar credenciales productivas.
+4. Ejecutar `node supabase/backup/restore-local.mjs <ruta-absoluta.dump.enc>`. Rechaza remoto, datos existentes y falta de confirmación. Descifra autenticando GCM; restaura negocio/metadata/Auth sobre estructura de plataforma compatible, conservando propietarios y ACL. Neutraliza defaults antes de crear objetos para no abrir EXECUTE de RPC privados. No importa historiales internos de instalación de Auth/Storage.
+5. Comparar tablas/datos/configuración/historial/secuencias. Probar login Auth con cuenta sintética, RLS/policies y ACL de RPC privados. `report_payment_qr` debe conservar anon/authenticated sin EXECUTE y service_role con EXECUTE. Verificar QR 1/QR 2 y snapshots en DB. Las imágenes no están recuperadas.
+6. Si falla, guardar diagnóstico privado y descartar el laboratorio parcial; no parchearlo para declarar éxito. No activar jobs/correos externos ni modificar producción.
 
-Herramientas aceptadas de DB: `local-backup.mjs`, `restore-local.mjs`, `pg-tools.mjs` usan clientes oficiales nativos o contenedores `supabase_db_NOVA-LOCAL-*`, solo Docker Desktop local. Restore carga Auth/ACL con supabase_admin LOCAL y conserva propietarios; con cliente nativo requiere password local protegido. `storage-local.mjs` sigue siendo helper limitado (5 MB/64 MB/5.000 objetos); **no** se usa por el backup semanal productivo.
+Con Docker Desktop, `BACKUP_LOCAL_CONTAINER=supabase_db_NOVA-LOCAL-...` utiliza clientes oficiales del contenedor LOCAL. Restore carga Auth/ACL con supabase_admin LOCAL; con clientes nativos necesita contraseña local de ese rol mediante `BACKUP_RESTORE_ADMIN_PASSWORD`. No introducirla por argumentos. `local-backup.mjs` permanece como alias exclusivamente LOCAL del mismo código manual; `qa-manual-backup-local.mjs` y `qa-backup-schema-local.mjs` documentan los ensayos sintéticos reutilizables.
 
-Prueba real de proveedor, IAM/políticas/SSE/versionado y ejecución semanal siguen pendientes: el calendario permanece desactivado. No se afirma que producción ya esté respaldada. [pg_dump oficial](https://www.postgresql.org/docs/17/app-pgdump.html), [descarga Storage oficial](https://supabase.com/docs/guides/storage/management/download-objects).
+Evidencia histórica de decisiones anteriores: [HISTORY.md](HISTORY.md). Los resultados vigentes de esta simplificación están en [MANUAL_BACKUP_VALIDATION.md](MANUAL_BACKUP_VALIDATION.md). Las evidencias privadas y backups anteriores no se borran al retirar herramientas.

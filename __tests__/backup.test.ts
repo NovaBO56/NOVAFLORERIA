@@ -2,14 +2,12 @@ import { describe, it, expect } from "vitest";
 import { mkdtemp, readFile, writeFile, rm } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-// Pure local tests: no database, credentials, S3 or production requests.
-import { archiveName, decryptDump, encryptDump, encryptionKey, retentionCandidates, sha256, validateBucket, validateSource, verifyDownloaded } from "../supabase/backup/backup-core.mjs";
+import { decryptDump, encryptDump, encryptionKey, validateSource } from "../supabase/backup/backup-core.mjs";
 import { validateRestore, restoreList } from "../supabase/backup/restore-local.mjs";
-import { storageRestore } from "../supabase/backup/storage-local.mjs";
 
-describe("Backup privado", () => {
-  it("cifra, recupera y detecta corrupción sin S3 (archivos locales)", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "nova-backup-test-"));
+describe("Backup DB privado — pruebas locales sin conexiones", () => {
+  it("cifra, recupera y detecta corrupción", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "anabelle-backup-test-"));
     try {
       const source = join(dir, "source"), encrypted = join(dir, "encrypted"), output = join(dir, "output");
       await writeFile(source, "datos sintéticos de prueba");
@@ -22,25 +20,9 @@ describe("Backup privado", () => {
       await expect(decryptDump(encrypted, join(dir, "corrupt"), key)).rejects.toThrow();
     } finally { await rm(dir, { recursive: true, force: true }); }
   });
-  it("no verifica una descarga diferente aunque tamaño y metadatos parezcan correctos", async () => {
-    const dir = await mkdtemp(join(tmpdir(), "nova-verification-test-"));
-    try {
-      const source = join(dir, "source"), copy = join(dir, "copy"); await writeFile(source, "abc"); await writeFile(copy, "abd");
-      await expect(verifyDownloaded(source, copy, { ContentLength: 3, Metadata: { sha256: await sha256(source) } })).rejects.toThrow();
-      await writeFile(copy, "abc"); await expect(verifyDownloaded(source, copy, { ContentLength: 3, Metadata: { sha256: await sha256(source) } })).resolves.toHaveLength(64);
-    } finally { await rm(dir, { recursive: true, force: true }); }
-  });
-  it("retiene cuatro copias y no elimina archivos desconocidos ni una copia más reciente", () => {
-    const names = Array.from({ length: 6 }, (_, i) => archiveName(new Date(`2026-10-0${i + 1}T00:00:00Z`), "aaaaaaaaaaaa"));
-    expect(retentionCandidates([...names, "otro.dump"], names[5], 4)).toEqual([names[1], names[0]]);
-    expect(retentionCandidates(names, names[0], 4)).toEqual([]);
-    expect(() => retentionCandidates(names, "no-verificado", 4)).toThrow();
-    expect(() => retentionCandidates(names, names[5], 1)).toThrow();
-  });
-  it("rechaza origen antiguo, endpoints inseguros y restauración remota", () => {
+  it("rechaza origen antiguo y restauración remota", () => {
     expect(() => validateSource({ BACKUP_MODE: "production", BACKUP_PROJECT_REF: "uyhawlpanhbrkkhqfhbv" })).toThrow();
     expect(() => validateSource({ BACKUP_MODE: "local", PGHOST: "db.example.com" })).toThrow();
-    expect(() => validateBucket({ BACKUP_S3_ENDPOINT: "http://example.com" })).toThrow();
     expect(() => validateRestore({ BACKUP_MODE: "local", PGHOST: "127.0.0.1", RESTORE_DISPOSABLE_LOCAL: "YES" })).not.toThrow();
     expect(() => validateRestore({ BACKUP_MODE: "production", PGHOST: "db.example.com" })).toThrow();
   });
@@ -54,9 +36,5 @@ describe("Backup privado", () => {
     expect(restoreList(toc)).toContain("SCHEMA - supabase_migrations");
     expect(restoreList(toc, true)).not.toContain("TABLE supabase_migrations");
     expect(restoreList(toc, true)).toContain("TABLE DATA supabase_migrations");
-  });
-  it("el restore de imágenes rechaza destinos remotos antes de cualquier solicitud", async () => {
-    await expect(storageRestore({ url: "https://example.com", key: "unused", encryption: "unused", input: "unused", acknowledge: "DISPOSABLE_LOCAL" })).rejects.toThrow("LOCAL");
-    await expect(storageRestore({ url: "http://127.0.0.1:61621", key: "unused", encryption: "unused", input: "unused", acknowledge: "NO" })).rejects.toThrow("Confirmación");
   });
 });
