@@ -103,9 +103,11 @@ export function SiteHeader({
         >
           <div
             ref={menuRef}
+            id="menu-principal-movil"
             role="dialog"
             aria-modal="true"
-            aria-label="Menú"
+            aria-label="Menú principal"
+            tabIndex={-1}
             className="absolute right-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto bg-white px-6 py-6 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-[#e8dfea] pb-5">
@@ -124,7 +126,7 @@ export function SiteHeader({
               <button
                 type="button"
                 onClick={() => setMenuOpen(false)}
-                className="flex size-10 items-center justify-center rounded-xl border border-[#e6dce8] text-[#55485b] transition hover:bg-[#f5eff7]"
+                className="flex size-11 items-center justify-center rounded-xl border border-[#e6dce8] text-[#55485b] transition hover:bg-[#f5eff7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2"
                 aria-label="Cerrar menú"
               >
                 <X size={20} />
@@ -139,13 +141,13 @@ export function SiteHeader({
               />
             </div>
 
-            <nav className="mt-4 flex flex-col">
+            <nav aria-label="Principal móvil" className="mt-4 flex flex-col">
               {navItems.map(({ label, href }) => (
                 <a
                   key={label}
                   href={href}
                   onClick={() => setMenuOpen(false)}
-                  className="border-b border-[#eee8f0] py-4 text-sm font-bold text-[#44384a] transition hover:text-[#65358e]"
+                  className="rounded-lg border-b border-[#eee8f0] px-2 py-4 text-sm font-bold text-[#44384a] transition hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2"
                 >
                   {label}
                 </a>
@@ -159,7 +161,7 @@ export function SiteHeader({
                   scrollToId("catalogo");
                 }}
                 aria-pressed={favoritesActive}
-                className="flex items-center justify-between border-b border-[#eee8f0] py-4 text-left text-sm font-bold text-[#44384a] transition hover:text-[#65358e]"
+                className="flex items-center justify-between rounded-lg border-b border-[#eee8f0] px-2 py-4 text-left text-sm font-bold text-[#44384a] transition hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2"
               >
                 <span>Mis favoritos</span>
 
@@ -172,17 +174,20 @@ export function SiteHeader({
 
       {/* ENCABEZADO */}
       <header className="sticky top-0 z-50 border-b border-[#e7dfe9] bg-white">
-        <div className="mx-auto flex h-[74px] max-w-[1280px] items-center justify-between px-5 sm:px-8">
+        <div className="mx-auto flex h-[74px] max-w-[1280px] items-center justify-between gap-3 px-5 sm:px-8 lg:gap-5">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
-            className="flex size-10 items-center justify-center rounded-xl border border-[#e5dce7] text-[#4b3d50] lg:hidden"
+            className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-[#e5dce7] text-[#4b3d50] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2 lg:hidden"
             aria-label="Abrir menú"
+            aria-expanded={menuOpen}
+            aria-controls="menu-principal-movil"
+            aria-haspopup="dialog"
           >
             <Menu size={20} />
           </button>
 
-          <a href="#inicio" className="flex shrink-0 items-center">
+          <a href="#inicio" className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2">
             <div>
               <div
                 className={`${script.className} text-[36px] leading-none text-[#65358e]`}
@@ -198,20 +203,20 @@ export function SiteHeader({
 
           <nav
             aria-label="Principal"
-            className="hidden items-center gap-8 lg:flex"
+            className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex xl:gap-1.5 2xl:gap-2"
           >
             {navItems.map(({ label, href }) => (
               <a
                 key={label}
                 href={href}
-                className="text-[13px] font-bold text-[#574b5c] transition-colors hover:text-[#65358e]"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-lg px-2 text-[12px] font-bold text-[#574b5c] transition-colors hover:bg-[#f8f4fa] hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2 xl:text-[13px]"
               >
                 {label}
               </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-1">
+          <div className="flex shrink-0 items-center gap-1">
             <button
               type="button"
               onClick={() => setSearchOpen((current) => !current)}

@@ -7,6 +7,7 @@ import {
   whatsappLink,
 } from "@/lib/public/format";
 import { createLocalStore } from "@/lib/public/local-store";
+import { storeLocationSchema, type StoreLocation } from "@/validations/store-location";
 import type {
   BusinessStatus,
   PublicCategory,
@@ -23,6 +24,7 @@ import {
   ClosedBanner,
   ContactSection,
   HeroSection,
+  LocationSection,
   PromotionSection,
   ServiceStrip,
   SiteFooter,
@@ -92,6 +94,8 @@ type Meta = {
   promotions: PublicPromotion[];
   heroProduct: PublicProduct | null;
   totalProducts: number | null;
+  location: StoreLocation | null;
+  locationUnavailable: boolean;
 };
 
 const initialMeta: Meta = {
@@ -103,6 +107,8 @@ const initialMeta: Meta = {
   promotions: [],
   heroProduct: null,
   totalProducts: null,
+  location: null,
+  locationUnavailable: false,
 };
 
 type CatalogData = {
@@ -174,7 +180,7 @@ export default function HomePage({ year }: { year: number }) {
     let cancelled = false;
 
     (async () => {
-      const [categories, hours, whatsapp, promotions, featured, all] =
+      const [categories, hours, whatsapp, promotions, featured, all, location] =
         await Promise.allSettled([
           getJson<{ categories: PublicCategory[] }>("/api/categories"),
           getJson<{ status: BusinessStatus | null; week: WeekDay[] }>(
@@ -186,11 +192,13 @@ export default function HomePage({ year }: { year: number }) {
           getJson<{ promotions: PublicPromotion[] }>("/api/promotions"),
           getJson<ProductsResponse>("/api/products?limit=1&is_featured=true"),
           getJson<ProductsResponse>("/api/products?limit=1"),
+          getJson<{ location: unknown }>("/api/store-location"),
         ]);
 
       if (cancelled) return;
 
       const allResult = settled(all);
+      const configuredLocation = storeLocationSchema.safeParse(settled(location)?.location);
 
       setMeta({
         loaded: true,
@@ -203,6 +211,8 @@ export default function HomePage({ year }: { year: number }) {
         totalProducts: allResult
           ? (allResult.pagination?.total ?? allResult.products.length)
           : null,
+        location: configuredLocation.success ? configuredLocation.data : null,
+        locationUnavailable: location.status === "rejected" || !configuredLocation.success,
       });
     })();
 
@@ -398,6 +408,7 @@ export default function HomePage({ year }: { year: number }) {
       ? [{ label: "Promociones", href: "#promociones" }]
       : []),
     { label: "Nosotros", href: "#nosotros" },
+    { label: "Ubicación", href: "#ubicacion" },
     { label: "Contacto", href: "#contacto" },
     { label: "Seguimiento", href: "/seguimiento" },
   ];
@@ -462,13 +473,16 @@ export default function HomePage({ year }: { year: number }) {
 
       <AboutSection />
 
-      <ContactSection whatsappHref={whatsappHref} status={meta.status} />
+      <LocationSection location={meta.location} hours={hoursToday} week={meta.week} loading={!meta.loaded} unavailable={meta.locationUnavailable} />
+
+      <ContactSection whatsappHref={whatsappHref} status={meta.status} week={meta.week} />
 
       <SiteFooter
         categories={meta.categories}
         week={meta.week}
         whatsappHref={whatsappHref}
         year={year}
+        location={meta.location}
         onSelectCategory={(id) => {
           selectCategory(id);
           scrollToId("catalogo");
