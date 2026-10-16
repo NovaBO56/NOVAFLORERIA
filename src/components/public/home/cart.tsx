@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, ShoppingBag, X } from "lucide-react";
@@ -155,6 +155,7 @@ export function CartDrawer({
   whatsappNumber,
 }: CartDrawerProps) {
   const cart = useCart();
+  const [removing, setRemoving] = useState<string | null>(null);
 
 
   function close() {
@@ -192,7 +193,7 @@ export function CartDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[430px] flex-col bg-white shadow-2xl"
+        className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col bg-[#faf8fd] shadow-2xl"
       >
         <div className="flex items-center justify-between border-b border-[#e7dfe9] px-6 py-5">
           <div>
@@ -272,7 +273,7 @@ export function CartDrawer({
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-black text-[#403344]">
+                    <p className="break-words text-sm font-black text-[#30283c]">
                       {item.name}
                     </p>
 
@@ -280,6 +281,9 @@ export function CartDrawer({
                       {formatMoney(item.price)}
                     </p>
 
+                    {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6c6278]">{option.name}</p>)}
+                    {item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
+                    {removing === item.id && <div className="my-3 rounded-xl border border-purple-200 bg-white p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm">¿Quitar este detalle del carrito?</p><div className="mt-2 flex flex-wrap gap-3"><button type="button" className="min-h-11 font-bold text-[#74599f]" onClick={() => { removeFromCart(item.id); setRemoving(null); }}>Sí, quitar</button><button type="button" className="min-h-11" onClick={() => setRemoving(null)}>Conservar</button></div></div>}
                     {!item.available ? (
                       <p
                         role="alert"
@@ -289,12 +293,12 @@ export function CartDrawer({
                       </p>
                     ) : null}
 
-                    <div className="mt-3 flex items-center justify-between">
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                       <div className="inline-flex items-center rounded-lg border border-[#ded2e2]">
                         <button
                           type="button"
-                          onClick={() => changeQuantity(item.id, -1)}
-                          className="flex size-9 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
+                          onClick={() => item.quantity === 1 ? setRemoving(item.id) : changeQuantity(item.id, -1)}
+                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
                           aria-label={`Disminuir cantidad de ${item.name}`}
                         >
                           −
@@ -308,7 +312,7 @@ export function CartDrawer({
                           type="button"
                           onClick={() => changeQuantity(item.id, 1)}
                           disabled={!item.available}
-                          className="flex size-9 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7] disabled:cursor-not-allowed disabled:opacity-40"
                           aria-label={`Aumentar cantidad de ${item.name}`}
                         >
                           +
@@ -317,7 +321,7 @@ export function CartDrawer({
 
                       <button
                         type="button"
-                        onClick={() => removeFromCart(item.id)}
+                        onClick={() => setRemoving(item.id)}
                         className="px-1 py-2 text-[11px] font-bold text-[#756779] transition hover:text-[#65358e]"
                       >
                         Eliminar
@@ -330,7 +334,7 @@ export function CartDrawer({
           )}
         </div>
 
-        <div className="border-t border-[#e7dfe9] px-6 py-6">
+        <div className="border-t border-[#e7dfe9] bg-white px-6 py-6 pb-[max(24px,env(safe-area-inset-bottom))]">
           <div className="flex items-center justify-between text-sm text-[#706474]">
             <span>Subtotal</span>
             <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>

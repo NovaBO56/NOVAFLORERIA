@@ -1,24 +1,24 @@
 "use client";
+import { Check, Clock, Download, Package, Store, Truck } from "lucide-react";
 import { formatMoney } from "@/lib/public/format";
 import { orderStatusLabels, paymentStatusLabels } from "@/lib/public/checkout";
+import { orderJourney } from "@/lib/public/order-journey";
 import type { PublicOrder } from "@/lib/public/types";
+import { WaitingFlower } from "./customer-shell";
 
 export function OrderSummary({ order, showReceipt = true, checkout = false }: { order: PublicOrder; showReceipt?: boolean; checkout?: boolean }) {
-  return <section className="nova-enter min-w-0 space-y-4 break-words rounded-2xl border bg-white p-5" aria-live="polite">
-    <h2 key={order.order_number} className="nova-value text-xl font-bold">{checkout?"Tu pedido · ":"Pedido "}#{order.order_number}</h2>
-    <p key={order.status} className="nova-fade border-l-2 border-purple-300 pl-3">Estado: <strong>{orderStatusLabels[order.status] ?? "Consulta con la tienda"}</strong></p>
-    <p>Pago: {Number(order.total) === 0 ? "No requiere pago: pedido gratuito" : order.payment_status ? paymentStatusLabels[order.payment_status] ?? "Consulta con la tienda" : "Sin reportar"}</p>
-    {order.items.map((item, index) => <div key={index} className="border-b pb-3">
-      <p>{item.quantity} × {item.product_name} — {formatMoney(item.line_total)}</p>
-      {item.personalization?.map(option => <p key={option.id} className="text-sm text-gray-600">{option.name}: {option.value}</p>)}
-      {item.message ? <p className="text-sm">Tarjeta: {item.message}</p> : null}
-      {item.note ? <p className="text-sm">Nota: {item.note}</p> : null}
-    </div>)}
-    <p>Subtotal: {formatMoney(order.subtotal)}</p>
-    <p>Descuento: {formatMoney(order.discount_total)}</p>
-    <p className="text-xl font-bold">Total del pedido: {formatMoney(order.total)}</p>
-    {showReceipt && order.receipt_token ? <a className="inline-flex min-h-12 items-center rounded-xl border border-purple-300 p-3 font-bold" href={`/api/orders/receipt/${order.receipt_token}`} target="_blank" rel="noopener noreferrer">Ver / descargar recibo</a> : null}
-    {order.customer_message ? <p className="whitespace-pre-wrap text-sm">{order.customer_message}</p> : null}
-    {order.status === "pendiente_pago" && order.reserved_until ? <p className="text-sm">Reserva hasta {new Date(order.reserved_until).toLocaleString("es-BO", { timeZone: "America/La_Paz" })}. La tienda revisará tu pago antes de confirmarlo.</p> : null}
+  const journey = orderJourney(order);
+  const statusLabel = order.status === "listo" ? journey.labels.at(-2) : order.status === "finalizado" ? journey.labels.at(-1) : orderStatusLabels[order.status] ?? "Consulta con la tienda";
+  const receiptAvailable = Boolean(order.receipt_token);
+  return <section className="customer-card customer-stack" aria-label={`Pedido ${order.order_number}`}>
+    <div><p className="customer-kicker">{checkout ? "Resumen de tu compra" : "Hecho con cariño, paso a paso"}</p><h2>Pedido #{order.order_number}</h2><p className="customer-muted text-sm mt-1">{new Date(order.created_at).toLocaleString("es-BO", { timeZone: "America/La_Paz" })}</p></div>
+    <p className="customer-note flex items-center gap-3">{journey.pickup ? <Store size={22} aria-hidden/> : <Truck size={22} aria-hidden/>}{journey.methodLabel}</p>
+    <div aria-live="polite" aria-atomic="true" key={order.status + order.payment_status} className="customer-confirmed"><p>Estado: <strong>{statusLabel}</strong></p><p className="customer-muted text-sm">{journey.free ? "No requiere pago: pedido gratuito" : `Pago: ${paymentStatusLabels[order.payment_status ?? ""] ?? "Sin reportar"}`}</p></div>
+    {!checkout && <>{journey.waiting && <div className="customer-waiting"><WaitingFlower/><h3 className="font-bold text-lg">Esperando confirmación</h3><p className="customer-muted text-sm mt-2">Recibimos tu aviso. La tienda todavía debe verificar el pago. Actualiza el estado para conocer las novedades.</p></div>}{journey.stopped ? <p className="customer-error">{order.status === "cancelado" ? "Este pedido fue cancelado. Si tenía una reserva, ya no está activa." : order.payment_status === "reembolsado" ? "El pago fue reembolsado. Consulta con la tienda si necesitas más información." : "El pago o pedido no fue aprobado. Contacta con la tienda antes de realizar otra transferencia."}</p> : <ol className="customer-timeline" aria-label="Estado de tu pedido">{journey.labels.map((label, index) => <li key={label} data-reached={index <= journey.current} aria-current={index === journey.current ? "step" : undefined}><span className="timeline-icon">{index < journey.current ? <Check size={19} aria-hidden/> : index === journey.current ? <Clock size={19} aria-hidden/> : <Package size={18} aria-hidden/>}</span><div><strong>{label}</strong><small>{index === journey.current ? index === journey.labels.length - 1 ? "¡Gracias por confiar en nosotros!" : label === "Listo para recoger" ? "Ya puedes coordinar el recojo con la tienda." : "Estado actual del pedido" : index < journey.current ? "Etapa completada" : "Próxima etapa"}</small></div></li>)}</ol>}</>}
+    <div>{order.items.map((item, index) => <div key={index} className="customer-summary-line"><div><p className="font-bold">{item.product_name}</p><p className="customer-muted text-sm">Cantidad: {item.quantity}</p>{item.personalization?.map(option => <p key={option.id} className="text-sm">{option.name}: {option.value}</p>)}{item.message && <p className="text-sm">Tarjeta: {item.message}</p>}{item.note && <p className="text-sm">Nota: {item.note}</p>}<p className="mt-2 font-bold">{formatMoney(item.line_total)}</p></div></div>)}</div>
+    <div className="flex flex-wrap justify-between gap-3"><span>Subtotal</span><span>{formatMoney(order.subtotal)}</span></div><div className="flex flex-wrap justify-between gap-3"><span>Descuento</span><span>− {formatMoney(order.discount_total)}</span></div><div className="customer-total"><span>Total del pedido</span><strong>{formatMoney(order.total)}</strong></div>
+    {showReceipt && (receiptAvailable ? <div className="customer-receipt customer-confirmed"><a className="customer-secondary" href={`/api/orders/receipt/${order.receipt_token}`} target="_blank" rel="noopener noreferrer"><Download aria-hidden size={19}/>Descargar comprobante PDF</a><p className="text-xs mt-3">Comprobante del pago verificado por la tienda. No es una factura fiscal.</p></div> : !journey.free && <p className="customer-note">El comprobante estará disponible cuando confirmemos tu pago.</p>)}
+    {order.customer_message && <p className="whitespace-pre-wrap text-sm customer-muted">{order.customer_message}</p>}
+    {order.status === "pendiente_pago" && order.reserved_until && !journey.waiting && <p className="customer-note">Reserva hasta {new Date(order.reserved_until).toLocaleString("es-BO", { timeZone: "America/La_Paz" })}. La tienda revisará tu pago antes de confirmarlo.</p>}
   </section>;
 }
