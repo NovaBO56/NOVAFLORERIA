@@ -35,6 +35,9 @@ yarn-error.log*
 
 # vercel
 .vercel
+.visual-preview/
+.next-visual-preview/
+public/visual-preview/
 
 # typescript
 *.tsbuildinfo

@@ -2,6 +2,7 @@
   import { cookies } from "next/headers";
 
   export async function createClient() {
+  if (process.env.NOVA_VISUAL_PREVIEW === "true") throw new Error("Supabase is disabled in visual preview.");
     const cookieStore = await cookies();
 
     return createServerClient(

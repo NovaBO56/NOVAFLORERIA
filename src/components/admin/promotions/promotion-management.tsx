@@ -818,7 +818,7 @@ export default function PromotionManagement({
                 className="flex flex-col gap-6"
               >
                 <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Nombre">
+                  <Field label="Nombre comercial" hint="Así aparecerá la oferta en la tienda.">
                     <Input
                       ref={nameRef}
                       value={form.name}
@@ -870,7 +870,7 @@ export default function PromotionManagement({
                 {isCombo ? (
                   <Field
                     label="Precio final del combo"
-                    hint="Es el precio total que pagará el cliente por cada combo completo."
+                    hint="Precio de los productos base por combo completo; las personalizaciones extra se cobran aparte."
                   >
                     <Input
                       type="number"
@@ -957,6 +957,8 @@ export default function PromotionManagement({
                         ? "Elige los productos y cuántas unidades de cada uno forman el combo."
                         : "Elige los productos a los que se aplicará esta promoción."}
                     </p>
+                    <p className="text-sm text-text-secondary">Las asociaciones son por producto. Seleccionar varios productos no crea una regla automática de categoría ni una oferta global para futuros productos. Solo se aplica una promoción por pedido.</p>
+                    {isCombo && <p className="text-sm text-text-secondary">La compra guiada de la tienda admite cantidades enteras de 1 a 99. Las cantidades fraccionarias requieren elegir participantes y cumplir las condiciones en el carrito.</p>}
                   </CardHeader>
 
                   <CardContent className="flex flex-col gap-4">
@@ -1124,7 +1126,7 @@ export default function PromotionManagement({
                     />
                   </Field>
 
-                  <Field label="Compra mínima" optional>
+                  <Field label="Subtotal mínimo del pedido" hint="Se compara con todo el pedido antes del descuento. El beneficio solo afecta a productos participantes." optional>
                     <Input
                       type="number"
                       inputMode="decimal"
@@ -1139,6 +1141,8 @@ export default function PromotionManagement({
                     />
                   </Field>
                 </div>
+
+                {form.name.trim() && <aside aria-label="Vista previa de la promoción" className="rounded-2xl border border-brand/20 bg-brand/5 p-5"><p className="text-xs font-bold uppercase tracking-wide text-text-secondary">Vista previa en la tienda</p><h3 className="mt-2 break-words text-xl font-semibold text-brand">{form.name}</h3>{form.description && <p className="mt-2 break-words text-sm">{form.description}</p>}<p className="mt-3 font-semibold">{isCombo ? `Combo a ${formatMoney(Number(form.combo_price) || 0)}` : form.discount_type === "porcentaje" ? `${form.discount_value || "0"}% de descuento` : `${formatMoney(Number(form.discount_value) || 0)} de descuento`}</p><ul className="mt-3 space-y-1 text-sm">{selected.map(item => <li key={item.productId} className="break-words">{isCombo ? `${item.quantity} × ` : ""}{item.name}</li>)}</ul>{Number(form.minimum_purchase) > 0 && <p className="mt-3 text-sm">Compra mínima: {formatMoney(Number(form.minimum_purchase))}</p>}<p className="mt-3 text-xs">Vista informativa. Se publicará según su vigencia, estado y productos configurados. Una promoción por pedido.</p></aside>}
 
                 {error && (
                   <p role="alert" className="text-sm text-danger">

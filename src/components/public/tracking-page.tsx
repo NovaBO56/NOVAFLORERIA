@@ -8,6 +8,7 @@ import { useOrderUpdates } from "./use-order-updates";
 import type { PublicOrder } from "@/lib/public/types";
 import { OrderSummary } from "./order-summary";
 import { CustomerShell } from "./customer-shell";
+import { readPreviousPurchase } from "@/lib/public/previous-purchase";
 
 export default function TrackingPage() {
   const [number, setNumber] = useState(""); const [phone, setPhone] = useState("");
@@ -21,7 +22,7 @@ export default function TrackingPage() {
   useEffect(() => {
     const controller = new AbortController(); recoveryRequest.current = controller;
     try {
-      const saved = JSON.parse(sessionStorage.getItem(checkoutSessionKeys.recovery) || "null");
+      const saved = JSON.parse(sessionStorage.getItem(checkoutSessionKeys.recovery) || "null") ?? readPreviousPurchase(sessionStorage);
       const parsed = trackOrderSchema.safeParse({ order_id: saved?.id, customer_phone: saved?.phone });
       if (!parsed.success) return;
       void fetch("/api/orders/track", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(parsed.data), cache: "no-store", signal: controller.signal }).then(async response => {

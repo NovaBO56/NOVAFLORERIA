@@ -12,7 +12,12 @@ describe("Public promotion conditions remain a whitelisted server read", () => {
   it("reads associations only for public promotions and returns no staff fields", async () => {
     mocks.publicQuery.mockResolvedValue({ data: [{ id: "visible", name: "TEST", starts_at: null, ends_at: null }], error: null });
     mocks.components.mockResolvedValue({ data: [{ promotion_id: "visible", product_id: "rose", quantity: "2", product: { price: "100", internal_note: "PRIVATE" }, created_by: "PRIVATE" }, { promotion_id: "not-visible", product_id: "other", quantity: 1, product: { price: 3 } }], error: null });
-    const response = await GET(); const body = await response.json(); expect(body.promotions[0].products).toEqual([{ product_id: "rose", quantity: 2, unit_price: 100 }]); expect(JSON.stringify(body)).not.toContain("PRIVATE"); expect(mocks.components).toHaveBeenCalledWith("promotion_id", ["visible"]);
+    const response = await GET(); const body = await response.json(); expect(body.promotions[0].products).toEqual([{ product_id: "rose", quantity: 2, unit_price: 100, product: null }]); expect(JSON.stringify(body)).not.toContain("PRIVATE"); expect(mocks.components).toHaveBeenCalledWith("promotion_id", ["visible"]);
+  });
+  it("exposes only active participant summaries and whitelists image fields", async () => {
+    mocks.publicQuery.mockResolvedValue({ data: [{ id: "visible" }], error: null });
+    mocks.components.mockResolvedValue({ data: [{ promotion_id: "visible", product_id: "rose", quantity: 1, product: { id: "rose", name: "Ramo", price: 100, is_active: true, is_available: true, is_sold_out: false, internal_note: "PRIVATE", images: [{ id: "image", public_url: "/flower.png", alt_text: "Ramo", sort_order: 0, storage_path: "PRIVATE" }] } }, { promotion_id: "visible", product_id: "hidden", quantity: 1, product: { name: "PRIVATE", price: 50, is_active: false } }], error: null });
+    const body = await (await GET()).json(); expect(body.promotions[0].products[0].product).toMatchObject({ id: "rose", name: "Ramo", images: [{ public_url: "/flower.png" }] }); expect(body.promotions[0].products[1].product).toBeNull(); expect(JSON.stringify(body)).not.toContain("PRIVATE");
   });
   it("fails safely when conditions cannot be read instead of suggesting an unverified offer", async () => {
     mocks.publicQuery.mockResolvedValue({ data: [{ id: "visible" }], error: null }); mocks.components.mockResolvedValue({ data: null, error: { code: "XX000" } }); expect((await GET()).status).toBe(503);

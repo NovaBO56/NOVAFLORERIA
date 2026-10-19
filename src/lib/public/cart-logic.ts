@@ -120,6 +120,19 @@ export function addItem(
   ];
 }
 
+/** All-or-nothing addition for a personalized combo; never silently truncate it. */
+export function addCartBatch(items: CartItem[], lines: { product: CartProductInput; quantity: number }[]) {
+  let next = items;
+  for (const line of lines) {
+    if (!Number.isInteger(line.quantity) || line.quantity < 1 || line.quantity > MAX_QUANTITY) throw new Error("La cantidad del combo supera el límite del carrito.");
+    const before = cartCount(next);
+    const added = addItem(next, line.product, line.quantity);
+    if (cartCount(added) - before !== line.quantity) throw new Error("No hay espacio para el combo completo. Revisa las cantidades del carrito.");
+    next = added;
+  }
+  return next;
+}
+
 /** Suma o resta; al llegar a 0 el producto sale del carrito. */
 export function changeItemQuantity(
   items: CartItem[],

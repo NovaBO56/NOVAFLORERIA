@@ -1,8 +1,11 @@
 import type { NextConfig } from "next";
 import { networkInterfaces } from "node:os";
+import { visualPreviewEnabled } from "./src/lib/visual-preview/config";
+
+const visualPreview = visualPreviewEnabled(process.env);
 
 const storageUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const storageOrigin = new URL(storageUrl || "https://groyjvbtcuhjbltmmdfl.supabase.co");
+const storageOrigin = new URL(visualPreview ? "https://visual-preview.invalid" : storageUrl || "https://groyjvbtcuhjbltmmdfl.supabase.co");
 // Opt-in for this computer's disposable lab: serve its Storage images directly
 // to LAN clients without relaxing the image optimizer's private-IP protection.
 const localLab = process.env.NOVA_LOCAL_LAB === "true";
@@ -13,6 +16,7 @@ if (localLab) {
   }
 }
 const nextConfig: NextConfig = {
+  ...(visualPreview ? { distDir: ".next-visual-preview", outputFileTracingIncludes: { "/api/visual-preview": ["./.visual-preview/snapshot.json"] } } : {}),
   images: {
     unoptimized: localLab,
     remotePatterns: [

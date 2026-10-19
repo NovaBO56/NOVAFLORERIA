@@ -3,11 +3,10 @@ import { LocationCard } from "../location-card";
 import { WeeklyHours } from "../weekly-hours";
 import type { StoreLocation } from "@/validations/store-location";
 
-import { useState } from "react";
+
 import { SafeImage as Image } from "@/components/public/safe-image";
 import {
   ArrowRight,
-  ChevronRight,
   Clock,
   Heart,
   MessageCircle,
@@ -18,11 +17,8 @@ import {
 import {
   DAY_NAMES,
   dayHoursLabel,
-  formatMoney,
   orderedWeek,
   pickImage,
-  promotionBenefit,
-  promotionValidity,
   todayHoursLabel,
 } from "@/lib/public/format";
 import type {
@@ -30,7 +26,6 @@ import type {
   PublicCategory,
   PublicImage,
   PublicProduct,
-  PublicPromotion,
   WeekDay,
 } from "@/lib/public/types";
 import { script } from "./shared";
@@ -61,12 +56,10 @@ export function ClosedBanner({ status }: { status: BusinessStatus | null }) {
    ============================================================ */
 
 export function HeroSection({
-  totalProducts,
   status,
   heroProduct,
   hasPromotions,
 }: {
-  totalProducts: number | null;
   status: BusinessStatus | null;
   heroProduct: PublicProduct | null;
   hasPromotions: boolean;
@@ -120,18 +113,6 @@ export function HeroSection({
             </div>
 
             <div className="mt-10 flex flex-wrap gap-6 border-t border-[#ded2e2] pt-6">
-              <div>
-                <p className="text-lg font-black text-[#403344]">
-                  {totalProducts ?? "—"}
-                </p>
-
-                <p className="mt-1 text-xs text-[#736877]">
-                  productos en el catálogo
-                </p>
-              </div>
-
-              <div className="h-10 w-px bg-[#ded2e2]" />
-
               <div>
                 <p className="text-lg font-black text-[#403344]">
                   {hours ?? "—"}
@@ -260,114 +241,7 @@ export function ServiceStrip() {
    PROMOCIONES (datos reales de /api/promotions)
    ============================================================ */
 
-const DEFAULT_PROMOTION_TEXT =
-  "Descubre nuestras opciones de regalo y crea una combinación especial para esa persona.";
-
-export function PromotionSection({
-  promotions,
-}: {
-  promotions: PublicPromotion[];
-}) {
-  const [activeId, setActiveId] = useState<string | null>(null);
-
-  if (promotions.length === 0) return null;
-
-  const promotion =
-    promotions.find((entry) => entry.id === activeId) ?? promotions[0];
-
-  const validity = promotionValidity(promotion);
-  const benefit = promotionBenefit(promotion);
-
-  return (
-    <section
-      id="promociones"
-      className="scroll-mt-20 px-5 pb-16 sm:px-8 sm:pb-20"
-    >
-      <div className="mx-auto max-w-[1180px]">
-        <div className="grid overflow-hidden rounded-2xl border border-[#e2d5e5] bg-white lg:grid-cols-[1.05fr_.95fr]">
-          <div className="flex items-center bg-[#eee5f1] px-7 py-12 sm:px-12 lg:px-16">
-            <div>
-              <span className="inline-flex rounded-full bg-[#65358e] px-3 py-1 text-[9px] font-black uppercase tracking-[0.15em] text-white">
-                Promoción
-              </span>
-
-              <h2
-                className={`${script.className} mt-5 break-words leading-[.95] text-[#4c285f] ${
-                  promotion.name.length > 22
-                    ? "text-[44px] sm:text-[52px]"
-                    : "text-[54px] sm:text-[68px]"
-                }`}
-              >
-                {promotion.name}
-              </h2>
-
-              <p className="mt-5 max-w-[450px] text-sm leading-6 text-[#6a5e6e]">
-                {promotion.description || DEFAULT_PROMOTION_TEXT}
-              </p>
-
-              <p className="mt-4 text-sm font-black text-[#65358e]">
-                {benefit}
-                {promotion.minimum_purchase !== null
-                  ? ` · compra mínima ${formatMoney(promotion.minimum_purchase)}`
-                  : ""}
-              </p>
-
-              {validity ? (
-                <p className="mt-1 text-xs text-[#6a5e6e]">{validity}</p>
-              ) : null}
-
-              {promotions.length > 1 ? (
-                <div
-                  className="mt-5 flex flex-wrap gap-2"
-                  role="group"
-                  aria-label="Otras promociones"
-                >
-                  {promotions.map((entry) => (
-                    <button
-                      key={entry.id}
-                      type="button"
-                      onClick={() => setActiveId(entry.id)}
-                      aria-pressed={entry.id === promotion.id}
-                      className={`min-h-10 rounded-full px-3 py-2 text-[11px] font-black transition ${
-                        entry.id === promotion.id
-                          ? "bg-[#65358e] text-white"
-                          : "border border-[#d8c8de] bg-white text-[#66596b] hover:border-[#65358e] hover:text-[#65358e]"
-                      }`}
-                    >
-                      {entry.name}
-                    </button>
-                  ))}
-                </div>
-              ) : null}
-
-              <a
-                href="#catalogo"
-                className="mt-7 inline-flex h-11 items-center gap-2 rounded-xl bg-[#65358e] px-5 text-sm font-black text-white transition hover:bg-[#572d7a]"
-              >
-                Ver productos
-                <ChevronRight size={16} />
-              </a>
-            </div>
-          </div>
-
-          <div className="flex min-h-[360px] items-center justify-center bg-[#f5eef7]">
-            <div className="aspect-[4/5] w-[54%] rounded-2xl bg-[#e1d2e5] shadow-[0_20px_45px_rgba(65,39,75,.1)]">
-              <div className="flex h-full flex-col items-center justify-center px-3 text-center">
-                <span className="text-7xl text-[#785682]">✿</span>
-
-                <p
-                  className={`${script.className} mt-4 text-3xl leading-tight text-[#684572] sm:text-4xl`}
-                >
-                  {benefit}
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </section>
-  );
-}
+export { PromotionSection } from "./promotion-section";
 
 /* ============================================================
    NOSOTROS

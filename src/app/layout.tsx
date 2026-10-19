@@ -30,6 +30,7 @@ export default function RootLayout({
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col font-sans">
+        {process.env.NOVA_VISUAL_PREVIEW === "true" && <aside role="note" className="bg-[#4c285f] px-4 py-3 text-center text-sm text-white">Vista previa visual · Datos sintéticos · No se registran pedidos ni pagos · NO PAGAR</aside>}
         {children}
       </body>
     </html>

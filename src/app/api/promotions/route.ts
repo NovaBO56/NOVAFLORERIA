@@ -47,14 +47,23 @@ export async function GET() {
     if (!promotions.length) return NextResponse.json({ success: true, promotions: [] });
     const { data: components, error: componentError } = await createAdminClient()
       .from("promotion_products")
-      .select("promotion_id, product_id, quantity, product:products(price)")
+      .select("promotion_id, product_id, quantity, product:products(id,name,price,is_active,is_available,is_sold_out,category_id,occasion,season_id,is_featured,catalog_order,images:product_images(id,public_url,alt_text,sort_order))")
       .in("promotion_id", promotions.map(promotion => promotion.id));
     if (componentError) return NextResponse.json({ success: false, message: "No se pudieron consultar las condiciones de las promociones." }, { status: 503 });
     return NextResponse.json({ success: true, promotions: promotions.map(promotion => ({
       ...promotion,
       products: (components ?? []).filter(component => component.promotion_id === promotion.id).flatMap(component => {
         const product = Array.isArray(component.product) ? component.product[0] : component.product;
-        return product && Number.isFinite(Number(product.price)) ? [{ product_id: component.product_id, quantity: Number(component.quantity), unit_price: Number(product.price) }] : [];
+        return product && Number.isFinite(Number(product.price)) ? [{
+          product_id: component.product_id, quantity: Number(component.quantity), unit_price: Number(product.price),
+          product: product.is_active === true ? {
+            id: product.id, name: product.name, price: Number(product.price),
+            is_available: product.is_available, is_sold_out: product.is_sold_out,
+            category_id: product.category_id, occasion: product.occasion, season_id: product.season_id,
+            is_featured: product.is_featured, catalog_order: product.catalog_order,
+            images: (product.images ?? []).map(image => ({ id: image.id, public_url: image.public_url, alt_text: image.alt_text, sort_order: image.sort_order })),
+          } : null,
+        }] : [];
       }),
     })) });
   } catch (error) {

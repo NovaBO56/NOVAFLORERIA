@@ -5,7 +5,7 @@ import { createOrderSchema } from "@/validations/orders";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { publicOrderError } from "@/lib/public/order-error";
 
-export function requestsHomeDelivery(customerMessage: string | null | undefined) {
+function requestsHomeDelivery(customerMessage: string | null | undefined) {
   return customerMessage?.split("\n", 1)[0]?.trim() === "Método: Entrega por coordinar";
 }
 

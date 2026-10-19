@@ -49,7 +49,7 @@ export type PublicCategory = {
 };
 
 export type PublicPromotion = {
-  products?: { product_id: string; quantity: number; unit_price: number }[];
+  products?: { product_id: string; quantity: number; unit_price: number; product?: PublicProduct | null }[];
   id: string;
   name: string;
   description: string | null;

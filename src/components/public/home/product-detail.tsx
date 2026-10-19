@@ -1,16 +1,19 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import { Heart, ShoppingBag } from "lucide-react";
 import {
   formatMoney,
   initials,
   isPurchasable,
+  promotionBenefit,
 } from "@/lib/public/format";
 import { MAX_QUANTITY } from "@/lib/public/cart-logic";
-import type { CustomizationOption, ProductDetail, PublicProduct } from "@/lib/public/types";
+import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion } from "@/lib/public/types";
 import { script } from "./shared";
+import { ComboProgress } from "../combo-progress";
+import { ShoppingNotice } from "../shopping-notice";
 
 type DetailState = { id: string; data: ProductDetail | null } | null;
 
@@ -19,7 +22,12 @@ type ProductDetailSectionProps = {
   categoryName: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onAdd: (quantity: number, options: CustomizationOption[], message: string) => void;
+  onAdd: (quantity: number, options: CustomizationOption[], message: string) => void | boolean;
+  requiredQuantity?: number;
+  actionLabel?: string;
+  promotion?: PublicPromotion;
+  comboGuide?: { step: number; total: number; cancel: () => void };
+  error?: string;
 };
 
 /**
@@ -33,11 +41,18 @@ export function ProductDetailSection({
   isFavorite,
   onToggleFavorite,
   onAdd,
+  requiredQuantity,
+  actionLabel,
+  promotion,
+  comboGuide,
+  error,
 }: ProductDetailSectionProps) {
   const [detail, setDetail] = useState<DetailState>(null);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [message, setMessage] = useState("");
-  const [quantity, setQuantity] = useState(1);
+  const [quantity, setQuantity] = useState(requiredQuantity ?? 1);
+  const adding = useRef(false);
+  const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
 
   // La lista trae lo básico; descripción e ingredientes vienen del detalle.
@@ -104,6 +119,8 @@ export function ProductDetailSection({
           </h2>
         </div>
 
+        {comboGuide && <ComboProgress step={comboGuide.step} total={comboGuide.total} product={product} quantity={requiredQuantity ?? 1} name={promotion?.name} onCancel={comboGuide.cancel}/>}
+        {error && <div className="mb-6"><ShoppingNotice tone="error">{error}</ShoppingNotice></div>}
         <div className="grid min-w-0 gap-8 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
           <div
             className={`grid gap-4 ${
@@ -203,7 +220,7 @@ export function ProductDetailSection({
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
-                  disabled={quantity <= 1}
+                  disabled={quantity <= 1 || requiredQuantity !== undefined}
                   className="flex size-11 items-center justify-center text-[#5c4e61] disabled:opacity-40"
                   aria-label="Disminuir cantidad"
                 >
@@ -223,7 +240,7 @@ export function ProductDetailSection({
                   onClick={() =>
                     setQuantity((value) => Math.min(MAX_QUANTITY, value + 1))
                   }
-                  disabled={quantity >= MAX_QUANTITY}
+                  disabled={quantity >= MAX_QUANTITY || requiredQuantity !== undefined}
                   className="flex size-11 items-center justify-center text-[#5c4e61] disabled:opacity-40"
                   aria-label="Aumentar cantidad"
                 >
@@ -233,19 +250,20 @@ export function ProductDetailSection({
             </div>
 
             <div className="mt-5 space-y-3">
+              {promotion && <div className="customer-note" role="status"><strong>{promotion.name}</strong><p>{promotionBenefit(promotion)}. Personaliza tu producto; el carrito aplicará el beneficio cuando cumpla todas las condiciones.</p></div>}
               {full?.customization_options?.map(option => <label key={option.id} className="nova-option flex items-center gap-3 rounded-lg text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
               <label className="block text-sm">Mensaje para la tarjeta<textarea maxLength={500} value={message} onChange={event => setMessage(event.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={() => onAdd(quantity, full?.customization_options?.filter(o => selectedOptions.includes(o.id)) ?? [], message)}
-                disabled={!purchasable || loadingDetail || !full}
-                className="flex h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] sm:flex-1 text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => { if (adding.current) return; adding.current = true; try { const accepted = onAdd(quantity, full?.customization_options?.filter(o => selectedOptions.includes(o.id)) ?? [], message); if (accepted !== false) setAdded(true); } finally { window.setTimeout(() => { adding.current = false; setAdded(false); }, 700); } }}
+                disabled={added || !purchasable || loadingDetail || !full}
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-3 py-3 sm:flex-1 text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag size={17} />
                 {purchasable
-                  ? "Agregar al carrito"
+                  ? added ? "Agregado" : actionLabel ?? "Agregar al carrito"
                   : product.is_sold_out
                     ? "Agotado"
                     : "No disponible"}

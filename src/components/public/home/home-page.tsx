@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import { selectPromotion, usePromotionSelection } from "@/lib/public/promotion-selection";
+import { canBuildCombo } from "@/lib/public/promotion-shopping";
 import {
   acceptingOrders,
   todayHoursLabel,
@@ -11,12 +13,13 @@ import { MobileNavigation } from "../mobile-navigation";
 import { storeLocationSchema, type StoreLocation } from "@/validations/store-location";
 import type {
   BusinessStatus,
+  CustomizationOption,
   PublicCategory,
   PublicProduct,
   PublicPromotion,
   WeekDay,
 } from "@/lib/public/types";
-import { addToCart, CartDrawer, useCart } from "./cart";
+import { addToCart, addComboToCart, CartDrawer, useCart } from "./cart";
 import { CatalogSection, type CatalogState } from "./catalog";
 import { SiteHeader, type NavItem } from "./header";
 import { ProductDetailSection } from "./product-detail";
@@ -31,6 +34,7 @@ import {
   SiteFooter,
 } from "./sections";
 import { lato, scrollToId } from "./shared";
+import { ShoppingNotice } from "../shopping-notice";
 
 const PAGE_SIZE = 8;
 const MAX_FAVORITES = 100;
@@ -156,6 +160,7 @@ function mergeUnique(current: PublicProduct[], extra: PublicProduct[]) {
 
 export default function HomePage({ year }: { year: number }) {
   const cart = useCart();
+  const selectedPromotionId = usePromotionSelection();
   const favoriteIds = favoritesStore.useValue();
 
   const [cartOpen, setCartOpen] = useState(false);
@@ -174,6 +179,12 @@ export default function HomePage({ year }: { year: number }) {
   }>({ key: "", items: [] });
 
   const [selected, setSelected] = useState<PublicProduct | null>(null);
+  const [combo, setCombo] = useState<{ promotion: PublicPromotion; index: number; choices: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string }[] } | null>(null);
+  const [shoppingError, setShoppingError] = useState("");
+  const [shoppingNotice, setShoppingNotice] = useState("");
+  const [offerReturn, setOfferReturn] = useState(0);
+  const comboFlight = useRef(false);
+  useEffect(() => { comboFlight.current = false; }, [combo?.index, combo?.promotion.id]);
 
   /* ---------- datos generales (una sola vez) ---------- */
 
@@ -387,8 +398,50 @@ export default function HomePage({ year }: { year: number }) {
   }
 
   function openDetail(product: PublicProduct) {
+    setCombo(null);
+    setShoppingError("");
     setSelected(product);
-    scrollToId("detalle");
+    requestAnimationFrame(() => scrollToId("detalle"));
+  }
+
+  function chooseOfferProduct(promotion: PublicPromotion, product: PublicProduct) {
+    selectPromotion(promotion.id);
+    openDetail(product);
+  }
+
+  function buildCombo(promotion: PublicPromotion) {
+    if (!canBuildCombo(promotion)) return;
+    comboFlight.current = false;
+    setShoppingError("");
+    setShoppingNotice("");
+    setCombo({ promotion, index: 0, choices: [] });
+    setSelected(promotion.products![0].product!);
+    requestAnimationFrame(() => scrollToId("detalle"));
+  }
+
+  function cancelCombo() {
+    setCombo(null); setShoppingError("");
+    setShoppingNotice("Armado cancelado. No agregamos productos del combo; tu carrito se conserva.");
+    requestAnimationFrame(() => scrollToId("shopping-feedback"));
+  }
+
+  function addDetail(quantity: number, options: CustomizationOption[], message: string) {
+    if (!detailProduct) return false;
+    setShoppingError("");
+    if (!combo) { addToCart(detailProduct, quantity, options, message); setCartOpen(true); return true; }
+    if (comboFlight.current) return false;
+    comboFlight.current = true;
+    const choices = [...combo.choices, { product: detailProduct, quantity, options, message }];
+    const next = combo.index + 1;
+    if (next < combo.promotion.products!.length) {
+      setCombo({ ...combo, index: next, choices });
+      setSelected(combo.promotion.products![next].product!);
+      requestAnimationFrame(() => scrollToId("detalle"));
+      return true;
+    } else {
+      try { addComboToCart(choices); selectPromotion(combo.promotion.id); setCombo(null); setCartOpen(true); return true; }
+      catch (cause) { setShoppingError(cause instanceof Error ? cause.message : "No se pudo agregar el combo completo."); comboFlight.current = false; return false; }
+    }
   }
 
   /* ---------- derivados ---------- */
@@ -430,7 +483,6 @@ export default function HomePage({ year }: { year: number }) {
       <ClosedBanner status={meta.status} />
 
       <HeroSection
-        totalProducts={meta.totalProducts}
         status={meta.status}
         heroProduct={meta.heroProduct}
         hasPromotions={meta.promotions.length > 0}
@@ -456,19 +508,22 @@ export default function HomePage({ year }: { year: number }) {
         onOpenDetail={openDetail}
       />
 
-      <PromotionSection promotions={meta.promotions} />
+      {shoppingNotice && <div id="shopping-feedback" className="mx-auto max-w-[1180px] scroll-mt-24 px-5 py-4"><ShoppingNotice onDismiss={() => setShoppingNotice("")}>{shoppingNotice}</ShoppingNotice></div>}
+      <PromotionSection key={offerReturn} promotions={meta.promotions} initialPromotionId={selectedPromotionId} onChooseProduct={chooseOfferProduct} onBuildCombo={buildCombo}/>
 
       {detailProduct ? (
         <ProductDetailSection
-          key={detailProduct.id}
+          key={`${detailProduct.id}:${combo?.promotion.id ?? "single"}:${combo?.index ?? 0}`}
           product={detailProduct}
           categoryName={categoryName}
           isFavorite={favoriteIds.includes(detailProduct.id)}
           onToggleFavorite={() => toggleFavorite(detailProduct.id)}
-          onAdd={(quantity, options, message) => {
-            addToCart(detailProduct, quantity, options, message);
-            setCartOpen(true);
-          }}
+          onAdd={addDetail}
+          requiredQuantity={combo?.promotion.products![combo.index].quantity}
+          actionLabel={combo ? combo.index + 1 < combo.promotion.products!.length ? "Continuar al siguiente producto" : "Agregar combo al carrito" : undefined}
+          promotion={combo?.promotion ?? meta.promotions.find(promotion => promotion.id === selectedPromotionId && promotion.products?.some(line => line.product_id === detailProduct.id))}
+          comboGuide={combo ? { step: combo.index + 1, total: combo.promotion.products!.length, cancel: cancelCombo } : undefined}
+          error={shoppingError}
         />
       ) : null}
 
@@ -507,6 +562,8 @@ export default function HomePage({ year }: { year: number }) {
               }`
         }
         whatsappNumber={meta.whatsapp}
+        promotions={meta.promotions}
+        onReturnToOffer={() => { setOfferReturn(value => value + 1); requestAnimationFrame(() => scrollToId("promociones")); }}
       />
     </main>
   );

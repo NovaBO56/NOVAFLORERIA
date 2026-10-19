@@ -6,6 +6,8 @@ import Link from "next/link";
 import { ArrowRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import {
   addItem,
+  MAX_QUANTITY,
+  addCartBatch,
   buildOrderMessage,
   cartCount,
   cartTotal,
@@ -22,7 +24,11 @@ import {
   whatsappLink,
 } from "@/lib/public/format";
 import { createLocalStore } from "@/lib/public/local-store";
-import type { CustomizationOption, ProductDetail, PublicProduct } from "@/lib/public/types";
+import { selectPromotion, usePromotionSelection } from "@/lib/public/promotion-selection";
+import { cartPromotion } from "@/lib/public/cart-promotions";
+import { PromotionCartSummary } from "../promotion-cart-summary";
+import { ShoppingNotice } from "../shopping-notice";
+import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion } from "@/lib/public/types";
 import { script, useDialog } from "./shared";
 
 /* ============================================================
@@ -51,7 +57,14 @@ export function useCart() {
   );
 }
 
-export function clearCart() { cartStore.update(() => []); }
+export function clearCart() { cartStore.update(() => []); selectPromotion(""); }
+export function addComboToCart(lines: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string }[]) {
+  cartStore.update(items => addCartBatch(items, lines.map(line => ({ quantity: line.quantity, product: {
+    id: line.product.id, name: line.product.name,
+    price: Number(line.product.price) + line.options.reduce((sum, option) => sum + Number(option.extra_price), 0),
+    image: pickImage(line.product)?.public_url ?? null, options: line.options, message: line.message,
+  } }))));
+}
 export function addToCart(product: PublicProduct, quantity = 1, options: CustomizationOption[] = [], message = "") {
   cartStore.update((items) =>
     addItem(
@@ -68,11 +81,15 @@ export function addToCart(product: PublicProduct, quantity = 1, options: Customi
 }
 
 function changeQuantity(id: string, delta: number) {
-  cartStore.update((items) => changeItemQuantity(items, id, delta));
+  let next: CartItem[] = [];
+  cartStore.update((items) => { next = changeItemQuantity(items, id, delta); return next; });
+  return next;
 }
 
 function removeFromCart(id: string) {
-  cartStore.update((items) => removeItem(items, id));
+  let next: CartItem[] = [];
+  cartStore.update((items) => { next = removeItem(items, id); return next; });
+  return next;
 }
 
 /**
@@ -144,6 +161,8 @@ type CartDrawerProps = {
   acceptingOrders: boolean;
   closedNotice: string | null;
   whatsappNumber: string | null;
+  promotions?: PublicPromotion[];
+  onReturnToOffer?: () => void;
 };
 
 export function CartDrawer({
@@ -153,13 +172,26 @@ export function CartDrawer({
   acceptingOrders,
   closedNotice,
   whatsappNumber,
+  promotions = [],
+  onReturnToOffer,
 }: CartDrawerProps) {
   const cart = useCart();
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => { if (!open) return; const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, [open]);
+  const promotionId = usePromotionSelection() ?? "";
+  const promotion = promotions.find(entry => entry.id === promotionId);
+  const discount = promotion ? cartPromotion(promotion, cart.items, now) : null;
   const [removing, setRemoving] = useState<string | null>(null);
+  const [feedback, setFeedback] = useState("");
+
+  function notifyChange(next: CartItem[], message: string) {
+    const lostDiscount = discount && promotion && !cartPromotion(promotion, next, now);
+    setFeedback(`${message} ${lostDiscount ? "El descuento se retiró porque la compra ya no cumple sus condiciones." : "Actualizamos el total y revisamos la promoción."}`);
+  }
 
 
   function close() {
-
+    setFeedback(""); setRemoving(null);
     onClose();
   }
 
@@ -175,7 +207,7 @@ export function CartDrawer({
 
   const whatsappHref = whatsappLink(
     whatsappNumber,
-    buildOrderMessage(cart.items),
+    discount ? `${buildOrderMessage(cart.items).replace("\nTotal:", "\nSubtotal:")}\nOferta seleccionada: ${discount.promotion.name}\nDescuento estimado: ${formatMoney(discount.discount)}\nTotal estimado: ${formatMoney(discount.total)}\nLa tienda verificará las condiciones de la promoción.` : buildOrderMessage(cart.items),
   );
 
   return (
@@ -220,6 +252,7 @@ export function CartDrawer({
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-6">
+          {feedback && <div className="mb-4"><ShoppingNotice tone="success" onDismiss={() => setFeedback("")}>{feedback}</ShoppingNotice></div>}
           {cart.items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="flex size-16 items-center justify-center rounded-full bg-[#f3ebf6] text-[#65358e]">
@@ -283,21 +316,16 @@ export function CartDrawer({
 
                     {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6c6278]">{option.name}</p>)}
                     {item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
-                    {removing === item.id && <div className="my-3 rounded-xl border border-purple-200 bg-white p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm">¿Quitar este detalle del carrito?</p><div className="mt-2 flex flex-wrap gap-3"><button type="button" className="min-h-11 font-bold text-[#74599f]" onClick={() => { removeFromCart(item.id); setRemoving(null); }}>Sí, quitar</button><button type="button" className="min-h-11" onClick={() => setRemoving(null)}>Conservar</button></div></div>}
+                    {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#f4edf8] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#59436c]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#65358e] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#604581]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
                     {!item.available ? (
-                      <p
-                        role="alert"
-                        className="mt-1 text-xs font-bold text-[#b42318]"
-                      >
-                        Ya no está disponible. Quítalo para continuar.
-                      </p>
+                      <div className="mt-3"><ShoppingNotice tone="error">Este producto ya no está disponible. Elimínalo o elige otro detalle para continuar.</ShoppingNotice></div>
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
                       <div className="inline-flex items-center rounded-lg border border-[#ded2e2]">
                         <button
                           type="button"
-                          onClick={() => item.quantity === 1 ? setRemoving(item.id) : changeQuantity(item.id, -1)}
+                          onClick={() => item.quantity === 1 ? setRemoving(item.id) : notifyChange(changeQuantity(item.id, -1), "Cantidad actualizada.")}
                           className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
                           aria-label={`Disminuir cantidad de ${item.name}`}
                         >
@@ -310,8 +338,8 @@ export function CartDrawer({
 
                         <button
                           type="button"
-                          onClick={() => changeQuantity(item.id, 1)}
-                          disabled={!item.available}
+                          onClick={() => notifyChange(changeQuantity(item.id, 1), "Cantidad actualizada.")}
+                          disabled={!item.available || item.quantity >= MAX_QUANTITY}
                           className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7] disabled:cursor-not-allowed disabled:opacity-40"
                           aria-label={`Aumentar cantidad de ${item.name}`}
                         >
@@ -335,14 +363,15 @@ export function CartDrawer({
         </div>
 
         <div className="border-t border-[#e7dfe9] bg-white px-6 py-6 pb-[max(24px,env(safe-area-inset-bottom))]">
+          <PromotionCartSummary promotions={promotions} selectedId={promotionId} items={cart.items} onSelect={selectPromotion} onBrowse={onReturnToOffer ? () => { close(); onReturnToOffer(); } : undefined}/>
           <div className="flex items-center justify-between text-sm text-[#706474]">
             <span>Subtotal</span>
             <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>
           </div>
 
           <div className="mt-2 flex items-center justify-between text-lg font-black text-[#403344]">
-            <span>Total</span>
-            <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>
+            <span>Total estimado</span>
+            <span key={discount?.total ?? cart.total} className="nova-value tabular-nums">{formatMoney(discount?.total ?? cart.total)}</span>
           </div>
 
           {!acceptingOrders && closedNotice ? (
@@ -354,7 +383,7 @@ export function CartDrawer({
             </p>
           ) : null}
 
-          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : <p className="mt-4 text-sm">Revisa tu carrito para continuar.</p>}
+          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : cart.items.length > 0 ? <div className="mt-4"><ShoppingNotice>Revisa la disponibilidad de tus productos y el horario de la tienda para continuar.</ShoppingNotice></div> : null}
           {whatsappHref && cart.items.length > 0 ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center gap-2 text-sm text-[#65358e]"><MessageCircle size={16} /> Comprar por WhatsApp</a> : null}
         </div>
       </aside>
