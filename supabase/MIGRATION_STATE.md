@@ -1,6 +1,14 @@
 # Estado vigente de Supabase
 
-La fuente oficial es supabase/migrations/ y supabase/seed.sql. En esta rama hay diez versiones de la base de referencia más la candidata incremental 20261013000100, probada solo localmente y pendiente de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+La fuente oficial es supabase/migrations/ y supabase/seed.sql. En esta rama hay diez versiones de la base productiva de referencia y dos candidatas incrementales, `20261013000100` y `20261017000100`, probadas solo localmente y pendientes de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+
+## Certificación LAB100 local (2026-10-19)
+
+Replay desde cero de 12 migraciones + seed correcto en `NOVA-LOCAL-INTEGRITY` (API 62621, DB 62622), sin `project-ref`. El catálogo público quedó con exactamente 100 productos sintéticos activos y vendibles, recetas completas, imágenes de demostración locales, 12 insumos y 24 lotes conciliados. El fixture conserva registros sintéticos anteriores y desactiva, sin borrar, productos `TEST %` heredados para mantener el total público solicitado.
+
+La preparación registró 50 operaciones LAB50 por flujos comerciales reales: 24 ventas pagadas confirmadas, cuatro pedidos gratuitos, cuatro reintegros monetarios y dos devoluciones físicas entre cinco registros de devolución. Una suite dirigida adicional aprobó 31 comprobaciones HTTP/Auth/concurrencia, incluidas idempotencia de pedido/pago, confirmación concurrente, última unidad, roles, rate limit, Bs 90/90 y Bs 200/50. `DELIVERY_AVAILABILITY_TESTS.sql` aprobó con `ROLLBACK`; el interruptor también se probó mediante HTTP real y no creó un pedido cuando estaba desactivado.
+
+Calidad: 602/602 tests en 48 archivos, lint 0 errores/0 warnings, TypeScript correcto y build Next 69/69 páginas. Secret scan: 419 archivos, 0 hallazgos. Legacy: 39/39 SHA-256. La política del navegador integrado impidió adquirir la pestaña `localhost`; por ello 375/390/430/768/1280/1440 y los flujos visuales no se declaran aprobados en esta ronda. No se consultó ni modificó Supabase remoto durante la certificación local.
 
 ## Revisión actual: inventario, reintegros y Dashboard (2026-10-13)
 
@@ -21,6 +29,7 @@ Los apartados siguientes son evidencia histórica; sus cifras y referencias a mi
 9. 20261009000300_tracking_rpc_server_only.sql
 10. 20261012000100_two_payment_qr.sql
 11. 20261013000100_inventory_refunds_sales_ledger.sql (candidata pendiente de autorización productiva)
+12. 20261017000100_home_delivery_availability.sql (candidata pendiente de autorización productiva)
 
 seed.sql permanece separado (la CLI local ejecuta los seeds después de todas las migraciones).
 
