@@ -26,6 +26,9 @@ function localUrl(value, port) {
   if (url.protocol !== "http:" || !localAddresses.has(url.hostname) || url.port !== String(port) || url.username || url.password || url.pathname !== "/" || url.search || url.hash) throw Error("Target must be this computer and the fixed LOCAL port.");
   return url.origin;
 }
+function isCurrentLocalStorageUrl(value) {
+  try { return localUrl(new URL(value).origin, 62621).length > 0; } catch { return false; }
+}
 const app = localUrl(access.webUrl, 3116), authUrl = localUrl(access.supabaseUrl, 62621);
 const service = createClient(cfg.API_URL, cfg.SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 const file = path.join(lab, "lab50-results.private.json");
@@ -100,9 +103,18 @@ if (mode === "--prepare") {
       if (!report.entries.includes(entry.id)) report.entries.push(entry.id); save();
     }
   }
+  // Preserve earlier synthetic QA rows but keep the public catalog at the
+  // requested 100 saleable products. No real-looking row is changed.
+  const earlierQaProducts = await rows("products", query => query.like("name", "TEST %"));
+  for (const product of earlierQaProducts) if (product.is_active || product.is_available) {
+    await http(`/api/admin/products/${product.id}`, { is_active: false, is_available: false }, "PATCH");
+  }
   for (const [index, product] of products.entries()) {
-    let row = await one("products", "name", product.name);
+    let row = report.products[product.code] ? await one("products", "id", report.products[product.code]) : await one("products", "name", product.name);
     if (!row) row = (await http("/api/admin/products", { name: product.name, description: product.description, price: product.price, category_id: report.categories[product.categoryKey], occasion: product.occasion, catalog_order: index + 1, is_featured: index % 5 === 0, is_active: false, is_available: false })).data.product;
+    else if (row.name !== product.name || row.description !== product.description || Number(row.price) !== product.price || row.category_id !== report.categories[product.categoryKey]) {
+      row = (await http(`/api/admin/products/${row.id}`, { name: product.name, description: product.description, price: product.price, category_id: report.categories[product.categoryKey], occasion: product.occasion, catalog_order: index + 1 }, "PATCH")).data.product;
+    }
     report.products[product.code] = row.id; save();
     for (const line of product.recipe) {
       const existing = await rows("product_inventory_requirements", query => query.eq("product_id", row.id).eq("inventory_item_id", report.items[line.itemKey]));
@@ -111,13 +123,21 @@ if (mode === "--prepare") {
     }
     const images = await rows("product_images", query => query.eq("product_id", row.id));
     if (!images.length) { const form = new FormData(); form.set("file", new Blob([await demoImage(product.code)], { type: "image/png" }), `${product.code} Ilustración de demostración no fotografía real.png`); await http(`/api/admin/products/${row.id}/images`, form); }
+    else for (const image of images) {
+      if (isCurrentLocalStorageUrl(image.public_url)) continue;
+      const oldUrl = new URL(image.public_url);
+      if (!oldUrl.pathname.startsWith("/storage/v1/object/public/product-images/")) throw Error(`Unexpected product image origin for ${product.code}`);
+      const replacement = authUrl + oldUrl.pathname;
+      const updated = await service.from("product_images").update({ public_url: replacement }).eq("id", image.id);
+      if (updated.error) throw Error(`Could not repair LOCAL-only product image URL for ${product.code}`);
+    }
     if (!row.is_active || !row.is_available) await http(`/api/admin/products/${row.id}`, { is_active: true, is_available: true }, "PATCH");
     console.log(`Prepared ${product.code}`);
   }
   for (const slot of ["qr_1", "qr_2"]) {
     const latest = (await rows("payment_qr_config", query => query.eq("qr_slot", slot).order("created_at", { ascending: false }).limit(1)))[0];
     const label = `NO PAGAR / DEMOSTRACIÓN · QR ${slot.at(-1)}`;
-    if (latest?.account_label !== label) { const form = new FormData(); form.set("file", new Blob([await demoImage(slot, true)], { type: "image/png" }), "no-pagar-demostracion.png"); form.set("qr_slot", slot); form.set("account_label", label); form.set("is_active", "true"); await http("/api/admin/payment-qr", form); }
+    if (latest?.account_label !== label || !isCurrentLocalStorageUrl(latest?.qr_public_url)) { const form = new FormData(); form.set("file", new Blob([await demoImage(slot, true)], { type: "image/png" }), "no-pagar-demostracion.png"); form.set("qr_slot", slot); form.set("account_label", label); form.set("is_active", "true"); await http("/api/admin/payment-qr", form); }
     else if (!latest.is_active) await http("/api/admin/payment-qr", { qr_slot: slot, is_active: true }, "PATCH");
   }
   // Disable only the LOCAL integration so manual tests cannot accidentally open a real conversation.
@@ -134,7 +154,12 @@ if (mode === "--prepare") {
   // All sales, sessions and returns still use the authenticated business APIs.
   if (!register) { const result = await service.from("cash_registers").insert({ name: "LAB50 · Caja demostración" }).select().single(); if (result.error) throw Error(`LOCAL register configuration: ${result.error.code}`); register = result.data; }
   report.register = register.id; save();
-  if (!report.session) { const open = await rows("cash_sessions", query => query.eq("cash_register_id", register.id).eq("status", "abierta")); report.session = open[0]?.id ?? (await http("/api/admin/cash-sessions", { cash_register_id: register.id, opening_amount: 500 })).data.session_id; save(); }
+  const labSessions = await rows("cash_sessions", query => query.eq("cash_register_id", register.id));
+  const labMovements = labSessions.length ? await rows("cash_movements", query => query.in("cash_session_id", labSessions.map(session => session.id))) : [];
+  const sessionWithMovements = labSessions.find(session => labMovements.some(movement => movement.cash_session_id === session.id));
+  if (sessionWithMovements) report.session = sessionWithMovements.id;
+  else if (!report.session) { const open = labSessions.filter(session => session.status === "abierta"); report.session = open[0]?.id ?? (await http("/api/admin/cash-sessions", { cash_register_id: register.id, opening_amount: 500 })).data.session_id; }
+  save();
 
   const paidDays = [0, 1, 3, 5, 6, 8, 10, 12, 15, 19, 23, 27];
   for (let index = 0; index < 30; index++) {
@@ -186,8 +211,11 @@ if (mode === "--prepare") {
   for (const [key, type, fraction] of [["25", "reintegro", .25], ["26", "reintegro", 1], ["27", "devolucion", 1], ["28", "reintegro", .3], ["28", "retorno_fisico", 0]]) {
     const order = await one("orders", "id", report.operations[key].id);
     const amount = Math.round(Number(order.total) * fraction * 100) / 100;
-    const result = await http(`/api/admin/orders/${order.id}/returns`, { type, amount, reason: `LAB50 · ${type} simulado, sin dinero real`, idempotency_key: uuidFor(`return-${key}-${type}`) });
-    report.returns[`${key}-${type}`] = result.data.return_id; save();
+    const reason = `LAB50 · ${type} simulado, sin dinero real`;
+    const existing = (await rows("sale_returns", query => query.eq("order_id", order.id).eq("type", type))).find(record => record.reason === reason);
+    if (existing && (Number(existing.amount) !== amount || existing.idempotency_key !== uuidFor(`return-${key}-${type}`))) throw Error(`Return fixture conflict ${key}-${type}; no silent overwrite.`);
+    const returnId = existing?.id ?? (await http(`/api/admin/orders/${order.id}/returns`, { type, amount, reason, idempotency_key: uuidFor(`return-${key}-${type}`) })).data.return_id;
+    report.returns[`${key}-${type}`] = returnId; save();
   }
   // Only timestamp fixture history; money, stock and states came from the real business flows.
   const productIds = Object.values(report.products).map(sqlQuote).join(","), itemIds = Object.values(report.items).map(sqlQuote).join(","), entryIds = report.entries.map(sqlQuote).join(",");
@@ -209,22 +237,89 @@ if (mode === "--prepare") {
   // or reordering any preexisting register/session owned by earlier fixtures.
   if (!report.manualSession) {
     const open = await rows("cash_sessions", query => query.eq("cash_register_id", report.register).eq("status", "abierta"));
-    report.manualSession = open[0]?.id ?? (await http("/api/admin/cash-sessions", { cash_register_id: report.register, opening_amount: 500 })).data.session_id;
+    report.manualSession = open.find(session => session.id !== report.session)?.id ?? (await http("/api/admin/cash-sessions", { cash_register_id: report.register, opening_amount: 500 })).data.session_id;
     save();
   }
+
+  // Extend the additive fixture to 50 operations while preserving the original
+  // 30-operation financial reference set. Every transition still uses the real
+  // business RPC/API; no status is written directly.
+  for (let index = 30; index < 50; index++) {
+    const key = String(index + 1).padStart(2, "0");
+    if (report.operations[key]?.complete) continue;
+    const free = index >= 48;
+    const product = free ? products[0] : products[50 + (index - 30)], productId = report.products[product.code];
+    const phone = `000250${key}`, name = `LAB50 Cliente ${key}`, pickup = index % 2 === 0;
+    let operation = report.operations[key];
+    if (!operation) {
+      const id = await rpc(service, "create_order", {
+        p_customer_name: name,
+        p_customer_phone: phone,
+        p_customer_whatsapp: null,
+        p_items: [{ product_id: productId, quantity: 1, customization_option_ids: [], message: "LAB50 · Tarjeta de demostración" }],
+        p_customer_message: `Método: ${pickup ? "Retiro en tienda" : "Entrega por coordinar"}\nLAB50 · Simulación sin entrega real${pickup ? "" : "\nDirección sintética de laboratorio, sin destino real"}`,
+        p_idempotency_key: `LAB50-v${LAB_VERSION}-order-${key}`,
+        p_promotion_id: free ? report.freePromotion : null,
+      });
+      const order = await one("orders", "id", id);
+      operation = { id: order.id, number: order.order_number, phone, name, physical: false, productCode: product.code, days: 0 };
+      report.operations[key] = operation; save();
+    }
+    let order = await one("orders", "id", operation.id);
+    if (index >= 34 && index <= 45 && !free) {
+      const existingPayment = await one("payments", "order_id", order.id);
+      const payment = existingPayment ?? await rpc(service, "report_payment_qr", { p_order_id: order.id, p_customer_phone: phone, p_qr_slot: index % 2 === 0 ? "qr_1" : "qr_2" });
+      operation.payment = (Array.isArray(payment) ? payment[0] : payment).id; save();
+      if (index >= 44) {
+        if (order.status !== "rechazado") await http(`/api/admin/payments/${operation.payment}/reject`, { reason: "LAB50 · Rechazo simulado, sin transferencia real" });
+      } else if (index >= 38 && order.status === "pendiente_pago") {
+        await http(`/api/admin/payments/${operation.payment}/confirm`, {});
+      }
+    }
+    if (index === 46 || index === 47) {
+      if (order.status !== "cancelado") await http(`/api/admin/orders/${order.id}/cancel`, { reason: "LAB50 · Cancelación de demostración" });
+    }
+    const desired = index === 39 ? "en_preparacion" : index === 40 ? "listo" : index >= 41 && index <= 43 || index === 49 ? "finalizado" : null;
+    if (desired) {
+      order = await one("orders", "id", order.id);
+      const stages = ["confirmado", "en_preparacion", "listo", "finalizado"];
+      for (let current = stages.indexOf(order.status); current >= 0 && current < stages.indexOf(desired); current++) await http(`/api/admin/orders/${order.id}/status`, { new_status: stages[current + 1] });
+    }
+    operation.complete = true; save(); console.log(`Prepared operation ${key} (#${operation.number})`);
+  }
+  let deliveryStatusVisible = false, deliveryBlocked = false;
+  const orderCountBeforeDeliveryProbe = (await rows("orders")).length;
+  try {
+    await http("/api/admin/system-settings?key=delivery_enabled", { value: { enabled: false } }, "PATCH");
+    const publicStatus = (await http("/api/business-hours", undefined, "GET", false)).data.status;
+    deliveryStatusVisible = publicStatus.delivery_enabled === false;
+    const blocked = await fetch(`${app}/api/orders`, {
+      method: "POST", redirect: "error", signal: AbortSignal.timeout(60000), headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ customer_name: "LAB50 Entrega bloqueada", customer_phone: "00025998", items: [{ product_id: report.products[products[0].code], quantity: 1 }], customer_message: "Método: Entrega por coordinar\nLAB50 · No crear", idempotency_key: uuidFor("delivery-disabled-probe") }),
+    });
+    const blockedBody = await blocked.json();
+    deliveryBlocked = blocked.status === 409 && blockedBody.code === "DELIVERY_UNAVAILABLE" && (await rows("orders")).length === orderCountBeforeDeliveryProbe;
+  } finally {
+    await http("/api/admin/system-settings?key=delivery_enabled", { value: { enabled: true } }, "PATCH");
+  }
+  check("delivery switch is exposed by the public status API", deliveryStatusVisible);
+  check("disabled delivery is rejected by the real HTTP order API without mutation", deliveryBlocked);
+  check("delivery switch is restored after the probe", (await http("/api/business-hours", undefined, "GET", false)).data.status.delivery_enabled === true);
 }
 
 const catalog = await rows("products", query => query.like("name", "LAB50 %"));
-check("exactly 50 distinct LAB50 products", catalog.length === 50 && new Set(catalog.map(product => product.name)).size === 50);
-check("all 50 have valid category and saleable flags", catalog.every(product => product.category_id && product.is_active && product.is_available && Number(product.price) > 0));
+check("exactly 100 distinct LAB50 products", catalog.length === 100 && new Set(catalog.map(product => product.name)).size === 100);
+check("all 100 have valid category and saleable flags", catalog.every(product => product.category_id && product.is_active && product.is_available && Number(product.price) > 0));
 const newItemIds = Object.values(report.items), requirements = await rows("product_inventory_requirements", query => query.in("product_id", catalog.map(product => product.id)));
 check("all products have complete recipes", products.every(product => product.recipe.every(line => requirements.some(requirement => requirement.product_id === report.products[product.code] && requirement.inventory_item_id === report.items[line.itemKey] && Number(requirement.quantity) === line.quantity))));
+const catalogImages = await rows("product_images", query => query.in("product_id", catalog.map(product => product.id)));
+check("all 100 products have a LOCAL demonstration image", catalog.every(product => catalogImages.some(image => image.product_id === product.id && isCurrentLocalStorageUrl(image.public_url))));
 const stock = await rows("inventory_items", query => query.in("id", newItemIds)), lots = await rows("inventory_lots", query => query.in("inventory_item_id", newItemIds)), movements = await rows("inventory_movements", query => query.in("inventory_item_id", newItemIds));
 check("24 lots and 12 inventory items", stock.length === 12 && lots.length === 24);
 check("stock reconciles against lots and movements", stock.every(item => { const incoming = movements.filter(movement => movement.inventory_item_id === item.id && movement.movement_type !== "salida").reduce((sum, movement) => sum + Number(movement.quantity), 0); const outgoing = movements.filter(movement => movement.inventory_item_id === item.id && movement.movement_type === "salida").reduce((sum, movement) => sum + Number(movement.quantity), 0); const remaining = lots.filter(lot => lot.inventory_item_id === item.id).reduce((sum, lot) => sum + Number(lot.remaining_quantity), 0); return Number(item.current_stock) >= 0 && Math.abs(Number(item.current_stock) - remaining) < .00001 && Math.abs(Number(item.current_stock) - incoming + outgoing) < .00001; }));
 const ops = Object.entries(report.operations).sort(([a], [b]) => Number(a) - Number(b)).map(([, operation]) => operation), ids = ops.map(operation => operation.id);
 const orders = await rows("orders", query => query.in("id", ids)), payments = await rows("payments", query => query.in("order_id", ids)), returns = await rows("sale_returns", query => query.in("order_id", ids));
-check("30 unique simulated operations", orders.length === 30 && new Set(ids).size === 30);
+check("50 unique simulated operations", orders.length === 50 && new Set(ids).size === 50);
 check("fixture order dates are not in the future", orders.every(order => new Date(order.created_at).getTime() <= Date.now()));
 check("pending orders did not consume stock or materialize customers", (await rows("customers", query => query.in("phone", ops.slice(0, 6).map(operation => operation.phone)))).length === 0 && !movements.some(movement => movement.movement_type === "salida" && ops.slice(0, 6).some(operation => operation.id === movement.reference_id)));
 check("free orders confirmed without payment", ["23", "24"].every(key => { const order = orders.find(order => order.id === report.operations[key].id); return ["confirmado", "en_preparacion", "listo", "finalizado"].includes(order.status) && Number(order.total) === 0 && !payments.some(payment => payment.order_id === order.id); }));
@@ -238,9 +333,10 @@ check("physical sales and monetary refunds reconcile in their own cash session",
 const closedCash = await one("cash_sessions", "id", report.session);
 check("historical cash closed with zero discrepancy", closedCash.status === "cerrada" && Number(closedCash.expected_amount) === 967.5 && Number(closedCash.counted_amount) === 967.5 && Number(closedCash.difference_amount) === 0);
 const openSessions = (await http("/api/admin/cash-sessions?status=abierta")).data.sessions;
-check("manual sales will use the new LAB50 session", openSessions[0]?.id === report.manualSession);
-const gross = payments.filter(payment => payment.status === "confirmado").reduce((sum, payment) => sum + Number(payment.amount), 0), refund = returns.reduce((sum, record) => sum + Number(record.amount), 0);
-check("LAB50 paid sales reconcile with refunds", Math.abs(gross - 5083) < .00001 && Math.abs(refund - 431.5) < .00001);
+check("manual sales have the new LAB50 session available", openSessions.some(session => session.id === report.manualSession));
+const referenceIds = new Set(ops.slice(0, 30).map(operation => operation.id));
+const gross = payments.filter(payment => referenceIds.has(payment.order_id) && payment.status === "confirmado").reduce((sum, payment) => sum + Number(payment.amount), 0), refund = returns.reduce((sum, record) => sum + Number(record.amount), 0);
+check("original LAB50 paid sales reconcile with refunds", Math.abs(gross - 5083) < .00001 && Math.abs(refund - 431.5) < .00001);
 report.financial = { gross, refunds: refund, net: gross - refund, historicalCashExpected: Number(closedCash.expected_amount), cashDiscrepancy: Number(closedCash.difference_amount) };
 for (const [label, days] of [["today", 0], ["7 days", 6], ["30 days", 29]]) {
   const to = stamp(0).slice(0, 10), from = stamp(days).slice(0, 10), range = `from=${from}&to=${to}`;
@@ -271,7 +367,7 @@ check("all preexisting orders preserved byte-for-byte", [...previous].every(([id
 const qrs = (await http("/api/payment-qr", undefined, "GET", false)).data.qrs;
 check("both QR are explicitly NO PAGAR demonstrations", qrs.length === 2 && qrs.every(qr => qr.account_label.includes("NO PAGAR") && qr.account_label.includes("DEMOSTRACIÓN")));
 for (const qr of qrs) {
-  if (new URL(qr.qr_public_url).origin !== authUrl) throw Error("Demo QR must be hosted by the guarded LOCAL Storage origin.");
+  localUrl(new URL(qr.qr_public_url).origin, 62621);
   const response = await fetch(qr.qr_public_url, { redirect: "error", signal: AbortSignal.timeout(60000) });
   const image = response.ok ? await sharp(Buffer.from(await response.arrayBuffer())).metadata() : {};
   check(`${qr.qr_slot} demo image available through LAN Storage`, response.status === 200 && image.width > 0 && image.height > 0);

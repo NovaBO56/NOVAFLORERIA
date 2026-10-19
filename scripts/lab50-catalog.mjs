@@ -83,7 +83,7 @@ const families = [
   },
 ];
 
-export const products = families.flatMap((family, familyIndex) => family.names.map((name, index) => {
+const baseProducts = families.flatMap((family, familyIndex) => family.names.map((name, index) => {
   const code = `${LAB_PREFIX} ${String(familyIndex * 5 + index + 1).padStart(2, "0")}`;
   const recipe = [
     { itemKey: family.flowerKey, quantity: family.quantities[index] },
@@ -103,3 +103,18 @@ export const products = families.flatMap((family, familyIndex) => family.names.m
     recipe,
   };
 }));
+
+export const products = [
+  ...baseProducts,
+  ...baseProducts.map((product, index) => {
+    const code = `${LAB_PREFIX} ${String(index + 51).padStart(2, "0")}`;
+    return {
+      ...product,
+      code,
+      name: `${code} · ${product.name.split(" · ").slice(1).join(" · ")} · Edición jardín`,
+      description: `${product.description} Variante sintética Edición jardín para comprobar catálogos extensos; no corresponde a una oferta ni a una venta real.`,
+      price: product.price + 15,
+      recipe: product.recipe.map(line => ({ ...line })),
+    };
+  }),
+];

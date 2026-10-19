@@ -2,12 +2,12 @@ import { describe, expect, it } from "vitest";
 import { LAB_PREFIX, LAB_VERSION, categories, inventoryItems, products } from "../scripts/lab50-catalog.mjs";
 
 describe("Local LAB50 catalog definitions", () => {
-  it("identifies one stable version and exactly 50 unique numbered products", () => {
+  it("identifies one stable version and exactly 100 unique numbered products", () => {
     expect(LAB_PREFIX).toBe("LAB50");
     expect(LAB_VERSION).toBe("1");
-    expect(products).toHaveLength(50);
-    expect(new Set(products.map(product => product.name)).size).toBe(50);
-    expect(products.map(product => product.code)).toEqual(Array.from({ length: 50 }, (_, index) => `LAB50 ${String(index + 1).padStart(2, "0")}`));
+    expect(products).toHaveLength(100);
+    expect(new Set(products.map(product => product.name)).size).toBe(100);
+    expect(products.map(product => product.code)).toEqual(Array.from({ length: 100 }, (_, index) => `LAB50 ${String(index + 1).padStart(2, "0")}`));
   });
 
   it("defines ten families with five products each", () => {
@@ -18,7 +18,7 @@ describe("Local LAB50 catalog definitions", () => {
     ]);
     for (const category of categories) {
       expect(category.name).toContain(LAB_PREFIX);
-      expect(products.filter(product => product.categoryKey === category.key)).toHaveLength(5);
+      expect(products.filter(product => product.categoryKey === category.key)).toHaveLength(10);
     }
   });
 
@@ -29,7 +29,7 @@ describe("Local LAB50 catalog definitions", () => {
       expect(product.description).toContain("No corresponde a una oferta ni a una venta real");
       expect(product.description.length).toBeLessThanOrEqual(2000);
       expect(product.price).toBeGreaterThanOrEqual(45);
-      expect(product.price).toBeLessThanOrEqual(650);
+      expect(product.price).toBeLessThanOrEqual(665);
       expect(Number.isInteger(product.price * 100)).toBe(true);
       expect(product.occasion.length).toBeLessThanOrEqual(120);
       expect(product.occasion.length).toBeGreaterThan(0);
