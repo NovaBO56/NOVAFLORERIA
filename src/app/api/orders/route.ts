@@ -5,6 +5,10 @@ import { createOrderSchema } from "@/validations/orders";
 import { checkRateLimit, rateLimitResponse } from "@/lib/rate-limit";
 import { publicOrderError } from "@/lib/public/order-error";
 
+export function requestsHomeDelivery(customerMessage: string | null | undefined) {
+  return customerMessage?.split("\n", 1)[0]?.trim() === "Método: Entrega por coordinar";
+}
+
 export async function POST(request: Request) {
   try {
     const supabase = await createClient();
@@ -46,7 +50,26 @@ export async function POST(request: Request) {
       promotion_id,
     } = result.data;
 
-    const { data: orderId, error } = await createAdminClient().rpc("create_order", {
+    const admin = createAdminClient();
+    if (requestsHomeDelivery(customer_message)) {
+      const { data: deliverySetting, error: deliveryError } = await admin
+        .from("system_settings")
+        .select("value")
+        .eq("key", "delivery_enabled")
+        .maybeSingle();
+
+      if (deliveryError) {
+        console.error("Error verificando disponibilidad de entrega:", deliveryError);
+        return NextResponse.json({ success: false, message: "No se pudo verificar la disponibilidad de entrega. Intenta de nuevo." }, { status: 503 });
+      }
+
+      const deliveryValue = deliverySetting?.value as { enabled?: unknown } | null;
+      if (deliveryValue?.enabled !== true) {
+        return NextResponse.json({ success: false, code: "DELIVERY_UNAVAILABLE", message: "La entrega a domicilio está temporalmente no disponible. Cambia a recojo para continuar." }, { status: 409 });
+      }
+    }
+
+    const { data: orderId, error } = await admin.rpc("create_order", {
       p_customer_name: customer_name,
       p_customer_phone: customer_phone,
       p_customer_whatsapp: customer_whatsapp || null,

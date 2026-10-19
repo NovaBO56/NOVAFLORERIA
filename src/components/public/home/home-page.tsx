@@ -7,6 +7,7 @@ import {
   whatsappLink,
 } from "@/lib/public/format";
 import { createLocalStore } from "@/lib/public/local-store";
+import { MobileNavigation } from "../mobile-navigation";
 import { storeLocationSchema, type StoreLocation } from "@/validations/store-location";
 import type {
   BusinessStatus,
@@ -414,7 +415,7 @@ export default function HomePage({ year }: { year: number }) {
   ];
 
   return (
-    <main className={`${lato.className} nova-page nova-storefront min-h-screen bg-[#faf8fb] text-[#28202d]`}>
+    <main className={`${lato.className} nova-page nova-storefront public-with-bottom-nav min-h-screen bg-[#faf8fb] text-[#28202d]`}>
       <SiteHeader
         navItems={navItems}
         cartCount={cart.count}
@@ -488,6 +489,8 @@ export default function HomePage({ year }: { year: number }) {
           scrollToId("catalogo");
         }}
       />
+
+      <MobileNavigation/>
 
       <CartDrawer
         open={cartOpen}

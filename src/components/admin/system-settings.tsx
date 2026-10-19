@@ -10,6 +10,7 @@ type SystemSetting = {
   value: unknown;
   is_critical: boolean;
   updated_at?: string;
+  updated_by?: string | null;
 };
 
 export default function SystemSettings() {
@@ -54,6 +55,21 @@ export default function SystemSettings() {
 
   async function updateSetting(setting: SystemSetting) {
     if (pending) return;
+    if (setting.key === "delivery_enabled") {
+      const current = typeof setting.value === "object" && setting.value !== null && "enabled" in setting.value && setting.value.enabled === true;
+      setPending(true);
+      setError("");
+      try {
+        const response = await fetch(`/api/admin/system-settings?key=${encodeURIComponent(setting.key)}`, {
+          method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ value: { enabled: !current } }),
+        });
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.message || "No se pudo actualizar la disponibilidad de entrega.");
+        await loadSettings();
+      } catch (error) { setError(error instanceof Error ? error.message : "No se pudo actualizar la disponibilidad de entrega."); }
+      finally { setPending(false); }
+      return;
+    }
     if (setting.key === "accept_orders_outside_hours") {
       const current = typeof setting.value === "object" && setting.value !== null && "enabled" in setting.value && setting.value.enabled === true;
       setPending(true);
@@ -140,10 +156,10 @@ export default function SystemSettings() {
             className="flex-col gap-4 md:flex-row md:items-center md:justify-between"
           >
             <div className="min-w-0 break-words">
-              <p className="font-semibold text-text">{setting.key === "accept_orders_outside_hours" ? "Aceptar pedidos fuera de horario" : setting.key}</p>
+              <p className="font-semibold text-text">{setting.key === "accept_orders_outside_hours" ? "Aceptar pedidos fuera de horario" : setting.key === "delivery_enabled" ? "Entrega a domicilio" : setting.key}</p>
               <p className="break-all text-text-secondary">
                 Estado:{" "}
-                {setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Pedidos permitidos fuera de horario" : "Solo dentro del horario de atención") : typeof setting.value === "string"
+                {setting.key === "delivery_enabled" ? (((setting.value as {enabled?:boolean}).enabled === true) ? "Disponible para nuevos pedidos" : "Temporalmente no disponible; el recojo sigue habilitado") : setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Pedidos permitidos fuera de horario" : "Solo dentro del horario de atención") : typeof setting.value === "string"
                   ? setting.value
                   : JSON.stringify(setting.value)}
               </p>
@@ -154,9 +170,9 @@ export default function SystemSettings() {
               </div>
             </div>
 
-            <Button size="sm" variant="outline" loading={pending} disabled={pending} onClick={() => void updateSetting(setting)}>
+            {setting.key === "delivery_enabled" ? <button type="button" role="switch" aria-checked={(setting.value as {enabled?:boolean}).enabled === true} aria-label="Entrega a domicilio" disabled={pending} onClick={() => void updateSetting(setting)} className={`relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-brand focus-visible:ring-offset-2 disabled:opacity-50 ${(setting.value as {enabled?:boolean}).enabled === true ? "bg-brand" : "bg-gray-300"}`}><span className={`inline-block h-5 w-5 rounded-full bg-white shadow transition-transform ${(setting.value as {enabled?:boolean}).enabled === true ? "translate-x-6" : "translate-x-1"}`}/><span className="sr-only">{(setting.value as {enabled?:boolean}).enabled === true ? "Activada" : "Desactivada"}</span></button> : <Button size="sm" variant="outline" loading={pending} disabled={pending} onClick={() => void updateSetting(setting)}>
               {setting.key === "accept_orders_outside_hours" ? ((setting.value as {enabled:boolean}).enabled ? "Desactivar pedidos fuera de horario" : "Permitir pedidos fuera de horario") : "Modificar"}
-            </Button>
+            </Button>}
           </Card>
         ))
       )}

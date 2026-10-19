@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 // Solo lo que el visitante necesita ver. La configuración interna
 // (quién la creó, fechas de edición, etc.) no sale de aquí.
@@ -41,7 +42,21 @@ export async function GET() {
         (!promotion.ends_at || Date.parse(promotion.ends_at) >= now),
     );
 
-    return NextResponse.json({ success: true, promotions });
+    // Association RLS is staff-only. Read only the already-public promotion IDs
+    // on the server; never expose staff fields or broaden table/RPC permissions.
+    if (!promotions.length) return NextResponse.json({ success: true, promotions: [] });
+    const { data: components, error: componentError } = await createAdminClient()
+      .from("promotion_products")
+      .select("promotion_id, product_id, quantity, product:products(price)")
+      .in("promotion_id", promotions.map(promotion => promotion.id));
+    if (componentError) return NextResponse.json({ success: false, message: "No se pudieron consultar las condiciones de las promociones." }, { status: 503 });
+    return NextResponse.json({ success: true, promotions: promotions.map(promotion => ({
+      ...promotion,
+      products: (components ?? []).filter(component => component.promotion_id === promotion.id).flatMap(component => {
+        const product = Array.isArray(component.product) ? component.product[0] : component.product;
+        return product && Number.isFinite(Number(product.price)) ? [{ product_id: component.product_id, quantity: Number(component.quantity), unit_price: Number(product.price) }] : [];
+      }),
+    })) });
   } catch (error) {
     console.error("Error inesperado obteniendo promociones públicas:", error);
 

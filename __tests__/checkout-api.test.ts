@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-const mocks = vi.hoisted(() => ({ rpc: vi.fn(), adminRpc: vi.fn(), adminFactory: vi.fn(), allowed: vi.fn() }));
+const mocks = vi.hoisted(() => ({ rpc: vi.fn(), adminRpc: vi.fn(), adminFactory: vi.fn(), allowed: vi.fn(), deliverySetting: { enabled: true } as { enabled: boolean } | null, deliveryError: null as null | { message: string } }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ rpc: mocks.rpc }) }));
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.adminFactory }));
 vi.mock("@/lib/rate-limit", () => ({ checkRateLimit: mocks.allowed, rateLimitResponse: () => new Response(JSON.stringify({ success: false }), { status: 429 }) }));
@@ -9,7 +9,7 @@ import { POST as pay } from "@/app/api/orders/[id]/payment/route";
 const id = "550e8400-e29b-41d4-a716-446655440000";
 const request = (body: unknown) => new Request("http://localhost/api/orders", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) });
 const payload = { customer_name: "Ana", customer_phone: "70000000", idempotency_key: "same-key", items: [{ product_id: id, quantity: 1 }] };
-beforeEach(() => { vi.resetAllMocks(); mocks.allowed.mockResolvedValue(true); mocks.adminFactory.mockReturnValue({ rpc: mocks.adminRpc }); });
+beforeEach(() => { vi.resetAllMocks(); mocks.allowed.mockResolvedValue(true); mocks.deliverySetting = { enabled: true }; mocks.deliveryError = null; mocks.adminFactory.mockReturnValue({ rpc: mocks.adminRpc, from: () => ({ select: () => ({ eq: () => ({ maybeSingle: async () => ({ data: mocks.deliverySetting ? { value: mocks.deliverySetting } : null, error: mocks.deliveryError }) }) }) }) }); });
 describe("Integración HTTP del checkout con RPC existentes", () => {
   it("rechaza pedido vacío antes de llamar create_order", async () => {
     expect((await create(request({ ...payload, items: [] }))).status).toBe(400); expect(mocks.rpc).not.toHaveBeenCalled();
@@ -18,6 +18,26 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     mocks.adminRpc.mockResolvedValue({ data: id, error: null });
     const response = await create(request(payload)); expect(response.status).toBe(201); expect(await response.json()).toEqual({ success: true, order_id: id });
     expect(mocks.adminRpc).toHaveBeenCalledWith("create_order", expect.objectContaining({ p_idempotency_key: "same-key", p_customer_phone: "70000000", p_items: [{ product_id: id, quantity: 1, customization_option_ids: [] }] }));
+  });
+  it("bloquea la entrega desde el servidor cuando está desactivada y conserva el recojo", async () => {
+    mocks.deliverySetting = { enabled: false };
+    const delivery = { ...payload, customer_message: "Método: Entrega por coordinar\nAv. de prueba 123" };
+    const blocked = await create(request(delivery));
+    expect(blocked.status).toBe(409);
+    expect(await blocked.json()).toMatchObject({ code: "DELIVERY_UNAVAILABLE", message: "La entrega a domicilio está temporalmente no disponible. Cambia a recojo para continuar." });
+    expect(mocks.adminRpc).not.toHaveBeenCalled();
+
+    mocks.adminRpc.mockResolvedValue({ data: id, error: null });
+    const pickup = await create(request({ ...payload, customer_message: "Método: Retiro en tienda" }));
+    expect(pickup.status).toBe(201);
+    expect(mocks.adminRpc).toHaveBeenCalledWith("create_order", expect.objectContaining({ p_customer_message: "Método: Retiro en tienda" }));
+  });
+  it("falla cerrada si no puede consultar la configuración de entrega", async () => {
+    mocks.deliveryError = { message: "local query failed" };
+    const response = await create(request({ ...payload, customer_message: "Método: Entrega por coordinar\nDirección sintética" }));
+    expect(response.status).toBe(503);
+    expect(mocks.adminRpc).not.toHaveBeenCalled();
+    expect(JSON.stringify(await response.json())).not.toContain("local query failed");
   });
   it("devuelve un error de stock comprensible", async () => {
     mocks.adminRpc.mockResolvedValue({ error: { code: "P0001", message: "Stock insuficiente" }, data: null });

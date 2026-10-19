@@ -20,6 +20,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { UserRole } from "@/lib/auth/permissions";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { whatsappLink } from "@/lib/public/format";
+import { orderDelivery } from "@/lib/public/order-journey";
 
 type OneOrMany<T> = T | T[] | null;
 
@@ -30,6 +31,7 @@ function first<T>(value: OneOrMany<T>): T | null {
 type CustomerRef = { id: string | null; name: string; phone: string | null; whatsapp: string | null };
 
 type OrderRow = {
+  customer_message: string | null;
   receipt_token: string | null;
   id: string;
   order_number: number;
@@ -85,9 +87,9 @@ const STATUS_CHIPS: { value: "activos" | "todos" | "expirados" | OrderStatus; la
   { value: "activos", label: "Activos" },
   { value: "todos", label: "Todos" },
   { value: "pendiente_pago", label: "Pendiente de pago" },
-  { value: "confirmado", label: "Confirmado" },
+  { value: "confirmado", label: "Confirmados por preparar" },
   { value: "en_preparacion", label: "En preparación" },
-  { value: "listo", label: "Listo" },
+  { value: "listo", label: "Listos para entrega / recojo" },
   { value: "finalizado", label: "Finalizado" },
   { value: "cancelado", label: "Cancelado" },
   { value: "expirados", label: "Expirados" },
@@ -175,7 +177,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
               key={chip.value}
               size="sm"
               variant={statusFilter === chip.value ? "default" : "outline"}
-              onClick={() => { setPage(1); setStatusFilter(chip.value); }}
+              aria-pressed={statusFilter === chip.value && !pendingOnly}
+              onClick={() => { setPage(1); setPendingOnly(false); setStatusFilter(chip.value); }}
             >
               {chip.label}
             </Button>
@@ -195,7 +198,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
           <Button
             size="sm"
             variant={pendingOnly ? "secondary" : "ghost"}
-            onClick={() => { setPage(1); setPendingOnly((current) => !current); }}
+            aria-pressed={pendingOnly}
+            onClick={() => { setPage(1); setStatusFilter("pendiente_pago"); setPendingOnly((current) => !current); }}
           >
             Con pago por verificar
           </Button>
@@ -214,6 +218,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
           </div>
         </div>
       </div>
+
+      <p className="rounded-2xl border border-brand/15 bg-brand-soft p-4 text-sm text-text-secondary">Primero revisa los <strong className="text-text">pagos por verificar</strong> en el banco. Reportar un pago no lo confirma. Los pedidos confirmados pueden pasar a preparación, luego a listo y finalmente a entrega o recojo.</p>
 
       {loading ? (
         <div className="flex flex-col gap-2">
@@ -243,6 +249,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                   <TableHead>Número</TableHead>
                   <TableHead>Cliente</TableHead>
                   <TableHead>Tipo</TableHead>
+                  <TableHead>Modalidad / pago</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead numeric>Total</TableHead>
                   <TableHead>Hora</TableHead>
@@ -268,6 +275,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                       <TableCell className="font-mono">#{order.order_number}</TableCell>
                       <TableCell>{customer?.name ?? "Cliente anónimo"}</TableCell>
                       <TableCell>{order.order_type === "online" ? "Online" : "Física"}</TableCell>
+                      <TableCell><p className="text-xs">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p><p className="text-xs text-text-secondary">{paymentLabel(order)}</p></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge status={order.status} />
@@ -300,6 +308,8 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                     <span className="font-medium tabular-nums">{formatMoney(order.total)}</span>
                   </div>
                   <p className="text-text-secondary">{customer?.name ?? "Cliente anónimo"}</p>
+                  <p className="text-xs text-text-secondary">{formatDateTime(order.created_at)} · {order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p>
+                  <p className="text-sm">{paymentLabel(order)}</p>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge status={order.status} />
                     {pendingPaymentByOrder.has(order.id) && <Badge variant="outline">Pago por verificar</Badge>}
@@ -330,7 +340,14 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
   );
 }
 
-type PendingAction = "cancel" | "reject-payment" | "request-deletion" | null;
+function paymentLabel(order: OrderRow) {
+  if (Number(order.total) === 0) return "No requiere pago";
+  const payment = order.payments.find(item => item.status === "pendiente") ?? order.payments.find(item => item.status === "confirmado") ?? order.payments.find(item => item.status === "rechazado");
+  if (!payment) return "Pago sin reportar";
+  return `${payment.method === "qr" ? "QR" : "Efectivo"} · ${payment.status === "pendiente" ? "por verificar" : payment.status === "confirmado" ? "verificado" : "rechazado"}`;
+}
+
+type PendingAction = "cancel" | "reject-payment" | "request-deletion" | "confirm-payment" | null;
 
 function OrderDetailModal({
   orderId,
@@ -446,6 +463,7 @@ function OrderDetailModal({
               <Badge status={order.status} />
               {pendingPayment && <Badge variant="outline">Pago por verificar</Badge>}
             </div>
+            <div className="rounded-xl bg-brand-soft p-3 text-sm"><p className="font-medium">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p><p>{paymentLabel(order)}</p></div>
 
             <div className="text-sm text-text-secondary">
               <p className="text-text">{first(order.customer)?.name ?? "Cliente anónimo"}</p>
@@ -523,9 +541,15 @@ function OrderDetailModal({
             )}
 
             {(order.status === "finalizado" || (order.status === "cancelado" && order.payments.some(payment => payment.status === "confirmado"))) && <OrderReturns key={order.id} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} cancelled={order.status === "cancelado"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
-            {actionError && <p className="text-sm text-danger">{actionError}</p>}
+            {actionError && <p role="alert" className="text-sm text-danger">{actionError}</p>}
 
-            {pendingAction ? (
+            <fieldset disabled={busy} className="contents">{pendingAction === "confirm-payment" && pendingPayment ? (
+              <div className="flex flex-col gap-3 rounded-2xl border border-brand/20 bg-brand-soft p-4">
+                <h3 className="font-semibold">¿Verificaste el pago en el banco?</h3>
+                <p className="text-sm">Confirma únicamente si recibiste {formatMoney(pendingPayment.amount)} para el pedido #{order.order_number}. El aviso del cliente y el QR indicado no prueban el pago. Esta acción confirma el pedido y procesa su reserva de inventario.</p>
+                <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => setPendingAction(null)}>Volver</Button><Button loading={busy} disabled={Boolean(order.inventory_review_required)} onClick={() => void runAction(`/api/admin/payments/${pendingPayment.id}/confirm`)}>Sí, confirmar pago verificado</Button></div>
+              </div>
+            ) : pendingAction ? (
               <div className="flex flex-col gap-2">
                 <Field
                   label={
@@ -593,7 +617,7 @@ function OrderDetailModal({
                     </Button>
                     <Button
                       loading={busy}
-                      onClick={() => void runAction(`/api/admin/payments/${pendingPayment.id}/confirm`)}
+                      onClick={() => setPendingAction("confirm-payment")}
                       disabled={Boolean(order.inventory_review_required)}
                     >
                       Confirmar pago
@@ -622,7 +646,7 @@ function OrderDetailModal({
                   </Button>
                 )}
               </ModalFooter>
-            )}
+            )}</fieldset>
           </div>
         ) : null}
       </ModalContent>

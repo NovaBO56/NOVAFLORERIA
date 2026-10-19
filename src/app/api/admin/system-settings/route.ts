@@ -87,6 +87,12 @@ export async function PATCH(
     if (key === "accept_orders_outside_hours" && (!parsed.data.value || typeof parsed.data.value !== "object" || typeof (parsed.data.value as Record<string, unknown>).enabled !== "boolean")) {
       return NextResponse.json({ success: false, message: "enabled debe ser booleano." }, { status: 400 });
     }
+    if (key === "delivery_enabled") {
+      if (!parsed.data.value || typeof parsed.data.value !== "object" || typeof (parsed.data.value as Record<string, unknown>).enabled !== "boolean") {
+        return NextResponse.json({ success: false, message: "enabled debe ser booleano." }, { status: 400 });
+      }
+      parsed.data.value = { enabled: (parsed.data.value as { enabled: boolean }).enabled };
+    }
     const { data: existing, error: existingError } = await supabase
       .from("system_settings")
       .select("key, value, is_critical")

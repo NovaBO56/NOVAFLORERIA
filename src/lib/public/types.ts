@@ -49,6 +49,7 @@ export type PublicCategory = {
 };
 
 export type PublicPromotion = {
+  products?: { product_id: string; quantity: number; unit_price: number }[];
   id: string;
   name: string;
   description: string | null;
@@ -67,6 +68,7 @@ export type BusinessStatus = {
   closes_at: string | null;
   is_closed_today: boolean;
   accept_orders_outside_hours: boolean;
+  delivery_enabled?: boolean;
 };
 
 export type WeekDay = {

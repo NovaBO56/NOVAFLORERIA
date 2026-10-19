@@ -736,6 +736,11 @@
   color:#604581;
   background:#fff
 }
+.customer-primary:focus-visible,.customer-secondary:focus-visible,.customer-bottom-nav a:focus-visible {
+  outline:2px solid #65358e;
+  outline-offset:4px;
+}
+.customer-primary[aria-busy=true],.customer-secondary[aria-busy=true] { cursor:progress; }
 .customer-experience button:disabled {
   opacity:.5;
   cursor:not-allowed
@@ -860,6 +865,7 @@
   color:white;
   box-shadow:0 0 0 5px #eee8fa
 }
+.customer-timeline .timeline-icon[data-stage=complete] { background:#e6f1e9; color:#386647; }
 .customer-timeline strong {
   display:block
 }
@@ -904,6 +910,10 @@
   width:100%
 }
 @media(prefers-reduced-motion:no-preference) {
+  .customer-timeline .timeline-icon[data-stage=complete]>svg { animation:nova-enter 180ms ease-out; }
+  .customer-timeline .timeline-icon[data-stage=current] { animation:nova-value 240ms ease-out; }
+  .customer-secondary:hover { background:#f6f1fa; }
+  .customer-primary:active:not(:disabled),.customer-secondary:active:not(:disabled),.customer-bottom-nav a:active { transform:scale(.98); }
   .customer-step {
     animation:nova-enter 220ms ease-out
   }
@@ -962,7 +972,7 @@
   .customer-actions>* {
     flex:1 1 100%
   }
-  .customer-with-nav {
+  .customer-with-nav,.public-with-bottom-nav {
     padding-bottom:calc(76px + env(safe-area-inset-bottom))
   }
   .customer-bottom-nav {
@@ -985,11 +995,11 @@
     min-height:44px;
     color:#6c6278
   }
-  .customer-bottom-nav [aria-current=page] {
+  .customer-bottom-nav [aria-current] {
     color:#604581;
     font-weight:700
   }
-  .customer-bottom-nav [aria-current=page] svg {
+  .customer-bottom-nav [aria-current] svg {
     background:#eee8fa;
     border-radius:6px
   }
