@@ -54,12 +54,14 @@ export function ProductDetailSection({
   const adding = useRef(false);
   const [added, setAdded] = useState(false);
   const [activeImage, setActiveImage] = useState(0);
+  const [checking, setChecking] = useState(false);
+  const [availabilityError, setAvailabilityError] = useState("");
 
   // La lista trae lo básico; descripción e ingredientes vienen del detalle.
   useEffect(() => {
     let cancelled = false;
 
-    (async () => {
+    const refresh = async () => {
       try {
         const response = await fetch(`/api/products/${product.id}`, {
           cache: "no-store",
@@ -78,10 +80,15 @@ export function ProductDetailSection({
       } catch {
         if (!cancelled) setDetail({ id: product.id, data: null });
       }
-    })();
+    };
+    void refresh();
+    const timer = setInterval(() => { if (document.visibilityState !== "hidden") void refresh(); }, 30_000);
+    window.addEventListener("focus", refresh);
 
     return () => {
       cancelled = true;
+      clearInterval(timer);
+      window.removeEventListener("focus", refresh);
     };
   }, [product.id]);
 
@@ -91,7 +98,24 @@ export function ProductDetailSection({
   const images = (full?.images?.length ? full.images : product.images) ?? [];
   const current = images[activeImage] ?? images[0] ?? null;
 
-  const purchasable = isPurchasable(full ?? product);
+  const purchasable = isPurchasable(full ?? product) && quantity <= (full?.available_quantity ?? MAX_QUANTITY);
+
+  async function addSelection() {
+    if (adding.current || !full) return;
+    adding.current = true; setChecking(true); setAvailabilityError("");
+    try {
+      if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW !== "true") {
+        const response = await fetch("/api/products/availability", { method: "POST", headers: { "content-type": "application/json" },
+          body: JSON.stringify({ items: [{ product_id: product.id, quantity, customization_option_ids: selectedOptions }] }) });
+        const result = await response.json();
+        if (!response.ok || result.availability?.[0]?.is_available !== true) {
+          setAvailabilityError(response.ok ? "Este detalle ya no está disponible en la cantidad elegida. Prueba otra cantidad u otro producto." : "No pudimos comprobar la disponibilidad. Intenta nuevamente."); return;
+        }
+      }
+      if (onAdd(quantity, full.customization_options?.filter(option => selectedOptions.includes(option.id)) ?? [], message) !== false) setAdded(true);
+    } catch { setAvailabilityError("No pudimos comprobar la disponibilidad. Intenta nuevamente."); }
+    finally { setChecking(false); adding.current = false; window.setTimeout(() => setAdded(false), 700); }
+  }
 
   const includes = (full?.components ?? [])
     .map((entry) =>
@@ -257,17 +281,19 @@ export function ProductDetailSection({
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
-                onClick={() => { if (adding.current) return; adding.current = true; try { const accepted = onAdd(quantity, full?.customization_options?.filter(o => selectedOptions.includes(o.id)) ?? [], message); if (accepted !== false) setAdded(true); } finally { window.setTimeout(() => { adding.current = false; setAdded(false); }, 700); } }}
-                disabled={added || !purchasable || loadingDetail || !full}
+                onClick={() => void addSelection()}
+                disabled={checking || added || !purchasable || loadingDetail || !full}
                 className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-3 py-3 sm:flex-1 text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag size={17} />
                 {purchasable
-                  ? added ? "Agregado" : actionLabel ?? "Agregar al carrito"
-                  : product.is_sold_out
+                  ? checking ? "Comprobando…" : added ? "Agregado" : actionLabel ?? "Agregar al carrito"
+                  : quantity > (full?.available_quantity ?? MAX_QUANTITY) && Number(full?.available_quantity) > 0 ? "Elige una cantidad menor" : (full ?? product).is_sold_out
                     ? "Agotado"
                     : "No disponible"}
               </button>
+
+              {availabilityError && <p className="customer-error" role="alert">{availabilityError}</p>}
 
               <button
                 type="button"

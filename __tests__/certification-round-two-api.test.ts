@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 const mocks = vi.hoisted(() => ({ from: vi.fn(), response: vi.fn(), insert: vi.fn(), update: vi.fn(), range: vi.fn() }));
 vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ from: mocks.from }) }));
+vi.mock("@/lib/public/product-availability.server", () => ({ withProductAvailability: async (products: unknown[]) => products }));
 vi.mock("@/lib/auth/permissions", () => ({ requireAdmin: vi.fn(), requireEmployeeOrAdmin: vi.fn() }));
 import { GET as catalog } from "@/app/api/products/route";
 import { POST as promotionProduct } from "@/app/api/admin/promotions/[id]/products/route";

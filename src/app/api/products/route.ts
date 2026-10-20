@@ -1,12 +1,12 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { listPublicProductsQuerySchema } from "@/validations/public-catalog";
+import { withProductAvailability } from "@/lib/public/product-availability.server";
 
 // No incluye "description" completa ni campos internos: es el listado
 // para tarjetas de catálogo. El detalle completo va en /api/products/[id].
-const PUBLIC_PRODUCT_SELECT =
-  "id, name, price, category_id, occasion, season_id, is_featured, is_available, is_sold_out, catalog_order, " +
-  "images:product_images(id, public_url, alt_text, sort_order)";
+const PUBLIC_PRODUCT_SELECT = `id, name, price, category_id, occasion, season_id, is_featured, is_available, is_sold_out, catalog_order,
+  images:product_images(id, public_url, alt_text, sort_order)`;
 
 export async function GET(request: Request) {
   try {
@@ -75,7 +75,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({
       success: true,
-      products: data,
+      products: await withProductAvailability(data ?? []),
       pagination: { page, limit, total, total_pages: Math.max(1, Math.ceil(total / limit)) },
     });
   } catch (error) {

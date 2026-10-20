@@ -11,6 +11,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
  * se pueden testear directamente sin necesitar una base de datos.
  */
 export const RATE_LIMITS = {
+  cartAvailability: { maxAttempts: 60, windowSeconds: 60 },
   trackOrder: { maxAttempts: 20, windowSeconds: 5 * 60 },
   orderReceipt: { maxAttempts: 10, windowSeconds: 5 * 60 },
   createOrder: { maxAttempts: 10, windowSeconds: 5 * 60 },
@@ -67,7 +68,7 @@ export async function checkRateLimit(
 
   if (error) {
     console.error(`Error verificando rate limit para "${route}":`, error);
-    return route !== "createOrder" && route !== "reportPayment" && route !== "orderReceipt" && route !== "trackOrder";
+    return route !== "cartAvailability" && route !== "createOrder" && route !== "reportPayment" && route !== "orderReceipt" && route !== "trackOrder";
   }
 
   return data === true;

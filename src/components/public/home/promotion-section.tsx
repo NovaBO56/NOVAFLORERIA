@@ -56,7 +56,7 @@ export function PromotionSection({ promotions, onChooseProduct, onBuildCombo, in
               {lines.map(line => <li key={line.product_id}>{promotion.promotion_type === "combo" ? `${line.quantity} × ` : ""}{line.product?.name ?? "Producto temporalmente no disponible"}</li>)}
               {Number(promotion.minimum_purchase) > 0 && <li>Compra mínima del pedido: {formatMoney(promotion.minimum_purchase!)}.</li>}
               {promotionValidity(promotion) && <li>{promotionValidity(promotion)}</li>}
-              <li>Una promoción por pedido. El servidor verifica las condiciones.</li>
+              <li>Una promoción por pedido, según sus condiciones.</li>
               {promotion.promotion_type === "combo" && <li>Se requieren todos los productos y cantidades. Los extras se cobran aparte.</li>}
             </ul>
             {eligible.some(isPurchasable) ? <button type="button" onClick={choose} className="mt-6 inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] px-5 py-3 text-sm font-bold text-white hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e] sm:w-auto">{combo && onBuildCombo ? "Comprar combo" : single ? "Comprar esta oferta" : "Elegir productos participantes"}<ArrowRight aria-hidden size={18}/></button> : <p className="mt-6 rounded-xl bg-white p-4 text-sm text-[#6a5e6e]">Esta oferta no tiene productos disponibles para comprar en este momento.</p>}

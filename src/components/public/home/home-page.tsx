@@ -183,6 +183,40 @@ export default function HomePage({ year }: { year: number }) {
   const [shoppingError, setShoppingError] = useState("");
   const [shoppingNotice, setShoppingNotice] = useState("");
   const [offerReturn, setOfferReturn] = useState(0);
+  const visibleIds = JSON.stringify([...new Set([...catalogData.items, ...favoritesData.items].map(product => product.id))]);
+  useEffect(() => {
+    if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW === "true") return;
+    let cancelled = false, running = false;
+    const refresh = async () => {
+      if (running || document.visibilityState === "hidden") return;
+      running = true;
+      try {
+        const ids: string[] = JSON.parse(visibleIds);
+        const states = new Map<string, Pick<PublicProduct, "is_available" | "is_sold_out" | "available_quantity">>();
+        for (let start = 0; start < ids.length; start += 50) {
+          const response = await fetch("/api/products/availability", { method: "POST", headers: { "content-type": "application/json" },
+            body: JSON.stringify({ items: ids.slice(start, start + 50).map(product_id => ({ product_id, quantity: 1 })), combine: false }) });
+          if (!response.ok) return;
+          const data = await response.json();
+          for (const row of data.availability ?? []) states.set(row.product_id, { is_available: row.is_available, is_sold_out: row.is_sold_out, available_quantity: row.available_quantity });
+        }
+        const [promotions, featured] = await Promise.all([
+          getJson<{ promotions: PublicPromotion[] }>("/api/promotions"),
+          getJson<ProductsResponse>("/api/products?limit=1&is_featured=true"),
+        ]);
+        if (cancelled) return;
+        const update = (products: PublicProduct[]) => products.map(product => ({ ...product, ...states.get(product.id) }));
+        setCatalogData(current => ({ ...current, items: update(current.items) }));
+        setFavoritesData(current => ({ ...current, items: update(current.items) }));
+        setMeta(current => ({ ...current, promotions: promotions.promotions, heroProduct: featured.products[0] ?? null }));
+      } catch { /* Preserve the last successful read; order creation still checks atomically. */ }
+      finally { running = false; }
+    };
+    const timer = setInterval(() => void refresh(), 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { cancelled = true; clearInterval(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [visibleIds]);
   const comboFlight = useRef(false);
   useEffect(() => { comboFlight.current = false; }, [combo?.index, combo?.promotion.id]);
 

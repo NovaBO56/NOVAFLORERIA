@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
+import { productAvailability, withProductAvailability } from "@/lib/public/product-availability.server";
 
 // Solo lo que el visitante necesita ver. La configuración interna
 // (quién la creó, fechas de edición, etc.) no sale de aquí.
@@ -50,6 +51,17 @@ export async function GET() {
       .select("promotion_id, product_id, quantity, product:products(id,name,price,is_active,is_available,is_sold_out,category_id,occasion,season_id,is_featured,catalog_order,images:product_images(id,public_url,alt_text,sort_order))")
       .in("promotion_id", promotions.map(promotion => promotion.id));
     if (componentError) return NextResponse.json({ success: false, message: "No se pudieron consultar las condiciones de las promociones." }, { status: 503 });
+    const visibleProducts = (components ?? []).flatMap(component => {
+      const product = Array.isArray(component.product) ? component.product[0] : component.product;
+      return product?.is_active ? [product] : [];
+    });
+    const availability = new Map((await withProductAvailability(visibleProducts)).map(product => [product.id, product]));
+    const blockedCombos = new Set<string>();
+    for (const promotion of promotions.filter(promotion => promotion.promotion_type === "combo")) {
+      const lines = (components ?? []).filter(component => component.promotion_id === promotion.id)
+        .map(component => ({ product_id: component.product_id, quantity: Number(component.quantity) }));
+      if ((await productAvailability(lines, true)).some(line => !line.is_available)) blockedCombos.add(promotion.id);
+    }
     return NextResponse.json({ success: true, promotions: promotions.map(promotion => ({
       ...promotion,
       products: (components ?? []).filter(component => component.promotion_id === promotion.id).flatMap(component => {
@@ -58,7 +70,9 @@ export async function GET() {
           product_id: component.product_id, quantity: Number(component.quantity), unit_price: Number(product.price),
           product: product.is_active === true ? {
             id: product.id, name: product.name, price: Number(product.price),
-            is_available: product.is_available, is_sold_out: product.is_sold_out,
+            is_available: !blockedCombos.has(promotion.id) && availability.get(product.id)?.is_available === true,
+            is_sold_out: availability.get(product.id)?.is_sold_out ?? true,
+            available_quantity: availability.get(product.id)?.available_quantity ?? 0,
             category_id: product.category_id, occasion: product.occasion, season_id: product.season_id,
             is_featured: product.is_featured, catalog_order: product.catalog_order,
             images: (product.images ?? []).map(image => ({ id: image.id, public_url: image.public_url, alt_text: image.alt_text, sort_order: image.sort_order })),

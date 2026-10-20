@@ -101,7 +101,21 @@ function removeFromCart(id: string) {
 export async function refreshCartItems() {
   const current = cartStore.get();
 
-  if (current.length === 0) return;
+  if (current.length === 0) return true;
+
+  const fingerprint = JSON.stringify(current.map(item => [item.id, item.quantity]));
+  let availability: { is_available: boolean }[];
+  try {
+    if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW === "true") availability = current.map(() => ({ is_available: true }));
+    else {
+      const response = await fetch("/api/products/availability", { method: "POST", headers: { "content-type": "application/json" },
+        body: JSON.stringify({ items: current.map(item => ({ product_id: item.id.split(":")[0], quantity: item.quantity,
+          customization_option_ids: (item.options ?? []).map(option => option.id) })) }), cache: "no-store" });
+      const data = await response.json();
+      if (!response.ok || !data.success || !Array.isArray(data.availability) || data.availability.length !== current.length) return false;
+      availability = data.availability;
+    }
+  } catch { return false; }
 
   const results = await Promise.all(
     current.map(async (item) => {
@@ -131,10 +145,10 @@ export async function refreshCartItems() {
   );
 
   cartStore.update((items) =>
-    items.map((item) => {
+    JSON.stringify(items.map(item => [item.id, item.quantity])) !== fingerprint ? items : items.map((item, index) => {
       const result = results.find((entry) => entry?.id === item.id);
 
-      if (!result) return item;
+      if (!result) return { ...item, available: item.available && availability[index].is_available };
       if (result.gone || !result.product) return { ...item, available: false };
 
       const product = result.product;
@@ -144,10 +158,31 @@ export async function refreshCartItems() {
         name: product.name,
         price: Number(product.price) + (item.options ?? []).reduce((sum, o) => sum + Number(product.customization_options?.find(entry => entry.id === o.id)?.extra_price ?? o.extra_price), 0),
         image: pickImage(product)?.public_url ?? item.image,
-        available: isPurchasable(product) && (item.options ?? []).every(o => product.customization_options?.some(entry => entry.id === o.id)),
+        available: availability[index].is_available && isPurchasable(product) && (item.options ?? []).every(o => product.customization_options?.some(entry => entry.id === o.id)),
       };
     }),
   );
+  return !hasUnavailable(cartStore.get());
+}
+
+/** Recheck on quantity changes, return to the tab and while a cart is visible. */
+export function useCartAvailability(enabled: boolean) {
+  const cart = useCart();
+  const fingerprint = JSON.stringify(cart.items.map(item => [item.id, item.quantity]));
+  useEffect(() => {
+    if (!enabled) return;
+    let running = false;
+    const refresh = async () => {
+      if (running || document.visibilityState === "hidden") return;
+      running = true;
+      try { await refreshCartItems(); } finally { running = false; }
+    };
+    void refresh();
+    const timer = setInterval(() => void refresh(), 30_000);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+    return () => { clearInterval(timer); window.removeEventListener("focus", refresh); document.removeEventListener("visibilitychange", refresh); };
+  }, [enabled, fingerprint]);
 }
 
 /* ============================================================
@@ -198,9 +233,7 @@ export function CartDrawer({
   const panelRef = useDialog<HTMLElement>(open, close);
 
   // Cada vez que se abre el carrito se actualizan precios y disponibilidad.
-  useEffect(() => {
-    if (open) void refreshCartItems();
-  }, [open]);
+  useCartAvailability(open);
 
   const canContinue =
     cart.items.length > 0 && !cart.hasUnavailable && acceptingOrders;
@@ -318,7 +351,7 @@ export function CartDrawer({
                     {item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
                     {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#f4edf8] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#59436c]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#65358e] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#604581]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
                     {!item.available ? (
-                      <div className="mt-3"><ShoppingNotice tone="error">Este producto ya no está disponible. Elimínalo o elige otro detalle para continuar.</ShoppingNotice></div>
+                      <div className="mt-3"><ShoppingNotice tone="error">No podemos preparar este detalle en la cantidad elegida. Prueba una cantidad menor o elige otro producto para continuar.</ShoppingNotice></div>
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">

@@ -1,6 +1,6 @@
 # Supabase: fuente oficial
 
-La única fuente SQL está en `migrations/`. Esta rama incorpora dos incrementales validadas LOCALMENTE y pendientes de revisión y autorización productiva: inventario/reintegros (11) y disponibilidad de entrega (12).
+La única fuente SQL está en `migrations/`. El 20 de octubre se confirmó por lectura que producción tiene las primeras doce migraciones. La incremental 13 de disponibilidad calculada está probada LOCALMENTE y pendiente de revisión y autorización productiva.
 
 1. `20261007000100_baseline_initial.sql`
 2. `20261007000200_checkout_public_summary.sql`
@@ -12,8 +12,9 @@ La única fuente SQL está en `migrations/`. Esta rama incorpora dos incremental
 8. `20261009000200_receipt_rate_limit.sql`
 9. `20261009000300_tracking_rpc_server_only.sql`
 10. `20261012000100_two_payment_qr.sql`
-11. `20261013000100_inventory_refunds_sales_ledger.sql` (pendiente de aprobación productiva).
-12. `20261017000100_home_delivery_availability.sql` (pendiente de aprobación productiva).
+11. `20261013000100_inventory_refunds_sales_ledger.sql`
+12. `20261017000100_home_delivery_availability.sql`
+13. `20261020000100_product_inventory_availability.sql` (pendiente de aprobación productiva).
 
 `seed.sql` se ejecuta después y contiene configuración mínima idempotente: buckets sin archivos, Caja principal sin abrir, siete días cerrados y pedidos fuera de horario desactivados. No contiene clientes, usuarios, productos reales, QR ni WhatsApp privados.
 

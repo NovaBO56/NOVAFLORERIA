@@ -8,6 +8,7 @@ function requestWithHeaders(headers: Record<string, string>): Request {
 describe("Configuración de límites (código real de producción)", () => {
   it("las rutas públicas sensibles tienen un límite configurado", () => {
     expect(Object.keys(RATE_LIMITS)).toEqual([
+      "cartAvailability",
       "trackOrder",
       "orderReceipt",
       "createOrder",

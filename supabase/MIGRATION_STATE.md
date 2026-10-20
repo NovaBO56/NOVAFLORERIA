@@ -1,6 +1,6 @@
 # Estado vigente de Supabase
 
-La fuente oficial es supabase/migrations/ y supabase/seed.sql. En esta rama hay diez versiones de la base productiva de referencia y dos candidatas incrementales, `20261013000100` y `20261017000100`, probadas solo localmente y pendientes de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan.
+La fuente oficial es supabase/migrations/ y supabase/seed.sql. Consulta productiva de solo lectura del 20 de octubre: primeras doce migraciones aplicadas, incluidas `20261013000100` y `20261017000100`. La nueva `20261020000100` está probada solo LOCALMENTE y pendiente de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan. Los cierres anteriores siguientes conservan evidencia histórica, no sustituyen este estado vigente.
 
 ## Certificación LAB100 local (2026-10-19)
 

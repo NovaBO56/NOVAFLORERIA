@@ -40,6 +40,6 @@ export function PromotionChooser({ promotions, items, selectedId, now, onSelect 
         {choices.map(choice => <option key={choice.promotion.id} value={choice.promotion.id}>{choice.promotion.name} · ahorro {formatMoney(choice.discount)}</option>)}
       </select></label>
     </details>}
-    <p className="mt-2 text-xs">Una promoción por pedido. El servidor valida el descuento definitivo al crear tu pedido.</p>
+    <p className="mt-2 text-xs">Una promoción por pedido. Comprobaremos tu oferta antes de mostrarte el importe final.</p>
   </section>;
 }

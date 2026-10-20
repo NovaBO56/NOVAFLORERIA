@@ -20,6 +20,7 @@ export type PublicProduct = {
   is_featured: boolean;
   is_available: boolean;
   is_sold_out: boolean;
+  available_quantity?: number;
   catalog_order: number | null;
   images: PublicImage[];
 };

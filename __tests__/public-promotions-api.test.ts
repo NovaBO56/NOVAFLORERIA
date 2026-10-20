@@ -4,7 +4,7 @@ vi.mock("@/lib/supabase/server", () => ({ createClient: async () => ({ from: () 
 vi.mock("@/lib/supabase/admin", () => ({ createAdminClient: mocks.admin }));
 import { GET } from "@/app/api/promotions/route";
 describe("Public promotion conditions remain a whitelisted server read", () => {
-  beforeEach(() => { vi.clearAllMocks(); mocks.admin.mockReturnValue({ from: () => ({ select: () => ({ in: mocks.components }) }) }); });
+  beforeEach(() => { vi.clearAllMocks(); mocks.admin.mockReturnValue({ rpc: async (_name: string, args: { p_items: { product_id: string }[] }) => ({ error: null, data: args.p_items.map((item, line_index) => ({ line_index, product_id: item.product_id, available_quantity: 5, is_available: true, is_sold_out: false })) }), from: () => ({ select: () => ({ in: mocks.components }) }) }); });
   it("inactive rows are restricted by the existing is_active query; expired/future rows and their associations are omitted", async () => {
     mocks.publicQuery.mockResolvedValue({ data: [{ id: "expired", ends_at: "2000-01-01" }, { id: "future", starts_at: "2999-01-01" }], error: null });
     const response = await GET(); expect(await response.json()).toEqual({ success: true, promotions: [] }); expect(mocks.admin).not.toHaveBeenCalled();

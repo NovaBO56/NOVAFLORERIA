@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { uuidSchema } from "@/validations/database-values";
 import { createClient } from "@/lib/supabase/server";
+import { withProductAvailability } from "@/lib/public/product-availability.server";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -44,7 +45,12 @@ export async function GET(_request: Request, context: RouteContext) {
       return NextResponse.json({ success: false, message: "El producto no existe." }, { status: 404 });
     }
 
-    return NextResponse.json({ success: true, product: data });
+    const [product] = await withProductAvailability([data]);
+    const components = await Promise.all((data.components ?? []).map(async component => {
+      const child = Array.isArray(component.component_product) ? component.component_product[0] : component.component_product;
+      return { ...component, component_product: child ? (await withProductAvailability([child]))[0] : null };
+    }));
+    return NextResponse.json({ success: true, product: { ...product, components } });
   } catch (error) {
     console.error("Error inesperado obteniendo el producto:", error);
     return NextResponse.json({ success: false, message: "No se pudo obtener el producto." }, { status: 500 });

@@ -5,7 +5,7 @@ import { selectedPaymentQr, readPaymentQrSelection, savePaymentQrSelection, type
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
-import { clearCart, refreshCartItems, useCart } from "./home/cart";
+import { clearCart, refreshCartItems, useCart, useCartAvailability } from "./home/cart";
 import { checkoutSessionKeys, readCheckoutDraft, reachedConfirmation, saveCheckoutDraft, hasCheckoutDraft, orderPayload, publicRequest, requiresPayment, singleFlight, type CheckoutDetails } from "@/lib/public/checkout";
 import { CheckCircle2, ExternalLink, RotateCcw } from "lucide-react";
 import { whatsappLink } from "@/lib/public/format";
@@ -38,8 +38,10 @@ export default function CheckoutPage() {
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
+  const [attemptStarted, setAttemptStarted] = useState(false);
 
   const [recovery, setRecovery] = useState<Recovery | null>(null);
+  useCartAvailability(ready && !recovery && !busy && !attemptStarted);
   const [order, setOrder] = useState<PublicOrder | null>(null);
   const updateNotice = useOrderUpdates(order, recovery?.phone ?? "", setOrder, !busy);
   const qr = order?.reported_qr ?? selectedPaymentQr(qrs, qrSlot);
@@ -57,13 +59,16 @@ export default function CheckoutPage() {
         if (saved && typeof saved.id === "string" && typeof saved.phone === "string" && active) { setRecovery(saved); setQrSlot(readPaymentQrSelection(sessionStorage, saved.id)); }
         if (!saved && active) { const draft = readCheckoutDraft(sessionStorage); setDetails({ ...(draft ?? emptyDetails), promotion_id: getPromotionSelection() ?? draft?.promotion_id ?? "" }); }
         attempt.current = JSON.parse(sessionStorage.getItem(attemptKey) || "null");
+        if (attempt.current && active) setAttemptStarted(true);
       } catch { /* Storage is optional. */ }
       const results = await Promise.allSettled([
         publicRequest<{ status: BusinessStatus }>("/api/business-hours"),
         publicRequest<{ promotions: PublicPromotion[] }>("/api/promotions"),
         publicRequest<{ whatsapp: { phone_number: string } }>("/api/whatsapp-config"),
         publicRequest<{ qrs: PaymentQr[] }>("/api/payment-qr"),
-        refreshCartItems(),
+        // An uncertain previous submit must recover its own reservation using
+        // the same idempotency key, rather than treating it as somebody else's stock.
+        attempt.current ? Promise.resolve() : refreshCartItems(),
       ]);
       if (!active) return;
       const [hours, promotions, whatsapp, paymentQr] = results;
@@ -95,7 +100,7 @@ export default function CheckoutPage() {
     if (!beginAnotherPurchase(sessionStorage, { id: order.id, number: Number(order.order_number), phone: recovery.phone })) {
       setError("No pudimos guardar el seguimiento anterior. Conserva tu número de pedido antes de salir e intenta nuevamente."); return;
     }
-    clearCart(); setRecovery(null); setOrder(null); setQrSlot(null); setDetails(emptyDetails); setError(""); attempt.current = null;
+    clearCart(); setRecovery(null); setOrder(null); setQrSlot(null); setDetails(emptyDetails); setError(""); attempt.current = null; setAttemptStarted(false);
     router.push("/#catalogo");
   }
   async function refreshOrder() {
@@ -112,6 +117,7 @@ export default function CheckoutPage() {
   }
   async function createOrder() {
     await run(async () => {
+      setAttemptStarted(true);
       const fingerprint = JSON.stringify(orderPayload(cart.items, details, "preview"));
       if (!attempt.current || attempt.current.fingerprint !== fingerprint) attempt.current = { fingerprint, key: crypto.randomUUID() };
       try { sessionStorage.setItem(attemptKey, JSON.stringify(attempt.current)); } catch { /* In-memory retry remains available. */ }
@@ -120,6 +126,10 @@ export default function CheckoutPage() {
       try {
         result = await publicRequest<{ order_id: string }>("/api/orders", payload);
       } catch (cause) {
+        if (cause instanceof Error && /suficiente stock|producto ya no está disponible/.test(cause.message)) {
+          await refreshCartItems();
+          setAttemptStarted(false);
+        }
         if (cause instanceof Error && cause.message.includes("entrega a domicilio está temporalmente no disponible")) {
           const hours = await publicRequest<{ status: BusinessStatus }>("/api/business-hours");
           setMeta(current => ({ ...current, status: hours.status }));
@@ -161,7 +171,7 @@ export default function CheckoutPage() {
     {!ready ? <div className="customer-card" role="status">Preparando tu compra…</div> : recovery ? <div className="customer-stack">
       {order && <CheckoutPurchaseActions number={Number(order.order_number)} confirmed={reachedConfirmation(order)} disabled={busy} onStart={startAnotherPurchase}/>}
       <div className="customer-columns"><div className="customer-stack">
-        {order?.payment_status === "pendiente" && order.status === "pendiente_pago" ? <section className="customer-waiting" role="status"><WaitingFlower/><h2>¡Recibimos tu aviso de pago!</h2><p className="mt-3">Estamos esperando que la florería verifique tu pago. Esta página consulta el estado real; también puedes pulsar Actualizar pedido.</p><p className="customer-note mt-5">Pedido #{order.order_number} · Esperando confirmación del local</p><p className="customer-muted mt-4 text-sm">El aviso no confirma el pago. WhatsApp requiere que tú pulses Enviar.</p>{meta.whatsapp && <a className="customer-secondary mt-5" href={whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone, order.reported_qr?.account_label))!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden/>Enviar aviso por WhatsApp</a>}</section> : null}
+        {order?.payment_status === "pendiente" && order.status === "pendiente_pago" ? <section className="customer-waiting" role="status"><WaitingFlower/><h2>¡Recibimos tu aviso de pago!</h2><p className="mt-3">Nuestro equipo está revisando tu pago. Te mostraremos aquí cualquier novedad; también puedes pulsar Actualizar pedido.</p><p className="customer-note mt-5">Pedido #{order.order_number} · Esperando confirmación del local</p><p className="customer-muted mt-4 text-sm">El aviso no confirma el pago. WhatsApp requiere que tú pulses Enviar.</p>{meta.whatsapp && <a className="customer-secondary mt-5" href={whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone, order.reported_qr?.account_label))!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden/>Enviar aviso por WhatsApp</a>}</section> : null}
         {order && Number(order.total) === 0 && ["confirmado", "en_preparacion", "listo", "finalizado"].includes(order.status) && <section className="customer-card customer-confirmed"><CheckCircle2 aria-hidden className="mb-3 text-[#53705b]"/><h2>Tu pedido gratuito está confirmado</h2><p className="mt-3">No necesitas transferir ni reportar un pago. Consulta su preparación en el seguimiento.</p></section>}
         {order && requiresPayment(order) && order.payment_status !== "pendiente" ? <CheckoutPayment total={Number(order.total)} qrs={qrs} selected={qr} whatsappAvailable={Boolean(meta.whatsapp)} error={qrError} busy={busy} reported={false} onSelect={slot => { setQrSlot(slot); savePaymentQrSelection(sessionStorage, recovery.id, slot); }} onReport={() => void reportPayment()}/> : null}
         <div className="customer-actions"><button disabled={busy} onClick={() => void run(refreshOrder)} className="customer-secondary"><RotateCcw size={18} aria-hidden/>Actualizar pedido</button></div>
