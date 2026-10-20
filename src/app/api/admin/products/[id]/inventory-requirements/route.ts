@@ -23,6 +23,7 @@ export async function GET(_request: Request, context: RouteContext) {
       .order("created_at", { ascending: true });
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error("Error obteniendo la receta del producto:", error);
       return NextResponse.json(
         { success: false, message: "No se pudo obtener la receta del producto." },
@@ -84,6 +85,7 @@ export async function POST(request: Request, context: RouteContext) {
       .single();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       if (error.code === "23505") {
         return NextResponse.json(
           { success: false, message: "Este producto ya tiene ese ítem en su receta. Edítalo en vez de duplicarlo." },

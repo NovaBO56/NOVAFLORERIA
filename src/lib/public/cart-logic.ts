@@ -1,3 +1,5 @@
+import { dedicationsSchema, hasDedication, resizeDedications, type Dedication } from "./dedications";
+import { clientId } from "./client-id";
 import { formatMoney } from "./format";
 
 /* ============================================================
@@ -10,6 +12,8 @@ export const MAX_ITEMS = 50;
 export type CartItem = {
   options?: { id: string; name: string; extra_price: number }[];
   message?: string;
+  dedications?: Dedication[];
+  dedication_card_quantity?: number;
   id: string;
   name: string;
   price: number;
@@ -22,6 +26,8 @@ export type CartItem = {
 export type CartProductInput = {
   options?: CartItem["options"];
   message?: string;
+  dedications?: Dedication[];
+  dedication_card_quantity?: number;
   id: string;
   name: string;
   price: number | string;
@@ -71,6 +77,8 @@ export function sanitizeCart(raw: unknown): CartItem[] {
       quantity,
       available: item.available !== false,
       ...(Array.isArray(item.options) ? { options: item.options.filter((o): o is NonNullable<CartItem["options"]>[number] => Boolean(o) && typeof o.id === "string" && typeof o.name === "string" && Number.isFinite(Number(o.extra_price)) && Number(o.extra_price) >= 0) } : {}),
+      ...(dedicationsSchema.safeParse(item.dedications).success ? { dedications: dedicationsSchema.parse(item.dedications) } : {}),
+      ...(Number.isInteger(item.dedication_card_quantity) && Number(item.dedication_card_quantity) >= 0 ? { dedication_card_quantity: Number(item.dedication_card_quantity) } : {}),
       ...(typeof item.message === "string" ? { message: item.message.slice(0, 500) } : {}),
     });
 
@@ -92,7 +100,7 @@ export function addItem(
   const existing = items.find((item) => item.id === product.id);
 
   // A configured line has its own identity; unconfigured carts keep their original ids.
-  const lineId = product.options?.length || product.message ? `${product.id}:${JSON.stringify([product.options?.map(o => o.id).sort(), product.message])}` : product.id;
+  const lineId = product.dedications?.length ? `${product.id}:${clientId()}` : product.options?.length || product.message ? `${product.id}:${JSON.stringify([product.options?.map(o => o.id).sort(), product.message])}` : product.id;
   const matching = lineId === product.id ? existing : items.find(item => item.id === lineId);
 
   if (matching) {
@@ -116,6 +124,8 @@ export function addItem(
       available: true,
       options: product.options,
       message: product.message,
+      dedications: product.dedications,
+      dedication_card_quantity: product.dedication_card_quantity,
     },
   ];
 }
@@ -142,7 +152,7 @@ export function changeItemQuantity(
   return items
     .map((item) =>
       item.id === id
-        ? { ...item, quantity: clampQuantity(item.quantity + delta) }
+        ? { ...item, quantity: clampQuantity(item.quantity + delta), ...(item.dedications ? { dedications: clampQuantity(item.quantity + delta) * (item.dedication_card_quantity ?? 0) > 198 ? (hasDedication(item.dedications) ? item.dedications : []) : resizeDedications(item.dedications, clampQuantity(item.quantity + delta) * (item.dedication_card_quantity ?? 0)) } : {}) }
         : item,
     )
     .filter((item) => item.quantity > 0);
@@ -168,7 +178,7 @@ export function hasUnavailable(items: CartItem[]) {
 export function buildOrderMessage(items: CartItem[]) {
   const lines = items.map(
     (item) =>
-      [`• ${item.quantity} × ${item.name} (${formatMoney(item.price)} c/u)`, ...(item.options ?? []).map(option => `  ${option.name}`), item.message ? `  Tarjeta: ${item.message}` : ""].filter(Boolean).join("\n"),
+      [`• ${item.quantity} × ${item.name} (${formatMoney(item.price)} c/u)`, ...(item.options ?? []).map(option => `  ${option.name}`), item.message ? `  Tarjeta: ${item.message}` : "", ...(item.dedications ?? []).map((entry, index) => `  Tarjeta ${index + 1}: ${entry.message}${entry.signature ? ` — ${entry.signature}` : ""}`)].filter(Boolean).join("\n"),
   );
 
   return [

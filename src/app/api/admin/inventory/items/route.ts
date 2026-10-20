@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createInventoryItemSchema } from "@/validations/inventory";
 
 const ITEM_SELECT =
-  "id, name, sku, item_type, unit, current_stock, minimum_stock, is_active, created_at, updated_at";
+  "id, name, sku, item_type, unit, current_stock, minimum_stock, is_dedication_card, is_active, created_at, updated_at";
 
 function withStockStatus(item: { current_stock: number; minimum_stock: number }) {
   let stock_status: "agotado" | "bajo" | "normal" = "normal";
@@ -27,6 +27,7 @@ export async function GET() {
       .order("name", { ascending: true });
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error("Error obteniendo inventario:", error);
       return NextResponse.json(
         { success: false, message: "No se pudo obtener el inventario." },
@@ -55,16 +56,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const { name, sku, item_type, unit, minimum_stock } = result.data;
+    const { name, sku, item_type, unit, minimum_stock, is_dedication_card } = result.data;
     const supabase = await createClient();
 
     const { data, error } = await supabase
       .from("inventory_items")
-      .insert({ name, sku: sku || null, item_type, unit, minimum_stock })
+      .insert({ name, sku: sku || null, item_type, unit, minimum_stock, is_dedication_card })
       .select(ITEM_SELECT)
       .single();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       if (error.code === "23505") {
         return NextResponse.json(
           { success: false, message: "Ya existe un ítem con ese SKU." },

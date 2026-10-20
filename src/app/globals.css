@@ -602,6 +602,18 @@
   position:sticky;
   top:24px
 }
+.customer-summary-items {
+  min-width:0;
+  max-height:42dvh;
+  overflow-y:auto;
+  overscroll-behavior:contain;
+  scrollbar-gutter:stable
+}
+.customer-summary-items:focus-visible {
+  outline:2px solid #74599f;
+  outline-offset:4px;
+  border-radius:12px
+}
 .customer-kicker {
   font-size:11px;
   letter-spacing:.15em;

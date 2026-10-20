@@ -4,12 +4,13 @@ import { receivedAtSchema } from "./database-values";
 export const createInventoryItemSchema = z.object({
   name: z.string().trim().min(1, "El nombre es obligatorio.").max(200),
   sku: z.string().trim().max(60).optional().nullable(),
+  is_dedication_card: z.boolean().optional().default(false),
   item_type: z.enum(["flor", "insumo", "componente", "producto"], {
     message: "El tipo debe ser flor, insumo, componente o producto.",
   }),
   unit: z.string().trim().min(1).max(30).optional().default("unidad"),
   minimum_stock: z.coerce.number().min(0, "El stock mínimo no puede ser negativo.").optional().default(0),
-});
+}).refine(data => !data.is_dedication_card || data.item_type === "insumo", { path: ["is_dedication_card"], message: "La tarjeta debe registrarse como insumo." });
 
 export const updateInventoryItemSchema = z
   .object({
@@ -18,6 +19,7 @@ export const updateInventoryItemSchema = z
     unit: z.string().trim().min(1).max(30),
     minimum_stock: z.coerce.number().min(0),
     is_active: z.boolean(),
+    is_dedication_card: z.boolean(),
   })
   .partial()
   .refine((data) => Object.keys(data).length > 0, {

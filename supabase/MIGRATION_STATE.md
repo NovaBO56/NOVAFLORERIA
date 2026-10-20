@@ -1,6 +1,14 @@
 # Estado vigente de Supabase
 
-La fuente oficial es supabase/migrations/ y supabase/seed.sql. Consulta productiva de solo lectura del 20 de octubre: primeras doce migraciones aplicadas, incluidas `20261013000100` y `20261017000100`. La nueva `20261020000100` está probada solo LOCALMENTE y pendiente de aprobación productiva. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan. Los cierres anteriores siguientes conservan evidencia histórica, no sustituyen este estado vigente.
+La fuente oficial es supabase/migrations/ y supabase/seed.sql. La consulta productiva anterior de solo lectura del 20 de octubre registró las primeras doce migraciones aplicadas, incluidas `20261013000100` y `20261017000100`. Las incrementales `20261020000100` (disponibilidad) y `20261020000200` (dedicatorias por receta) están probadas solo LOCALMENTE y pendientes de aprobación productiva. Esta fase no volvió a consultar ni modificar producción. Baseline exclusiva para instancias nuevas/vacías con Auth/Storage; nunca ejecutarla sobre producción existente. Los 39 legacy permanecen byte-idénticos y no se ejecutan. Los cierres anteriores siguientes conservan evidencia histórica, no sustituyen este estado vigente.
+
+## Integración de dedicatorias y catálogo boliviano LOCAL (2026-10-20)
+
+Replay limpio de 14 migraciones + seed aprobado en `NOVA-LOCAL-DEDICATIONS-CERTIFIED` (DB LOCAL 57622), separado del laboratorio poblado `NOVA-LOCAL-INTEGRITY` (62621/62622). Fixtures SQL de seguridad, dos QR y dedicatorias aprobados con rollback. Cinco funciones relevantes del delta y replay son idénticas.
+
+Calidad: 684/684 tests en 56 archivos, lint 0 errores/0 warnings, TypeScript y build correctos. Legacy 39/39 SHA-256. Secret scan sin hallazgos; sin service key ni refs remotas en bundles públicos. Pruebas reales: 45 escenarios, 154 comprobaciones finales HTTP/Auth/RPC/SQL, más pruebas SQL y navegador. Se agregaron 60 productos y 14 materiales sintéticos sin sobrescribir LAB100; 126 productos previos y filas originales de 14 tablas conservados. La semántica de inventario compartido y FIFO permanece intacta.
+
+La clasificación `inventory_items.is_dedication_card` habilita mensajes de 250 caracteres y firma de 60, con snapshots por tarjeta en `order_items.dedications`. No hay detección por nombres ni backfill automático de insumos reales. El código requiere la migración 14 antes de publicarse. Los carritos de 1/5/10/20/30 líneas se ejercitaron por navegador y servidor; quedan pendientes la captura administrativa con sesión del usuario y una prueba en celular físico por Wi-Fi. Ver [informe completo, alcance e incidencias](../docs/FLORIST_DEDICATIONS_QA.md). Sin push, merge, deploy ni SQL remoto en esta fase.
 
 ## Certificación LAB100 local (2026-10-19)
 

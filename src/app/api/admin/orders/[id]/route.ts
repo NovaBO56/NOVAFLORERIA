@@ -10,7 +10,7 @@ const ORDER_SELECT = `
   created_at, updated_at, guest_name, guest_phone, guest_whatsapp, receipt_token,
   payments(status, confirmed_at),
   customer:customers (id, name, phone, whatsapp),
-  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, note)
+  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note)
 `;
 
 type RouteContext = { params: Promise<{ id: string }> };

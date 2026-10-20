@@ -1,5 +1,7 @@
 "use client";
 
+import { DedicationEditor, DedicationPreview } from "../dedication-card";
+import { type Dedication } from "@/lib/public/dedications";
 import { useEffect, useMemo, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import Link from "next/link";
@@ -58,21 +60,21 @@ export function useCart() {
 }
 
 export function clearCart() { cartStore.update(() => []); selectPromotion(""); }
-export function addComboToCart(lines: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string }[]) {
+export function addComboToCart(lines: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string; dedications?: Dedication[]; cardQuantity?: number }[]) {
   cartStore.update(items => addCartBatch(items, lines.map(line => ({ quantity: line.quantity, product: {
     id: line.product.id, name: line.product.name,
     price: Number(line.product.price) + line.options.reduce((sum, option) => sum + Number(option.extra_price), 0),
-    image: pickImage(line.product)?.public_url ?? null, options: line.options, message: line.message,
+    image: pickImage(line.product)?.public_url ?? null, options: line.options, message: line.message, dedications: line.dedications, dedication_card_quantity: line.cardQuantity,
   } }))));
 }
-export function addToCart(product: PublicProduct, quantity = 1, options: CustomizationOption[] = [], message = "") {
+export function addToCart(product: PublicProduct, quantity = 1, options: CustomizationOption[] = [], message = "", dedications?: Dedication[], cardQuantity?: number) {
   cartStore.update((items) =>
     addItem(
       items,
       {
         id: product.id,
         name: product.name,
-        price: Number(product.price) + options.reduce((sum, o) => sum + Number(o.extra_price), 0), options, message,
+        price: Number(product.price) + options.reduce((sum, o) => sum + Number(o.extra_price), 0), options, message, dedications, dedication_card_quantity: cardQuantity,
         image: pickImage(product)?.public_url ?? null,
       },
       quantity,
@@ -158,6 +160,7 @@ export async function refreshCartItems() {
         name: product.name,
         price: Number(product.price) + (item.options ?? []).reduce((sum, o) => sum + Number(product.customization_options?.find(entry => entry.id === o.id)?.extra_price ?? o.extra_price), 0),
         image: pickImage(product)?.public_url ?? item.image,
+        dedication_card_quantity: (product.dedication_card_quantity ?? 0) + (item.options ?? []).reduce((sum, option) => sum + (product.customization_options?.find(entry => entry.id === option.id)?.dedication_card_quantity ?? 0), 0),
         available: availability[index].is_available && isPurchasable(product) && (item.options ?? []).every(o => product.customization_options?.some(entry => entry.id === o.id)),
       };
     }),
@@ -216,6 +219,7 @@ export function CartDrawer({
   const promotionId = usePromotionSelection() ?? "";
   const promotion = promotions.find(entry => entry.id === promotionId);
   const discount = promotion ? cartPromotion(promotion, cart.items, now) : null;
+  const [editingDedication, setEditingDedication] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
   const [feedback, setFeedback] = useState("");
 
@@ -260,7 +264,7 @@ export function CartDrawer({
         aria-labelledby="cart-title"
         className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col bg-[#faf8fd] shadow-2xl"
       >
-        <div className="flex items-center justify-between border-b border-[#e7dfe9] px-6 py-5">
+        <div className="flex shrink-0 items-center justify-between border-b border-[#e7dfe9] px-6 py-5">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#796481]">
               Tu compra
@@ -284,7 +288,7 @@ export function CartDrawer({
           </button>
         </div>
 
-        <div className="flex-1 overflow-y-auto px-6 py-6">
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6">
           {feedback && <div className="mb-4"><ShoppingNotice tone="success" onDismiss={() => setFeedback("")}>{feedback}</ShoppingNotice></div>}
           {cart.items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
@@ -348,7 +352,8 @@ export function CartDrawer({
                     </p>
 
                     {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6c6278]">{option.name}</p>)}
-                    {item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
+                    <DedicationPreview entries={item.dedications}/>{item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
+                    {(item.dedication_card_quantity ?? 0) > 0 ? <div className="mt-3"><button type="button" className="min-h-11 text-sm font-bold text-[#65358e] underline" onClick={() => setEditingDedication(editingDedication === item.id ? null : item.id)}>{editingDedication === item.id ? "Terminar edición" : "Editar dedicatorias"}</button>{editingDedication === item.id && <DedicationEditor count={item.quantity * (item.dedication_card_quantity ?? 0)} value={item.dedications ?? (item.message ? [{ message: item.message, signature: "" }] : [])} onChange={dedications => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications } : line))}/>}</div> : item.dedications?.length || item.message ? <div className="mt-3"><ShoppingNotice>Este detalle ya no incluye tarjeta. Conservamos tu texto para que puedas revisarlo.</ShoppingNotice><button type="button" className="min-h-11 text-sm underline" onClick={() => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications: undefined } : line))}>Continuar sin dedicatorias</button></div> : null}
                     {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#f4edf8] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#59436c]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#65358e] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#604581]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
                     {!item.available ? (
                       <div className="mt-3"><ShoppingNotice tone="error">No podemos preparar este detalle en la cantidad elegida. Prueba una cantidad menor o elige otro producto para continuar.</ShoppingNotice></div>
@@ -393,10 +398,11 @@ export function CartDrawer({
               </div>
             ))
           )}
+          <PromotionCartSummary promotions={promotions} selectedId={promotionId} items={cart.items} onSelect={selectPromotion} onBrowse={onReturnToOffer ? () => { close(); onReturnToOffer(); } : undefined}/>
         </div>
 
-        <div className="border-t border-[#e7dfe9] bg-white px-6 py-6 pb-[max(24px,env(safe-area-inset-bottom))]">
-          <PromotionCartSummary promotions={promotions} selectedId={promotionId} items={cart.items} onSelect={selectPromotion} onBrowse={onReturnToOffer ? () => { close(); onReturnToOffer(); } : undefined}/>
+        <div className="shrink-0 border-t border-[#e7dfe9] bg-white px-6 py-6 pb-[max(24px,env(safe-area-inset-bottom))]">
+
           <div className="flex items-center justify-between text-sm text-[#706474]">
             <span>Subtotal</span>
             <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>

@@ -96,6 +96,7 @@ export async function PATCH(
       .maybeSingle();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error(
         "Error actualizando inventario de la opción:",
         error,
@@ -205,6 +206,7 @@ export async function DELETE(
       .eq("customization_option_id", optionId);
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error(
         "Error eliminando inventario de la opción:",
         error,

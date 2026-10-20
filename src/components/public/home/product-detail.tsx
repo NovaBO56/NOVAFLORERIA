@@ -1,5 +1,7 @@
 "use client";
 
+import { DedicationEditor } from "../dedication-card";
+import { hasDedication, resizeDedications, type Dedication } from "@/lib/public/dedications";
 import { useEffect, useRef, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import { Heart, ShoppingBag } from "lucide-react";
@@ -22,7 +24,7 @@ type ProductDetailSectionProps = {
   categoryName: string | null;
   isFavorite: boolean;
   onToggleFavorite: () => void;
-  onAdd: (quantity: number, options: CustomizationOption[], message: string) => void | boolean;
+  onAdd: (quantity: number, options: CustomizationOption[], message: string, dedications?: Dedication[], cardQuantity?: number) => void | boolean;
   requiredQuantity?: number;
   actionLabel?: string;
   promotion?: PublicPromotion;
@@ -49,7 +51,7 @@ export function ProductDetailSection({
 }: ProductDetailSectionProps) {
   const [detail, setDetail] = useState<DetailState>(null);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
-  const [message, setMessage] = useState("");
+  const [dedications, setDedications] = useState<Dedication[]>([]);
   const [quantity, setQuantity] = useState(requiredQuantity ?? 1);
   const adding = useRef(false);
   const [added, setAdded] = useState(false);
@@ -95,6 +97,7 @@ export function ProductDetailSection({
   const loadingDetail = detail?.id !== product.id;
   const full = detail?.id === product.id ? detail.data : null;
 
+  const cardQuantity = (full?.dedication_card_quantity ?? 0) + (full?.customization_options ?? []).filter(option => selectedOptions.includes(option.id)).reduce((sum, option) => sum + (option.dedication_card_quantity ?? 0), 0);
   const images = (full?.images?.length ? full.images : product.images) ?? [];
   const current = images[activeImage] ?? images[0] ?? null;
 
@@ -102,6 +105,9 @@ export function ProductDetailSection({
 
   async function addSelection() {
     if (adding.current || !full) return;
+    if (quantity * cardQuantity > 198 && hasDedication(dedications)) {
+      setAvailabilityError("Para conservar tus dedicatorias, elige una cantidad menor o quita los mensajes de esta selección."); return;
+    }
     adding.current = true; setChecking(true); setAvailabilityError("");
     try {
       if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW !== "true") {
@@ -112,7 +118,7 @@ export function ProductDetailSection({
           setAvailabilityError(response.ok ? "Este detalle ya no está disponible en la cantidad elegida. Prueba otra cantidad u otro producto." : "No pudimos comprobar la disponibilidad. Intenta nuevamente."); return;
         }
       }
-      if (onAdd(quantity, full.customization_options?.filter(option => selectedOptions.includes(option.id)) ?? [], message) !== false) setAdded(true);
+      if (onAdd(quantity, full.customization_options?.filter(option => selectedOptions.includes(option.id)) ?? [], "", cardQuantity && quantity * cardQuantity <= 198 ? resizeDedications(dedications, quantity * cardQuantity) : undefined, cardQuantity) !== false) setAdded(true);
     } catch { setAvailabilityError("No pudimos comprobar la disponibilidad. Intenta nuevamente."); }
     finally { setChecking(false); adding.current = false; window.setTimeout(() => setAdded(false), 700); }
   }
@@ -276,7 +282,8 @@ export function ProductDetailSection({
             <div className="mt-5 space-y-3">
               {promotion && <div className="customer-note" role="status"><strong>{promotion.name}</strong><p>{promotionBenefit(promotion)}. Personaliza tu producto; el carrito aplicará el beneficio cuando cumpla todas las condiciones.</p></div>}
               {full?.customization_options?.map(option => <label key={option.id} className="nova-option flex items-center gap-3 rounded-lg text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
-              <label className="block text-sm">Mensaje para la tarjeta<textarea maxLength={500} value={message} onChange={event => setMessage(event.target.value)} className="mt-2 w-full rounded-xl border p-3" /></label>
+              <DedicationEditor count={quantity * cardQuantity} value={dedications} onChange={setDedications}/>
+              {hasDedication(dedications.slice(quantity * cardQuantity)) && <ShoppingNotice>La selección cambió. Las dedicatorias de las tarjetas que ya no están incluidas no se agregarán al pedido.</ShoppingNotice>}
             </div>
             <div className="mt-6 flex flex-col gap-3 sm:flex-row">
               <button

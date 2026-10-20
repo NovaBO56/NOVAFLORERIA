@@ -38,6 +38,7 @@ export type ProductComponent = {
 };
 
 export type ProductDetail = PublicProduct & {
+  dedication_card_quantity?: number;
   customization_options: CustomizationOption[];
   description: string | null;
   components: ProductComponent[] | null;
@@ -79,11 +80,11 @@ export type WeekDay = {
   is_closed: boolean;
 };
 
-export type CustomizationOption = { id: string; option_type: string; name: string; value: string; extra_price: number };
+export type CustomizationOption = { id: string; option_type: string; name: string; value: string; extra_price: number; dedication_card_quantity?: number };
 export type PublicOrder = {
   reported_qr?: import("./payment-qrs").PaymentQr | null;
   receipt_token?: string | null;
   id: string; order_number: number; status: string; subtotal: number; discount_total: number; total: number;
   customer_message: string | null; created_at: string; reserved_until: string | null; payment_status: string | null;
-  items: { product_name: string; quantity: number; unit_price: number; line_total: number; message: string | null; note: string | null; personalization: CustomizationOption[] | null }[];
+  items: { dedications?: import("./dedications").Dedication[]; product_name: string; quantity: number; unit_price: number; line_total: number; message: string | null; note: string | null; personalization: CustomizationOption[] | null }[];
 };

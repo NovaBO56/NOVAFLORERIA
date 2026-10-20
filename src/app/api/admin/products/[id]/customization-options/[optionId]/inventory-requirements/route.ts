@@ -106,6 +106,7 @@ export async function GET(
       .order("created_at", { ascending: true });
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error(
         "Error obteniendo el inventario de la opción:",
         error,
@@ -245,6 +246,7 @@ export async function POST(
       .single();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       if (error.code === "23505") {
         return NextResponse.json(
           {
@@ -419,6 +421,7 @@ export async function PATCH(
       .single();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error(
         "Error actualizando requisito de inventario:",
         error,
@@ -552,6 +555,7 @@ export async function DELETE(
       .eq("customization_option_id", optionId);
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       console.error(
         "Error eliminando requisito de inventario:",
         error,

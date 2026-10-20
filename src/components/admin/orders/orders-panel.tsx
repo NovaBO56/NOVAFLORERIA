@@ -1,5 +1,7 @@
 "use client";
 
+import { DedicationPreview } from "@/components/public/dedication-card";
+import type { Dedication } from "@/lib/public/dedications";
 import Link from "next/link";
 import { OrderReturns } from "./order-returns";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
@@ -63,6 +65,7 @@ type OrderItem = {
   line_total: number;
   personalization: PersonalizationOption[] | null;
   message: string | null;
+  dedications?: Dedication[];
   note: string | null;
 };
 
@@ -488,7 +491,8 @@ function OrderDetailModal({
                     </p>
                   )}
 
-                  {item.message && (
+                  <DedicationPreview entries={item.dedications}/>
+                          {item.message && (
                     <p className="text-xs text-text-secondary">
                       <span className="font-medium text-text">Mensaje:</span> {item.message}
                     </p>

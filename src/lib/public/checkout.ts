@@ -21,7 +21,7 @@ export function orderPayload(items: CartItem[], details: CheckoutDetails, key: s
     customer_name: data.customer_name, customer_phone: data.customer_phone,
     customer_message: [`Método: ${data.delivery === "retiro" ? "Retiro en tienda" : "Entrega por coordinar"}`, data.delivery === "entrega" ? data.address : "", data.delivery === "entrega" && data.reference ? `Referencia: ${data.reference}` : "", data.notes].filter(Boolean).join("\n"),
     promotion_id: data.promotion_id || null, idempotency_key: key,
-    items: items.map(item => ({ product_id: item.id.split(":")[0], quantity: item.quantity, customization_option_ids: item.options?.map(option => option.id) ?? [], message: item.message || null })),
+    items: items.map(item => ({ product_id: item.id.split(":")[0], quantity: item.quantity, customization_option_ids: item.options?.map(option => option.id) ?? [], message: item.dedications ? null : item.message || null, dedications: item.dedications })),
   });
 }
 

@@ -1,4 +1,5 @@
 "use client";
+import type { Dedication } from "@/lib/public/dedications";
 
 import { useEffect, useRef, useState } from "react";
 import { selectPromotion, usePromotionSelection } from "@/lib/public/promotion-selection";
@@ -179,7 +180,7 @@ export default function HomePage({ year }: { year: number }) {
   }>({ key: "", items: [] });
 
   const [selected, setSelected] = useState<PublicProduct | null>(null);
-  const [combo, setCombo] = useState<{ promotion: PublicPromotion; index: number; choices: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string }[] } | null>(null);
+  const [combo, setCombo] = useState<{ promotion: PublicPromotion; index: number; choices: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string; dedications?: Dedication[]; cardQuantity?: number }[] } | null>(null);
   const [shoppingError, setShoppingError] = useState("");
   const [shoppingNotice, setShoppingNotice] = useState("");
   const [offerReturn, setOfferReturn] = useState(0);
@@ -459,13 +460,13 @@ export default function HomePage({ year }: { year: number }) {
     requestAnimationFrame(() => scrollToId("shopping-feedback"));
   }
 
-  function addDetail(quantity: number, options: CustomizationOption[], message: string) {
+  function addDetail(quantity: number, options: CustomizationOption[], message: string, dedications?: Dedication[], cardQuantity?: number) {
     if (!detailProduct) return false;
     setShoppingError("");
-    if (!combo) { addToCart(detailProduct, quantity, options, message); setCartOpen(true); return true; }
+    if (!combo) { addToCart(detailProduct, quantity, options, message, dedications, cardQuantity); setCartOpen(true); return true; }
     if (comboFlight.current) return false;
     comboFlight.current = true;
-    const choices = [...combo.choices, { product: detailProduct, quantity, options, message }];
+    const choices = [...combo.choices, { product: detailProduct, quantity, options, message, dedications, cardQuantity }];
     const next = combo.index + 1;
     if (next < combo.promotion.products!.length) {
       setCombo({ ...combo, index: next, choices });

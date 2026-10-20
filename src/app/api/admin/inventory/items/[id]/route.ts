@@ -5,7 +5,7 @@ import { createClient } from "@/lib/supabase/server";
 import { updateInventoryItemSchema } from "@/validations/inventory";
 
 const ITEM_SELECT =
-  "id, name, sku, item_type, unit, current_stock, minimum_stock, is_active, created_at, updated_at";
+  "id, name, sku, item_type, unit, current_stock, minimum_stock, is_dedication_card, is_active, created_at, updated_at";
 
 type RouteContext = { params: Promise<{ id: string }> };
 
@@ -43,6 +43,7 @@ export async function PATCH(request: Request, context: RouteContext) {
       .single();
 
     if (error) {
+      if ((error.code === "P0001" && /tarjetas.*cantidades enteras/.test(error.message)) || error.code === "23514") return NextResponse.json({ success: false, message: "Revisa el tipo de insumo y usa cantidades enteras para las tarjetas en sus recetas." }, { status: 400 });
       if (error.code === "23505") {
         return NextResponse.json(
           { success: false, message: "Ya existe un ítem con ese SKU." },

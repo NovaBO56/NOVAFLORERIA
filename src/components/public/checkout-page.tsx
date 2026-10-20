@@ -1,4 +1,5 @@
 "use client";
+import { clientId } from "@/lib/public/client-id";
 
 import { paymentNotice } from "@/lib/public/payment-notice";
 import { selectedPaymentQr, readPaymentQrSelection, savePaymentQrSelection, type PaymentQr, type QrSlot } from "@/lib/public/payment-qrs";
@@ -119,7 +120,7 @@ export default function CheckoutPage() {
     await run(async () => {
       setAttemptStarted(true);
       const fingerprint = JSON.stringify(orderPayload(cart.items, details, "preview"));
-      if (!attempt.current || attempt.current.fingerprint !== fingerprint) attempt.current = { fingerprint, key: crypto.randomUUID() };
+      if (!attempt.current || attempt.current.fingerprint !== fingerprint) attempt.current = { fingerprint, key: clientId() };
       try { sessionStorage.setItem(attemptKey, JSON.stringify(attempt.current)); } catch { /* In-memory retry remains available. */ }
       const payload = orderPayload(cart.items, details, attempt.current.key);
       let result: { order_id: string };

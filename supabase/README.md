@@ -1,6 +1,6 @@
 # Supabase: fuente oficial
 
-La única fuente SQL está en `migrations/`. El 20 de octubre se confirmó por lectura que producción tiene las primeras doce migraciones. La incremental 13 de disponibilidad calculada está probada LOCALMENTE y pendiente de revisión y autorización productiva.
+La única fuente SQL está en `migrations/`. La lectura productiva anterior del 20 de octubre registró las primeras doce migraciones. Las incrementales 13 (disponibilidad calculada) y 14 (dedicatorias por receta) están probadas LOCALMENTE y pendientes de revisión y autorización productiva. La fase de dedicatorias no consultó ni modificó Supabase remoto.
 
 1. `20261007000100_baseline_initial.sql`
 2. `20261007000200_checkout_public_summary.sql`
@@ -15,6 +15,9 @@ La única fuente SQL está en `migrations/`. El 20 de octubre se confirmó por l
 11. `20261013000100_inventory_refunds_sales_ledger.sql`
 12. `20261017000100_home_delivery_availability.sql`
 13. `20261020000100_product_inventory_availability.sql` (pendiente de aprobación productiva).
+14. `20261020000200_recipe_dedications.sql` (pendiente de aprobación productiva).
+
+La 14 clasifica tarjetas dentro del inventario existente y guarda mensajes por tarjeta en la línea del pedido. Las recetas, reservas y FIFO se reutilizan. No clasifica automáticamente insumos reales por nombre. Requiere revisar/marcar expresamente las tarjetas que correspondan antes de habilitar el código nuevo en producción. Replay de 14 migraciones + seed, delta LOCAL y pruebas reales documentados en [el informe de dedicatorias](../docs/FLORIST_DEDICATIONS_QA.md).
 
 `seed.sql` se ejecuta después y contiene configuración mínima idempotente: buckets sin archivos, Caja principal sin abrir, siete días cerrados y pedidos fuera de horario desactivados. No contiene clientes, usuarios, productos reales, QR ni WhatsApp privados.
 
@@ -26,7 +29,7 @@ Para validar se usa `NOVA-LOCAL-VALIDATION`, API `http://127.0.0.1:55421` y DB `
 
 Las claves locales de pruebas están en archivos privados ignorados por Git; nunca usar credenciales productivas. `tests/ISOLATED_SECURITY_TESTS.sql` requiere base local vacía y opt-in `nova.security_test=isolated`; sus fixtures se revierten con ROLLBACK. Las dos consultas de `tools/` son genéricas y no contienen datos remotos capturados. El escáner genérico es `tools/scan-review-files.mjs`.
 
-Crear cambios futuros con timestamp único mayor que `20261017000100` y nombres snake_case. No reactivar históricos ni sobrescribir migraciones certificadas. Las nuevas versiones son incrementales; las versiones anteriores y seed permanecen intactos. Las versiones pendientes de producción requieren revisión y autorización separadas. Ambos RPC de seguimiento son privados; el público utiliza `/api/orders/track`, con validación y rate limiting antes del RPC.
+Crear cambios futuros con timestamp único mayor que `20261020000200` y nombres snake_case. No reactivar históricos ni sobrescribir migraciones certificadas. Las nuevas versiones son incrementales; las versiones anteriores y seed permanecen intactos. Las versiones pendientes de producción requieren revisión y autorización separadas. Ambos RPC de seguimiento son privados; el público utiliza `/api/orders/track`, con validación y rate limiting antes del RPC.
 
 La candidata 11 se probó en NOVA-LOCAL-INTEGRITY (API 62621, DB 62622, sin vínculo remoto), con copias de la cadena y seed. Su revisión, reglas financieras y decisiones de cuarentena de productos/pedidos están en [el informe de inventario, reintegros y Dashboard](../docs/INVENTORY_REFUNDS_DASHBOARD_REVIEW.md). No reutilizar un laboratorio con datos necesarios para un reset.
 

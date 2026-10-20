@@ -1,3 +1,4 @@
+import { dedicationCardCount } from "@/lib/public/dedications.server";
 import { NextResponse } from "next/server";
 import { uuidSchema } from "@/validations/database-values";
 import { createClient } from "@/lib/supabase/server";
@@ -50,7 +51,9 @@ export async function GET(_request: Request, context: RouteContext) {
       const child = Array.isArray(component.component_product) ? component.component_product[0] : component.component_product;
       return { ...component, component_product: child ? (await withProductAvailability([child]))[0] : null };
     }));
-    return NextResponse.json({ success: true, product: { ...product, components } });
+    const dedication_card_quantity = await dedicationCardCount(id);
+    const customization_options = await Promise.all((data.customization_options ?? []).map(async option => ({ ...option, dedication_card_quantity: (await dedicationCardCount(id, [option.id])) - dedication_card_quantity })));
+    return NextResponse.json({ success: true, product: { ...product, components, customization_options, dedication_card_quantity } });
   } catch (error) {
     console.error("Error inesperado obteniendo el producto:", error);
     return NextResponse.json({ success: false, message: "No se pudo obtener el producto." }, { status: 500 });

@@ -279,8 +279,8 @@ export function AboutSection({ photo = null }: { photo?: PublicImage | null }) {
               detalles para acompañar esos momentos.
             </p>
             <p className="mt-4 text-sm leading-7 text-[#6a5e6e]">Preparamos cada pedido con atención a su composición y presentación.
-              Añade tu mensaje para la tarjeta y consulta las opciones disponibles
-              de cada producto para darle tu toque personal.</p>
+              Si tu detalle incluye tarjeta, añade una dedicatoria. Consulta las
+              opciones de cada producto para darle tu toque personal.</p>
             <div className="mt-7 flex flex-wrap gap-3">
               <a href="#catalogo" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
               <a href="#contacto" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d8c8de] px-4 py-3 text-sm font-bold text-[#65358e] transition-colors hover:bg-[#f5eff7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Contactar</a>

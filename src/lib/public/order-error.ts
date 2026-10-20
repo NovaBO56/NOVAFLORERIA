@@ -1,5 +1,6 @@
 /** RPC diagnostics stay on the server, never in the customer-facing response. */
 export function publicOrderError(message: string): string {
+  if (/dedicatoria|tarjeta/i.test(message)) return "Revisa las dedicatorias de tu carrito: este detalle puede haber cambiado. Cada tarjeta admite un mensaje de 250 caracteres y una firma de 60.";
   if (/entrega a domicilio.*temporalmente no disponible/i.test(message)) return "La entrega a domicilio está temporalmente no disponible. Cambia a recojo para continuar.";
   if (/stock insuficiente|lotes suficientes|inconsistencia de inventario/i.test(message)) {
     return "No contamos con suficiente stock para completar esta cantidad. Reduce la cantidad o elige otro producto para continuar.";

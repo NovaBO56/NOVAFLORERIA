@@ -59,6 +59,7 @@ type InventoryItem = {
   id: string;
   name: string;
   sku: string | null;
+  is_dedication_card: boolean;
   item_type: ItemType;
   unit: string;
   current_stock: number;
@@ -212,6 +213,7 @@ export default function InventoryManagement() {
     item_type: "flor" as ItemType,
     unit: "unidad",
     minimum_stock: "0",
+    is_dedication_card: false,
     is_active: true,
   });
 
@@ -405,6 +407,7 @@ useEffect(() => {
       item_type: "flor",
       unit: "unidad",
       minimum_stock: "0",
+    is_dedication_card: false,
       is_active: true,
     });
 
@@ -423,6 +426,7 @@ useEffect(() => {
         item.minimum_stock,
       ),
       is_active: item.is_active,
+      is_dedication_card: item.is_dedication_card,
     });
 
     setItemModal(true);
@@ -492,6 +496,7 @@ useEffect(() => {
             name: itemForm.name.trim(),
             sku: itemForm.sku.trim() || null,
             item_type: itemForm.item_type,
+            is_dedication_card: itemForm.item_type === "insumo" && itemForm.is_dedication_card,
             unit: itemForm.unit.trim(),
             minimum_stock: Number(
               itemForm.minimum_stock,
@@ -1501,12 +1506,14 @@ useEffect(() => {
               </Field>
             </div>
 
+            {itemForm.item_type === "insumo" && <label className="flex items-start gap-3 rounded-xl border border-border-field p-3 text-sm"><input type="checkbox" checked={itemForm.is_dedication_card} onChange={event => setItemForm(form => ({ ...form, is_dedication_card: event.target.checked }))}/><span><strong>Tarjeta de dedicatoria</strong><small className="mt-1 block text-muted">Habilita mensajes cuando este insumo está incluido en la receta. Sus existencias se gestionan como las de cualquier material.</small></span></label>}
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Tipo"
                 required
               >
                 <select
+                  disabled={Boolean(editingItem)}
                   value={itemForm.item_type}
                   onChange={(event) =>
                     setItemForm((form) => ({

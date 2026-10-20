@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { dedicationsSchema } from "@/lib/public/dedications";
 import { orderQuantitySchema } from "./database-values";
 import { boliviaPhoneSchema } from "@/lib/public/phone";
 
@@ -13,6 +14,7 @@ const orderItemSchema = z.object({
     .array(z.string().uuid("Una opción de personalización no es válida."))
     .optional()
     .default([]),
+  dedications: dedicationsSchema.optional(),
   message: z.string().trim().max(500).optional().nullable(),
   note: z.string().trim().max(500).optional().nullable(),
 });
