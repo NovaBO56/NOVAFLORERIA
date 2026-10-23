@@ -10,7 +10,7 @@ const read=name=>JSON.parse(fs.readFileSync(path.join(lab,name),'utf8').replace(
 const cfg=read('status.private.json'), container='supabase_db_NOVA-LOCAL-INTEGRITY';
 if(cfg.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||
  !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab,'supabase/config.toml'),'utf8'))||
- execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2'||
+ execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria'||
  execFileSync('docker',['info','--format','{{.Name}}'],{encoding:'utf8'}).trim()!=='docker-desktop')throw Error('Requires existing unlinked LOCAL lab');
 const service=createClient(cfg.API_URL,cfg.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const admin=createClient(cfg.API_URL,cfg.ANON_KEY,{auth:{persistSession:false,autoRefreshToken:false}});

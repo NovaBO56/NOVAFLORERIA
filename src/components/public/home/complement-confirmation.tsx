@@ -46,9 +46,8 @@ export function ComplementConfirmation({product,onClose,onCart}:{product:PublicP
         </div> : null}
       </>}
       <div className="border-t border-[#e8dfee] pt-4"><p aria-live="polite" className="mb-3 font-semibold">Subtotal del carrito: {formatMoney(cart.total)}</p>
-        <div className="flex flex-wrap gap-2"><button type="button" className="min-h-12 rounded-xl bg-[#65358e] px-5 py-3 text-sm font-bold text-white" onClick={()=>{close();onCart();}}>Ir al carrito</button>
-          <button type="button" className="min-h-12 rounded-xl border px-4 text-sm" onClick={close}>Seguir explorando</button>
-          <button type="button" className="min-h-12 px-3 text-sm underline" onClick={()=>{close();onCart();}}>Continuar sin complementos</button>
+        <div className="flex flex-wrap gap-2"><button type="button" className="min-h-12 rounded-xl bg-[#65358e] px-5 py-3 text-sm font-bold text-white" onClick={()=>{close();onCart();}}>Ver carrito</button>
+          <button type="button" className="min-h-12 rounded-xl border px-4 text-sm" onClick={close}>Seguir comprando</button>
         </div>
       </div>
     </ModalContent>

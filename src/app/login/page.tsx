@@ -11,7 +11,6 @@ export default function LoginPage() {
 }
 
 function LoginForm() {
-  const supabase = createClient();
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -26,24 +25,30 @@ function LoginForm() {
     setError("");
     setLoading(true);
 
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
+    try {
+      // Auth is needed only after submission, not during static prerendering.
+      const { error } = await createClient().auth.signInWithPassword({
+        email,
+        password,
+      });
 
-    if (error) {
-      setError("Correo o contraseña incorrectos.");
+      if (error) {
+        setError("Correo o contraseña incorrectos.");
+        setLoading(false);
+        return;
+      }
+
+      const redirect = searchParams.get("redirect");
+
+      // Solo permitimos redirecciones internas.
+      const destination = loginDestination(redirect);
+
+      router.replace(destination);
+      router.refresh();
+    } catch {
+      setError("No se pudo iniciar sesión. Intenta nuevamente en unos momentos.");
       setLoading(false);
-      return;
     }
-
-    const redirect = searchParams.get("redirect");
-
-    // Solo permitimos redirecciones internas.
-    const destination = loginDestination(redirect);
-
-    router.replace(destination);
-    router.refresh();
   }
 
   return (

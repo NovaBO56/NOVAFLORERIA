@@ -2,7 +2,7 @@ param([switch]$Build)
 $ErrorActionPreference = 'Stop'
 $taskRepo = Split-Path -Parent $PSScriptRoot
 Set-Location -LiteralPath $taskRepo
-if ((git branch --show-current).Trim() -ne 'codex/inventory-refunds-dashboard-2') {
+if ((git branch --show-current).Trim() -ne 'desarrollo-auditoria') {
     throw 'Rama incorrecta. No se iniciaron servicios.'
 }
 $taskLab = Join-Path $env:LOCALAPPDATA 'NOVA-Floreria\inventory-refunds-final-replay'

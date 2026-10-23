@@ -2,6 +2,7 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "git": {
     "deploymentEnabled": {
+      "desarrollo-auditoria": false,
       "fix/production-round-1": false,
       "codex/weekly-backup-two-qr": false,
       "codex/inventory-refunds-dashboard-2": false

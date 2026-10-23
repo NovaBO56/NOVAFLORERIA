@@ -6,7 +6,7 @@ import { execFileSync } from "node:child_process";
 import { createClient } from "@supabase/supabase-js";
 import { createServerClient } from "@supabase/ssr";
 
-if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "codex/inventory-refunds-dashboard-2") throw Error("Wrong branch.");
+if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "desarrollo-auditoria") throw Error("Wrong branch.");
 const lab = path.join(process.env.LOCALAPPDATA ?? "", "NOVA-Floreria", "inventory-refunds-final-replay");
 const read = name => JSON.parse(fs.readFileSync(path.join(lab, name), "utf8").replace(/^\uFEFF/, ""));
 const cfg = read("status.private.json");

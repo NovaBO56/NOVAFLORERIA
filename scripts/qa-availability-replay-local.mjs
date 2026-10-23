@@ -9,7 +9,7 @@ if(process.argv[2]&&!dedications)throw Error('Unknown LOCAL replay mode');
 const project=final?'NOVA-LOCAL-DEDICATIONS-CERTIFIED':dedications?'NOVA-LOCAL-DEDICATIONS-REPLAY':'NOVA-LOCAL-AVAILABILITY-REPLAY';
 const container='supabase_db_'+project;
 const lab=path.join(process.env.LOCALAPPDATA,'NOVA-Floreria',final?'dedications-certified-replay':dedications?'dedications-clean-replay':'availability-clean-replay');
-if(execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2')throw Error('Branch mismatch');
+if(execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria')throw Error('Branch mismatch');
 if(execFileSync('docker',['info','--format','{{.Name}}'],{encoding:'utf8'}).trim()!=='docker-desktop')throw Error('Requires LOCAL Docker');
 if(fs.existsSync(lab))throw Error('Preserve existing replay; choose no reset');
 fs.mkdirSync(lab,{recursive:true});

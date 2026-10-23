@@ -464,7 +464,7 @@ export default function HomePage({ year }: { year: number }) {
   }
 
   function cancelCombo() {
-    setCombo(null); setShoppingError("");
+    setCombo(null); setSelected(null); setShoppingError("");
     setShoppingNotice("Armado cancelado. No agregamos productos del combo; tu carrito se conserva.");
     requestAnimationFrame(() => scrollToId("shopping-feedback"));
   }
@@ -483,14 +483,15 @@ export default function HomePage({ year }: { year: number }) {
       requestAnimationFrame(() => scrollToId("detalle"));
       return true;
     } else {
-      try { addComboToCart(choices); selectPromotion(combo.promotion.id); setCombo(null); setCartOpen(true); return true; }
+      try { addComboToCart(choices); selectPromotion(combo.promotion.id); setCombo(null); setSelected(null); setCartOpen(true); return true; }
       catch (cause) { setShoppingError(cause instanceof Error ? cause.message : "No se pudo agregar el combo completo."); comboFlight.current = false; return false; }
     }
   }
 
   /* ---------- derivados ---------- */
 
-  const detailProduct = selected ?? catalogState.items[0] ?? null;
+  // Standard products use the quick view; this section belongs to an explicit offer/combo.
+  const detailProduct = selected;
   const categoryName =
     meta.categories.find((entry) => entry.id === detailProduct?.category_id)
       ?.name ?? null;

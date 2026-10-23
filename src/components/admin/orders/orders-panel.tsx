@@ -303,7 +303,16 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                 <Card
                   key={order.id}
                   interactive
-                  className="gap-2"
+                  role="button"
+                  tabIndex={0}
+                  aria-label={`Ver pedido ${order.order_number}`}
+                  onKeyDown={(event) => {
+                    if (event.key === "Enter" || event.key === " ") {
+                      event.preventDefault();
+                      setSelectedId(order.id);
+                    }
+                  }}
+                  className="gap-2 focus-visible:outline-2 focus-visible:outline-brand"
                   onClick={() => setSelectedId(order.id)}
                 >
                   <div className="flex items-center justify-between gap-2">

@@ -12,7 +12,7 @@ import { LAB_PREFIX, LAB_VERSION, categories, inventoryItems, products } from ".
 const mode = process.argv[2];
 if (!["--prepare", "--verify"].includes(mode)) throw Error("Use --prepare or --verify. Fixed existing LOCAL laboratory only.");
 const repo = process.cwd();
-if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "codex/inventory-refunds-dashboard-2") throw Error("Wrong branch; no actions performed.");
+if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "desarrollo-auditoria") throw Error("Wrong branch; no actions performed.");
 const lab = path.join(process.env.LOCALAPPDATA ?? "", "NOVA-Floreria", "inventory-refunds-final-replay");
 if (!path.isAbsolute(lab) || path.resolve(lab).startsWith(path.resolve(repo) + path.sep)) throw Error("Private directory outside repository required.");
 const cfg = JSON.parse(fs.readFileSync(path.join(lab, "status.private.json"), "utf8"));

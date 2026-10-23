@@ -6,7 +6,7 @@ import crypto from "node:crypto";
 import { execFileSync } from "node:child_process";
 
 const root = process.cwd();
-if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "codex/inventory-refunds-dashboard-2") throw Error("Wrong branch.");
+if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "desarrollo-auditoria") throw Error("Wrong branch.");
 const lab = path.join(process.env.LOCALAPPDATA, "NOVA-Floreria/inventory-refunds-final-replay");
 if (fs.existsSync(path.join(lab, "supabase/.temp/project-ref")) || !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab, "supabase/config.toml"), "utf8"))) throw Error("Unlinked local lab required.");
 const target = fs.mkdtempSync(path.join(os.tmpdir(), "Anabelle-visual-preview-"));

@@ -12,7 +12,7 @@ const read=file=>JSON.parse(fs.readFileSync(path.join(lab,file),'utf8').replace(
 const cfg=read('status.private.json'),app='http://127.0.0.1:3116',container='supabase_db_NOVA-LOCAL-INTEGRITY';
 if(cfg.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||
  !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab,'supabase/config.toml'),'utf8'))||
- execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2')throw Error('Requires unlinked existing LOCAL lab and correct branch');
+ execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria')throw Error('Requires unlinked existing LOCAL lab and correct branch');
 const service=createClient(cfg.API_URL,cfg.SERVICE_ROLE_KEY,{auth:{persistSession:false,autoRefreshToken:false}});
 const file=path.join(lab,'florist-dedications.private.json'),mode=process.argv[2]??'--prepare';
 const report=fs.existsSync(file)?read('florist-dedications.private.json'):{tag:`TEST BO ${Date.now()}`,checks:[],scenarios:[],products:[],supplies:{},orders:[],payments:[],promotions:[]};

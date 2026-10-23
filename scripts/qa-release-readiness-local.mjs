@@ -9,7 +9,7 @@ import { createServerClient } from "@supabase/ssr";
 const lab = path.join(process.env.LOCALAPPDATA, "NOVA-Floreria/inventory-refunds-final-replay");
 const read = file => JSON.parse(fs.readFileSync(path.join(lab, file), "utf8").replace(/^\uFEFF/, ""));
 const cfg = read("status.private.json");
-if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "codex/inventory-refunds-dashboard-2" || cfg.API_URL !== "http://127.0.0.1:62621" || fs.existsSync(path.join(lab, "supabase/.temp/project-ref")) || !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab, "supabase/config.toml"), "utf8"))) throw Error("Unlinked existing LOCAL lab required.");
+if (execFileSync("git", ["branch", "--show-current"], { encoding: "utf8" }).trim() !== "desarrollo-auditoria" || cfg.API_URL !== "http://127.0.0.1:62621" || fs.existsSync(path.join(lab, "supabase/.temp/project-ref")) || !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab, "supabase/config.toml"), "utf8"))) throw Error("Unlinked existing LOCAL lab required.");
 const service = createClient(cfg.API_URL, cfg.SERVICE_ROLE_KEY, { auth: { persistSession: false, autoRefreshToken: false } });
 async function rows(table, filter) { const r = await filter(service.from(table).select("*")); if (r.error) throw Error(`LOCAL read ${table}: ${r.error.code}`); return r.data; }
 const file = path.join(lab, "release-readiness-qa.private.json");

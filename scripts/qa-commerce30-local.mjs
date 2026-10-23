@@ -12,7 +12,7 @@ const config=read('status.private.json'),fixture=read('florist-dedications.priva
 const app='http://127.0.0.1:3116',container='supabase_db_NOVA-LOCAL-INTEGRITY';
 if(config.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||
  !/project_id\s*=\s*"NOVA-LOCAL-INTEGRITY"/.test(fs.readFileSync(path.join(lab,'supabase/config.toml'),'utf8'))||
- execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2')throw Error('Only the existing unlinked LOCAL lab on the authorized branch is permitted.');
+ execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria')throw Error('Only the existing unlinked LOCAL lab on the authorized branch is permitted.');
 const round=process.env.NOVA_QA_ROUND;
 if(round&&!/^[a-z0-9-]{1,48}$/.test(round))throw Error('Invalid LOCAL round name');
 if(round&&(process.argv[2]??'').startsWith('--browser'))throw Error('Legacy browser order modes are not used in a new round. Preserve its separate UI evidence.');

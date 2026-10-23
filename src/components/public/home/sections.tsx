@@ -71,7 +71,7 @@ export function HeroSection({
   return (
     <section id="inicio" className="nova-hero relative isolate overflow-hidden scroll-mt-20 border-b border-[#e8e0ea] bg-[#f6f0f8]">
       <div className="nova-hero-petals pointer-events-none absolute inset-0 -z-10" aria-hidden="true"/><div className="mx-auto grid max-w-[1280px] lg:grid-cols-[1fr_1fr]">
-        <div className="flex items-center px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
+        <div className="flex items-center px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-24">
           <div className="max-w-[580px]">
             <div className="mb-5 flex items-center gap-3">
               <span className="h-px w-8 bg-[#9270a4]" />
@@ -126,11 +126,11 @@ export function HeroSection({
         </div>
 
         {/* IMAGEN PRINCIPAL: foto de un producto destacado si existe */}
-        <div className="relative min-h-[500px] bg-[#e7dce9] lg:min-h-[620px]">
+        <div className="relative min-h-[320px] bg-[#e7dce9] sm:min-h-[420px] lg:min-h-[620px]">
           <div className="absolute inset-6 border border-white/70 sm:inset-10" />
 
           <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-[72%] max-w-[420px]">
+            <div className="w-[56%] max-w-[280px] sm:w-[64%] sm:max-w-[300px] lg:w-[72%] lg:max-w-[420px]">
               <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#d9c9df] shadow-[0_25px_60px_rgba(65,39,75,.12)]">
                 {heroImage ? (
                   <>
@@ -392,7 +392,7 @@ export function SiteFooter({
     <footer className="bg-[#28202d] px-5 py-12 text-white sm:px-8">
       <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 [&>div]:min-w-0">
         <div>
-          <BrandLogo className="h-20 max-w-[240px]"/>
+          <div className="inline-flex max-w-full items-center rounded-2xl bg-[#f3dee6] px-4 py-3 [&_img]:mix-blend-darken"><BrandLogo className="h-16 max-w-[220px]"/></div>
 
           <p className="mt-5 max-w-[260px] text-xs leading-6 text-white/60">
             Flores, regalos y detalles para acompañar tus momentos especiales.

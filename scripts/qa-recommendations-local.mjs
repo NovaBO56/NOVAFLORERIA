@@ -7,7 +7,7 @@ import {createServerClient} from '@supabase/ssr';
 const lab=path.join(process.env.LOCALAPPDATA,'NOVA-Floreria/inventory-refunds-final-replay');
 const read=file=>JSON.parse(fs.readFileSync(path.join(lab,file),'utf8').replace(/^\uFEFF/,''));
 const config=read('status.private.json'),fixture=read('florist-dedications.private.json');
-if(config.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2')throw Error('Only authorized unlinked LOCAL lab');
+if(config.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria')throw Error('Only authorized unlinked LOCAL lab');
 const file=path.join(lab,'recommendations-20261022.private.json');
 const report=fs.existsSync(file)?read(path.basename(file)):{tag:'TEST COMPLEMENTS '+Date.now(),checks:[],http:[],operations:{},setup:{},orders:{},cases:{}};
 const save=()=>{fs.writeFileSync(file+'.tmp',JSON.stringify(report,null,2));if(fs.existsSync(file))fs.copyFileSync(file,file+'.previous');fs.renameSync(file+'.tmp',file);};

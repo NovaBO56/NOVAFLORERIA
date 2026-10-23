@@ -8,7 +8,7 @@ const lab = path.join(process.env.LOCALAPPDATA, 'NOVA-Floreria/inventory-refunds
 const read = name => JSON.parse(fs.readFileSync(path.join(lab, name), 'utf8').replace(/^\uFEFF/, ''));
 const cfg = read('status.private.json');
 if (cfg.API_URL !== 'http://127.0.0.1:62621' || fs.existsSync(path.join(lab,'supabase/.temp/project-ref')) ||
- execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim() !== 'codex/inventory-refunds-dashboard-2') throw Error('Existing unlinked LOCAL lab required');
+ execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim() !== 'desarrollo-auditoria') throw Error('Existing unlinked LOCAL lab required');
 const client = key => createClient(cfg.API_URL,key,{auth:{persistSession:false,autoRefreshToken:false}});
 const service=client(cfg.SERVICE_ROLE_KEY), admin=client(cfg.ANON_KEY), anon=client(cfg.ANON_KEY);
 const report={started:new Date().toISOString(),checks:[],fixtures:[],orders:[]};

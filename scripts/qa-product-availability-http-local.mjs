@@ -7,7 +7,7 @@ import {createClient} from '@supabase/supabase-js';
 const lab=path.join(process.env.LOCALAPPDATA,'NOVA-Floreria/inventory-refunds-final-replay');
 const read=name=>JSON.parse(fs.readFileSync(path.join(lab,name),'utf8').replace(/^\uFEFF/,''));
 const cfg=read('status.private.json');
-if(cfg.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='codex/inventory-refunds-dashboard-2')throw Error('LOCAL only');
+if(cfg.API_URL!=='http://127.0.0.1:62621'||fs.existsSync(path.join(lab,'supabase/.temp/project-ref'))||execFileSync('git',['branch','--show-current'],{encoding:'utf8'}).trim()!=='desarrollo-auditoria')throw Error('LOCAL only');
 const latest=fs.readdirSync(lab).filter(name=>/^availability-qa-\d+\.private.json$/.test(name)).sort().at(-1);
 if(!latest)throw Error('Run RPC/SQL suite first');
 const source=read(latest), fixture=source.fixtures[0];
