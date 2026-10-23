@@ -1,9 +1,10 @@
 "use client";
 
+import { BrandLogo } from "../storefront-media";
 import { useState } from "react";
 import type { FormEvent } from "react";
-import { Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
-import { script, scrollToId, useDialog } from "./shared";
+import { Flower2, Leaf, Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
+import { scrollToId, useDialog } from "./shared";
 
 export type NavItem = { label: string; href: string };
 
@@ -108,20 +109,10 @@ export function SiteHeader({
             aria-modal="true"
             aria-label="Menú principal"
             tabIndex={-1}
-            className="absolute right-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto bg-white px-6 py-6 shadow-2xl"
+            className="anabelle-mobile-menu absolute right-0 top-0 h-full w-[86%] max-w-sm overflow-y-auto bg-white px-6 py-6 shadow-2xl"
           >
             <div className="flex items-center justify-between border-b border-[#e8dfea] pb-5">
-              <div>
-                <p
-                  className={`${script.className} text-[34px] leading-none text-[#65358e]`}
-                >
-                  Anabelle
-                </p>
-
-                <p className="mt-1 text-[8px] font-black tracking-[0.28em] text-[#76667b]">
-                  FLORISTERÍA
-                </p>
-              </div>
+              <BrandLogo/>
 
               <button
                 type="button"
@@ -173,8 +164,10 @@ export function SiteHeader({
       ) : null}
 
       {/* ENCABEZADO */}
-      <header className="sticky top-0 z-50 border-b border-[#e7dfe9] bg-white">
-        <div className="mx-auto flex h-[74px] max-w-[1280px] items-center justify-between gap-3 px-5 sm:px-8 lg:gap-5">
+      <header className="anabelle-brand-header sticky top-0 z-50">
+        <div className="anabelle-header-botanical anabelle-header-botanical-left" aria-hidden="true"><Flower2/><Leaf/></div>
+        <div className="anabelle-header-botanical anabelle-header-botanical-right" aria-hidden="true"><Leaf/><Flower2/></div>
+        <div className="anabelle-header-bar relative mx-auto flex min-h-[78px] max-w-[1440px] items-center justify-between gap-2 px-3 sm:px-5 xl:gap-4">
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -187,18 +180,7 @@ export function SiteHeader({
             <Menu size={20} />
           </button>
 
-          <a href="#inicio" className="flex shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2">
-            <div>
-              <div
-                className={`${script.className} text-[36px] leading-none text-[#65358e]`}
-              >
-                Anabelle
-              </div>
-
-              <div className="mt-1 text-[8px] font-black tracking-[0.34em] text-[#756777]">
-                FLORISTERÍA
-              </div>
-            </div>
+          <a href="#inicio" aria-label="Floristería Anabelle · Inicio" className="anabelle-header-logo flex min-w-0 shrink-0 items-center rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2"><BrandLogo className="h-14 max-w-[164px] sm:h-16 sm:max-w-[188px] xl:h-[72px] xl:max-w-[212px]"/>
           </a>
 
           <nav
@@ -209,7 +191,7 @@ export function SiteHeader({
               <a
                 key={label}
                 href={href}
-                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-lg px-2 text-[12px] font-bold text-[#574b5c] transition-colors hover:bg-[#f8f4fa] hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2 xl:text-[13px]"
+                className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-2 text-[12px] font-bold text-[#574b5c] transition-colors hover:bg-[#f0d9e3] hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2 xl:text-[13px]"
               >
                 {label}
               </a>
@@ -235,7 +217,7 @@ export function SiteHeader({
                 scrollToId("catalogo");
               }}
               aria-pressed={favoritesActive}
-              className={`relative hidden size-10 items-center justify-center rounded-xl transition hover:bg-[#f5eff7] sm:flex ${
+              className={`relative flex size-10 items-center justify-center rounded-xl transition hover:bg-[#f5eff7] ${
                 favoritesActive ? "text-[#65358e]" : "text-[#504455]"
               }`}
               aria-label={`Mis favoritos (${favoritesCount})`}
@@ -247,7 +229,7 @@ export function SiteHeader({
               />
 
               {favoritesCount > 0 ? (
-                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
+                <span key={favoritesCount} className="nova-value absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
                   {favoritesCount}
                 </span>
               ) : null}
@@ -266,7 +248,7 @@ export function SiteHeader({
               <ShoppingBag size={20} strokeWidth={1.8} />
 
               {cartCount > 0 ? (
-                <span className="absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
+                <span key={cartCount} className="nova-value absolute right-1 top-1 flex size-4 items-center justify-center rounded-full bg-[#65358e] text-[9px] font-black text-white">
                   {cartCount}
                 </span>
               ) : null}

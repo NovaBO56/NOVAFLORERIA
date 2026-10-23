@@ -32,6 +32,7 @@ import ProductList from "@/components/admin/products/product-list";
 import ProductImageManagement from "@/components/admin/products/product-image-management";
 import ProductInventoryManagement from "@/components/admin/products/product-inventory-management";
 import ProductComponentManagement from "@/components/admin/products/product-component-management";
+import { ProductRecommendations } from "./product-recommendations";
 
 type Category = {
   id: string;
@@ -45,7 +46,7 @@ type Season = {
   is_active: boolean;
 };
 
-type ProductTab = "info" | "images" | "inventory" | "components";
+type ProductTab = "info" | "images" | "inventory" | "components" | "recommendations";
 
 type Filters = {
   search: string;
@@ -558,11 +559,13 @@ export default function ProductManagement() {
                 />
                 Componentes
               </button>
+              <button type="button" disabled={!editingProduct} onClick={()=>setActiveTab("recommendations")} className={`min-h-11 rounded-t-lg px-3 py-3 text-sm font-medium disabled:opacity-40 ${activeTab === "recommendations" ? "border-b-2 border-brand text-brand" : "text-text-secondary"}`}>Complementos recomendados</button>
             </div>
           </div>
 
           {/* CONTENIDO */}
           <div className="min-h-0 flex-1 overflow-y-auto py-4 pr-1">
+            {activeTab === "recommendations" && editingProduct && <ProductRecommendations key={editingProduct.id} productId={editingProduct.id}/>}
             {activeTab === "info" && (
               <ProductForm
                 categories={categories}

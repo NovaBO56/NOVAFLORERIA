@@ -35,6 +35,7 @@ export function visualCatalogResponse(snapshot: VisualSnapshot, url: URL) {
   if (route === "/api/promotions") return ok({ promotions: snapshot.promotions });
   if (route === "/api/business-hours") return ok(snapshot.hours);
   if (route === "/api/store-location") return ok({ location: null });
+  if (route === "/api/storefront-media") return ok({ media: { logo: null, about: null, categories: {} } });
   if (route === "/api/whatsapp-config" || route === "/api/payment-qr") return fail(404, "Contacto y pagos deshabilitados en la vista previa visual. NO PAGAR.");
   return fail(403);
 }

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import HomePage from "@/components/public/home/home-page";
+import { StorefrontMediaProvider } from "@/components/public/storefront-media";
 
 export const metadata: Metadata = {
   title: "Floristería Anabelle — Flores que hablan",
@@ -8,5 +9,5 @@ export const metadata: Metadata = {
 };
 
 export default function Page() {
-  return <HomePage year={new Date().getFullYear()} />;
+  return <StorefrontMediaProvider><HomePage year={new Date().getFullYear()} /></StorefrontMediaProvider>;
 }

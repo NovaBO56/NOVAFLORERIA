@@ -115,7 +115,14 @@ const TYPE_LABELS: Record<ItemType, string> = {
   flor: "Flor",
   insumo: "Insumo",
   componente: "Componente",
-  producto: "Producto",
+  producto: "Producto terminado",
+};
+
+const TYPE_HELP: Record<ItemType, string> = {
+  flor: "Flores: rosas, girasoles, claveles y lirios.",
+  insumo: "Materiales: papel coreano, cinta, tarjetas de dedicatoria y envolturas.",
+  componente: "Complementos de arreglos: osos, globos, chocolates y accesorios.",
+  producto: "Artículo físico ya terminado que almacenas y controlas por unidades.",
 };
 
 const STATUS_LABELS: Record<StockStatus, string> = {
@@ -201,6 +208,7 @@ export default function InventoryManagement() {
     useState<InventoryItem | null>(null);
 
   const [entryModal, setEntryModal] = useState(false);
+  const [returnToEntry, setReturnToEntry] = useState(false);
   const [wasteModal, setWasteModal] = useState(false);
   const [adjustmentModal, setAdjustmentModal] =
     useState(false);
@@ -486,7 +494,7 @@ useEffect(() => {
         ? "PATCH"
         : "POST";
 
-      await readResponse(
+      const saved = await readResponse(
         await fetch(url, {
           method,
           headers: {
@@ -520,6 +528,11 @@ useEffect(() => {
       );
 
       await loadItems();
+      if (returnToEntry && saved.item?.id) {
+        setEntryForm(form => ({ ...form, inventory_item_id: saved.item.id }));
+        setReturnToEntry(false);
+        setEntryModal(true);
+      }
     } catch (err) {
       setError(
         err instanceof Error
@@ -725,6 +738,16 @@ useEffect(() => {
 
   return (
     <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
+      <details className="rounded-xl border border-border-decorative bg-surface p-4 text-sm text-text-secondary">
+        <summary className="cursor-pointer font-medium text-text">Guía de inventario: materiales, existencias y recetas</summary>
+        <p className="mt-3">1. Crear material → 2. Registrar entrada y lote → 3. Crear producto y receta.</p>
+        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div><dt className="font-semibold">Stock físico / reservado / libre</dt><dd>Físico: lo que tienes. Reservado: separado para pedidos pendientes. Libre: lo que queda para nuevas compras.</dd></div>
+          <div><dt className="font-semibold">Stock mínimo y reposición</dt><dd>El mínimo avisa cuándo reponer. Para añadir existencias registra una entrada con la cantidad recibida.</dd></div>
+          <div><dt className="font-semibold">Lote</dt><dd>Grupo recibido en una entrada. Al preparar pedidos se utiliza primero el lote más antiguo con existencias.</dd></div>
+          <div><dt className="font-semibold">Merma</dt><dd>Flores o materiales dañados que ya no pueden utilizarse. Regístralos para mantener el stock real.</dd></div>
+        </dl>
+      </details>
       <PageHeader
         eyebrow="Operación"
         title="Inventario"
@@ -1436,7 +1459,7 @@ useEffect(() => {
 
       <Modal
         open={itemModal}
-        onOpenChange={setItemModal}
+        onOpenChange={open => { setItemModal(open); if (!open) setReturnToEntry(false); }}
       >
         <ModalContent className="md:max-w-xl">
           <ModalHeader>
@@ -1491,6 +1514,7 @@ useEffect(() => {
 
               <Field
                 label="Unidad"
+                hint="Cómo cuentas este material: unidad, tallo, metro o paquete. Usa la misma unidad en su receta."
                 required
               >
                 <Input
@@ -1510,6 +1534,7 @@ useEffect(() => {
             <div className="grid gap-4 sm:grid-cols-2">
               <Field
                 label="Tipo"
+                hint={TYPE_HELP[itemForm.item_type]}
                 required
               >
                 <select
@@ -1542,6 +1567,7 @@ useEffect(() => {
 
               <Field
                 label="Stock mínimo"
+                hint="Umbral para avisarte que debes reponer. No añade ni reserva existencias."
                 required
               >
                 <Input
@@ -1563,6 +1589,11 @@ useEffect(() => {
               </Field>
             </div>
 
+            <details className="rounded-xl bg-brand-soft p-3 text-sm text-text-secondary">
+              <summary className="cursor-pointer font-medium text-text">¿Material o producto comercial?</summary>
+              <p className="mt-2">La receta del producto comercial define qué materiales se consumen; el tipo de artículo no lo decide por sí solo.</p>
+              <p className="mt-2">Para preparar un Bouquet XXL con rosas, papel y cinta, registra esos materiales y crea el Bouquet XXL en Productos con su receta. No necesitas duplicarlo como producto terminado de inventario.</p>
+            </details>
             {editingItem && (
               <label className="flex items-center gap-3 rounded-xl border border-border-field px-3.5 py-3 text-sm">
                 <input
@@ -1617,11 +1648,15 @@ useEffect(() => {
             </ModalTitle>
 
             <ModalDescription>
-              La entrada aumenta el stock y crea automáticamente un lote para FIFO.
+              Crear material → Registrar entrada y lote → Crear producto y receta. Cada entrada añade existencias; se utilizan primero los lotes más antiguos.
             </ModalDescription>
           </ModalHeader>
 
-          <form
+          {availableItems.length === 0 ? <div className="space-y-3 rounded-xl bg-brand-soft p-4">
+            <h3 className="font-semibold">Todavía no tienes materiales registrados.</h3>
+            <p className="text-sm text-text-secondary">Primero registra una flor, insumo o componente activo para poder añadir existencias. Los filtros de la tabla no afectan esta lista.</p>
+            <Button onClick={() => { setEntryModal(false); setReturnToEntry(true); openNewItem(); }}><Plus aria-hidden="true"/>Crear primer artículo</Button>
+          </div> : <form
             onSubmit={saveEntry}
             className="space-y-4"
           >
@@ -1753,7 +1788,7 @@ useEffect(() => {
                 Registrar entrada
               </Button>
             </ModalFooter>
-          </form>
+          </form>}
         </ModalContent>
       </Modal>
 

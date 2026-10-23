@@ -1,4 +1,5 @@
 "use client";
+import { BrandLogo, useStorefrontMedia } from "../storefront-media";
 import { LocationCard } from "../location-card";
 import { WeeklyHours } from "../weekly-hours";
 import type { StoreLocation } from "@/validations/store-location";
@@ -40,7 +41,7 @@ export function ClosedBanner({ status }: { status: BusinessStatus | null }) {
   const hours = todayHoursLabel(status);
 
   return (
-    <div role="status" className="bg-[#4c285f] px-5 py-2.5 text-center text-xs text-white">
+    <div role="status" className="anabelle-hours-notice bg-[#4c285f] px-5 py-2.5 text-center text-xs text-white">
       <span className="font-black">Estamos cerrados en este momento.</span>{" "}
       {status.accept_orders_outside_hours
         ? "Puedes dejar tu pedido y lo atenderemos en cuanto abramos."
@@ -68,8 +69,8 @@ export function HeroSection({
   const hours = todayHoursLabel(status);
 
   return (
-    <section id="inicio" className="scroll-mt-20 border-b border-[#e8e0ea] bg-[#f6f0f8]">
-      <div className="mx-auto grid max-w-[1280px] lg:grid-cols-[1fr_1fr]">
+    <section id="inicio" className="nova-hero relative isolate overflow-hidden scroll-mt-20 border-b border-[#e8e0ea] bg-[#f6f0f8]">
+      <div className="nova-hero-petals pointer-events-none absolute inset-0 -z-10" aria-hidden="true"/><div className="mx-auto grid max-w-[1280px] lg:grid-cols-[1fr_1fr]">
         <div className="flex items-center px-6 py-16 sm:px-10 lg:px-16 lg:py-24">
           <div className="max-w-[580px]">
             <div className="mb-5 flex items-center gap-3">
@@ -248,11 +249,13 @@ export { PromotionSection } from "./promotion-section";
    ============================================================ */
 
 export function AboutSection({ photo = null }: { photo?: PublicImage | null }) {
+  const media = useStorefrontMedia();
+  const configuredPhoto = media.about ? { id: "configured-about", public_url: media.about, alt_text: "Fotografía configurada de Floristería Anabelle", sort_order: 0 } : photo;
   return (
     <section id="nosotros" aria-labelledby="nosotros-title" className="scroll-mt-44 px-5 py-16 sm:px-8 sm:py-20">
       <div className="mx-auto grid max-w-[1180px] overflow-hidden rounded-[32px] border border-[#e2d7e4] bg-white shadow-[0_18px_50px_-36px_rgba(76,40,95,.25)] lg:grid-cols-[.9fr_1.1fr]">
         <div className="relative order-2 flex min-h-[180px] items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_top_left,#f6e3ee,#eee7f5)] p-6 sm:min-h-[240px] lg:order-1 lg:min-h-[440px]">
-          {photo?.public_url ? <Image src={photo.public_url} alt={photo.alt_text || "Fotografía de Floristería Anabelle"} fill sizes="(min-width: 1024px) 530px, 100vw" className="object-cover" /> : <div className="flex items-center gap-5 text-center lg:flex-col lg:gap-0">
+          {configuredPhoto?.public_url ? <Image src={configuredPhoto.public_url} alt={configuredPhoto.alt_text || "Fotografía de Floristería Anabelle"} fill sizes="(min-width: 1024px) 530px, 100vw" className="object-cover" /> : <div className="flex items-center gap-5 text-center lg:flex-col lg:gap-0">
             <div aria-hidden="true" className="flex size-24 shrink-0 items-center justify-center rounded-full border border-[#d9c7df] bg-white/50 lg:size-36"><span className="text-5xl text-[#704b7d] lg:text-6xl">✿</span></div>
             <div><p className={`${script.className} text-4xl text-[#5d3a69] lg:mt-5 lg:text-5xl`}>Anabelle</p><p className="mt-3 text-[10px] font-bold uppercase tracking-[.16em] text-[#715e7b]">Ilustración floral</p></div>
           </div>}
@@ -389,11 +392,7 @@ export function SiteFooter({
     <footer className="bg-[#28202d] px-5 py-12 text-white sm:px-8">
       <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 [&>div]:min-w-0">
         <div>
-          <p className={`${script.className} text-[42px] leading-none`}>Anabelle</p>
-
-          <p className="mt-1 text-[8px] font-black tracking-[0.32em] text-white/60">
-            FLORISTERÍA
-          </p>
+          <BrandLogo className="h-20 max-w-[240px]"/>
 
           <p className="mt-5 max-w-[260px] text-xs leading-6 text-white/60">
             Flores, regalos y detalles para acompañar tus momentos especiales.

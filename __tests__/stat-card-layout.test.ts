@@ -11,7 +11,9 @@ describe("StatCard: importes completos (render SSR, no medición de viewport)", 
       const html = renderToStaticMarkup(React.createElement(StatCard, { label: "Total vendido", value, icon }));
       expect(html).toContain(value);
       expect(html).not.toMatch(/truncate|text-ellipsis|line-clamp|overflow-hidden/);
-      expect(html).toContain("[overflow-wrap:anywhere]");
+      expect(html).toContain("whitespace-nowrap");
+      if (value.length > 14) { expect(html).toContain("overflow-x-auto"); expect(html).toContain("overflow-y-hidden"); expect(html).toContain('tabindex="0"'); }
+      else expect(html).not.toContain("overflow-x-auto");
       expect(html).toContain("grid-cols-[minmax(0,1fr)_auto]");
       expect(html).toContain("col-span-2 min-w-0");
     }

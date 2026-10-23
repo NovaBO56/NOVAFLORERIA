@@ -46,6 +46,7 @@ export async function updateSession(request: NextRequest) {
     "/api/whatsapp-config",
     "/api/business-hours",
     "/api/store-location",
+    "/api/storefront-media",
     "/api/products",
     "/api/categories",
     "/api/seasons",

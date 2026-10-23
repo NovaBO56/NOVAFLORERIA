@@ -126,7 +126,8 @@ export default function ProductList({
 
   return (
     <>
-      <div className="overflow-x-auto">
+      <p className="px-4 py-2 text-xs text-text-secondary">Desliza la tabla para consultar todas las columnas. Acciones permanece a la derecha.</p>
+      <div className="product-admin-table overflow-x-auto" role="region" aria-label="Productos y acciones" tabIndex={0}>
         <table className="w-full min-w-[900px] border-collapse">
           <thead>
             <tr className="border-b border-border-decorative bg-bg-admin text-left">
@@ -170,12 +171,12 @@ export default function ProductList({
                     <td className="px-4 py-3">
                       <div className="flex items-start gap-2">
                         <div className="min-w-0">
-                          <p className="truncate font-medium text-text">
+                          <p className="max-w-64 truncate font-medium text-text" title={product.name}>
                             {product.name}
                           </p>
 
                           {product.occasion && (
-                            <p className="mt-0.5 truncate text-xs text-text-secondary">
+                            <p className="mt-0.5 max-w-64 truncate text-xs text-text-secondary">
                               {product.occasion}
                             </p>
                           )}
@@ -250,7 +251,7 @@ export default function ProductList({
                           }
                           aria-expanded={actionsOpen}
                           aria-label={`Acciones para ${product.name}`}
-                          className={`flex h-9 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors ${
+                          className={`flex min-h-11 items-center gap-1.5 rounded-lg border px-3 text-sm font-medium transition-colors ${
                             actionsOpen
                               ? "border-brand bg-brand/10 text-brand"
                               : "border-border-field bg-surface text-text hover:bg-bg-admin"

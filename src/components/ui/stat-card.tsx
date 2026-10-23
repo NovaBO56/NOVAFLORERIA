@@ -17,6 +17,8 @@ export function StatCard({
   icon,
   trend,
 }: StatCardProps) {
+  const numericValue = /^(?:Bs\s)?-?[\d.,]+$/.test(value);
+  const scrollValue = numericValue && value.length > 14;
   return (
     <Card className="nova-fade min-w-0">
       <CardContent className="grid grid-cols-[minmax(0,1fr)_auto] items-start gap-x-4 p-0">
@@ -25,7 +27,7 @@ export function StatCard({
             {label}
           </p>
 
-          <p key={value} className="nova-value col-span-2 min-w-0 mt-2 [overflow-wrap:anywhere] text-2xl font-semibold leading-tight tracking-tight tabular-nums text-text sm:text-[28px]">
+          <p key={value} className={`nova-value col-span-2 min-w-0 mt-2 font-semibold leading-normal tracking-tight tabular-nums text-text ${numericValue ? "whitespace-nowrap text-[clamp(1rem,2vw,1.75rem)]" : "[overflow-wrap:anywhere] text-2xl sm:text-[28px]"} ${scrollValue ? "overflow-x-auto overflow-y-hidden py-1" : ""}`} tabIndex={scrollValue ? 0 : undefined} role={scrollValue ? "region" : undefined} aria-label={scrollValue ? `${label}: ${value}` : undefined}>
             {value}
           </p>
 

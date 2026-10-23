@@ -36,6 +36,8 @@ import {
 } from "./sections";
 import { lato, scrollToId } from "./shared";
 import { ShoppingNotice } from "../shopping-notice";
+import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
+import { ComplementConfirmation } from "./complement-confirmation";
 
 const PAGE_SIZE = 8;
 const MAX_FAVORITES = 100;
@@ -180,6 +182,9 @@ export default function HomePage({ year }: { year: number }) {
   }>({ key: "", items: [] });
 
   const [selected, setSelected] = useState<PublicProduct | null>(null);
+  const [quickView, setQuickView] = useState<PublicProduct | null>(null);
+  const [addedProduct, setAddedProduct] = useState<PublicProduct | null>(null);
+  const quickViewTrigger = useRef<HTMLElement | null>(null);
   const [combo, setCombo] = useState<{ promotion: PublicPromotion; index: number; choices: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string; dedications?: Dedication[]; cardQuantity?: number }[] } | null>(null);
   const [shoppingError, setShoppingError] = useState("");
   const [shoppingNotice, setShoppingNotice] = useState("");
@@ -428,8 +433,12 @@ export default function HomePage({ year }: { year: number }) {
   }
 
   function handleAdd(product: PublicProduct) {
-    addToCart(product);
-    setCartOpen(true);
+    openQuickView(product);
+  }
+
+  function openQuickView(product: PublicProduct) {
+    quickViewTrigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    setQuickView(product);
   }
 
   function openDetail(product: PublicProduct) {
@@ -463,7 +472,7 @@ export default function HomePage({ year }: { year: number }) {
   function addDetail(quantity: number, options: CustomizationOption[], message: string, dedications?: Dedication[], cardQuantity?: number) {
     if (!detailProduct) return false;
     setShoppingError("");
-    if (!combo) { addToCart(detailProduct, quantity, options, message, dedications, cardQuantity); setCartOpen(true); return true; }
+    if (!combo) { addToCart(detailProduct, quantity, options, message, dedications, cardQuantity); setAddedProduct(detailProduct); return true; }
     if (comboFlight.current) return false;
     comboFlight.current = true;
     const choices = [...combo.choices, { product: detailProduct, quantity, options, message, dedications, cardQuantity }];
@@ -540,7 +549,7 @@ export default function HomePage({ year }: { year: number }) {
         favoriteIds={favoriteIds}
         onToggleFavorite={toggleFavorite}
         onAdd={handleAdd}
-        onOpenDetail={openDetail}
+        onOpenDetail={openQuickView}
       />
 
       {shoppingNotice && <div id="shopping-feedback" className="mx-auto max-w-[1180px] scroll-mt-24 px-5 py-4"><ShoppingNotice onDismiss={() => setShoppingNotice("")}>{shoppingNotice}</ShoppingNotice></div>}
@@ -581,6 +590,21 @@ export default function HomePage({ year }: { year: number }) {
       />
 
       <MobileNavigation/>
+
+      <Modal open={Boolean(quickView)} onOpenChange={open => { if (!open) setQuickView(null); }}>
+        <ModalContent voice="public" className="md:max-w-5xl" onCloseAutoFocus={event => { event.preventDefault(); if (!addedProduct) quickViewTrigger.current?.focus(); }}>
+          <ModalTitle className="pr-10">Vista rápida</ModalTitle>
+          <ModalDescription>Personaliza tu detalle antes de agregarlo al carrito.</ModalDescription>
+          {quickView && <ProductDetailSection key={quickView.id} embedded product={quickView}
+            categoryName={meta.categories.find(c => c.id === quickView.category_id)?.name ?? null}
+            isFavorite={favoriteIds.includes(quickView.id)} onToggleFavorite={() => toggleFavorite(quickView.id)}
+            onAdd={(quantity, options, message, dedications, cardQuantity) => {
+              addToCart(quickView, quantity, options, message, dedications, cardQuantity);
+              setQuickView(null); setAddedProduct(quickView); return true;
+            }}/>}
+        </ModalContent>
+      </Modal>
+      <ComplementConfirmation product={addedProduct} onClose={()=>setAddedProduct(null)} onCart={()=>setCartOpen(true)}/>
 
       <CartDrawer
         open={cartOpen}

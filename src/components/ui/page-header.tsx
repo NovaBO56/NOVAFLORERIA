@@ -19,11 +19,11 @@ export function PageHeader({
         "flex flex-col gap-5",
         "border-b border-border-decorative",
         "pb-6",
-        "lg:flex-row lg:items-end lg:justify-between",
-        "lg:gap-8",
+        "2xl:flex-row 2xl:items-end 2xl:justify-between",
+        "2xl:gap-8",
       ].join(" ")}
     >
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         {eyebrow ? (
           <p
             className={[
@@ -70,7 +70,7 @@ export function PageHeader({
       {actions ? (
         <div
           className={[
-            "flex shrink-0",
+            "flex min-w-0 max-w-full",
             "flex-wrap items-center",
             "gap-2",
           ].join(" ")}

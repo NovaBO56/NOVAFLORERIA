@@ -8,7 +8,7 @@ const ORDER_SELECT = `
   id, order_number, customer_id, order_type, status, subtotal, discount_total, total,
   customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason, inventory_review_required,
   created_at, updated_at, guest_name, guest_phone, guest_whatsapp, receipt_token,
-  payments(status, confirmed_at),
+  payments(id, method, status, confirmed_at, qr_slot, qr_label),
   customer:customers (id, name, phone, whatsapp),
   order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note)
 `;

@@ -1,7 +1,8 @@
 "use client";
 
 import { SafeImage as Image } from "@/components/public/safe-image";
-import { Heart, ShoppingBag } from "lucide-react";
+import { useStorefrontMedia } from "../storefront-media";
+import { Flower2, Heart, ShoppingBag } from "lucide-react";
 import { formatMoney, isPurchasable, pickImage } from "@/lib/public/format";
 import type { PublicCategory, PublicProduct } from "@/lib/public/types";
 import { script } from "./shared";
@@ -15,7 +16,7 @@ export type CatalogState = {
 };
 
 const chipBase =
-  "min-h-10 rounded-full px-4 py-2.5 text-xs font-black transition";
+  "inline-flex min-h-11 max-w-full items-center gap-2 rounded-full px-4 py-2.5 text-xs font-black transition";
 const chipActive = "bg-[#65358e] text-white";
 const chipIdle =
   "border border-[#ded2e2] bg-white text-[#66596b] hover:border-[#65358e] hover:text-[#65358e]";
@@ -84,7 +85,7 @@ function ProductCard({
           <Heart
             size={16}
             strokeWidth={1.8}
-            className={isFavorite ? "fill-current" : ""}
+            key={String(isFavorite)} className={isFavorite ? "nova-favorite fill-current text-[#a14370]" : "text-[#a14370]"}
           />
         </button>
 
@@ -177,6 +178,7 @@ export function CatalogSection({
   onAdd,
   onOpenDetail,
 }: CatalogSectionProps) {
+  const media = useStorefrontMedia();
   const filtered = Boolean(searchTerm) || favoritesOnly;
 
   return (
@@ -238,7 +240,7 @@ export function CatalogSection({
                       selectedCategory === category.id ? chipActive : chipIdle
                     }`}
                   >
-                    {category.name}
+                    {media.categories[category.id] ? <Image src={media.categories[category.id]} width={36} height={36} alt="" sizes="36px" className="size-9 shrink-0 rounded-full object-cover"/> : <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eee3f4] text-[#74558c]"><Flower2 size={20}/></span>}<span className="min-w-0 text-left [overflow-wrap:anywhere]">{category.name}</span>
                   </button>
                 ))
               )}

@@ -2,6 +2,7 @@ import { paymentQrSessionKey } from "./payment-qrs";
 import { z } from "zod";
 import { createOrderSchema } from "@/validations/orders";
 import type { CartItem } from "./cart-logic";
+import { resizeDedications } from "./dedications";
 
 export const checkoutDetailsSchema = z.object({
   customer_name: createOrderSchema.shape.customer_name,
@@ -21,7 +22,14 @@ export function orderPayload(items: CartItem[], details: CheckoutDetails, key: s
     customer_name: data.customer_name, customer_phone: data.customer_phone,
     customer_message: [`Método: ${data.delivery === "retiro" ? "Retiro en tienda" : "Entrega por coordinar"}`, data.delivery === "entrega" ? data.address : "", data.delivery === "entrega" && data.reference ? `Referencia: ${data.reference}` : "", data.notes].filter(Boolean).join("\n"),
     promotion_id: data.promotion_id || null, idempotency_key: key,
-    items: items.map(item => ({ product_id: item.id.split(":")[0], quantity: item.quantity, customization_option_ids: item.options?.map(option => option.id) ?? [], message: item.dedications ? null : item.message || null, dedications: item.dedications })),
+    items: items.map(item => {
+      const count = item.quantity * (item.dedication_card_quantity ?? 0);
+      const entries = item.dedications ?? (!item.message && count > 0 && count <= 198 ? [] : undefined);
+      // Catalog quick-add uses the editor's blank default without firing onChange.
+      // Fill only missing cards; never discard existing text after a recipe change.
+      const cards = entries && count > entries.length && count <= 198 ? resizeDedications(entries, count) : entries;
+      return { product_id: item.id.split(":")[0], quantity: item.quantity, customization_option_ids: item.options?.map(option => option.id) ?? [], message: cards ? null : item.message || null, dedications: cards?.map(entry => ({ ...entry, intent: entry.intent ?? (entry.message || entry.signature ? "write" : "blank") })) };
+    }),
   });
 }
 

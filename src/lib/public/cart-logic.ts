@@ -1,4 +1,4 @@
-import { dedicationsSchema, hasDedication, resizeDedications, type Dedication } from "./dedications";
+import { dedicationDraftsSchema, hasDedication, resizeDedications, type Dedication } from "./dedications";
 import { clientId } from "./client-id";
 import { formatMoney } from "./format";
 
@@ -77,7 +77,7 @@ export function sanitizeCart(raw: unknown): CartItem[] {
       quantity,
       available: item.available !== false,
       ...(Array.isArray(item.options) ? { options: item.options.filter((o): o is NonNullable<CartItem["options"]>[number] => Boolean(o) && typeof o.id === "string" && typeof o.name === "string" && Number.isFinite(Number(o.extra_price)) && Number(o.extra_price) >= 0) } : {}),
-      ...(dedicationsSchema.safeParse(item.dedications).success ? { dedications: dedicationsSchema.parse(item.dedications) } : {}),
+      ...(dedicationDraftsSchema.safeParse(item.dedications).success ? { dedications: dedicationDraftsSchema.parse(item.dedications) } : {}),
       ...(Number.isInteger(item.dedication_card_quantity) && Number(item.dedication_card_quantity) >= 0 ? { dedication_card_quantity: Number(item.dedication_card_quantity) } : {}),
       ...(typeof item.message === "string" ? { message: item.message.slice(0, 500) } : {}),
     });

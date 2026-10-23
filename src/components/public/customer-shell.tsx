@@ -1,16 +1,17 @@
 "use client";
+import { BrandLogo, StorefrontMediaProvider } from "./storefront-media";
 import Link from "next/link";
 import { MobileNavigation } from "./mobile-navigation";
 import { Flower2, Search, ArrowLeft } from "lucide-react";
 import type { ReactNode } from "react";
-import { lato, script } from "./home/shared";
+import { lato } from "./home/shared";
 
 export function CustomerShell({ children, tracking = false }: { children: ReactNode; tracking?: boolean }) {
-  return <main className={`customer-experience nova-checkout ${lato.className} ${tracking ? "customer-with-nav" : ""}`}>
-    <header className="customer-header"><Link href="/" aria-label="Volver a la tienda" className="customer-back"><ArrowLeft size={20} /></Link><Link href="/" className="customer-brand"><Flower2 aria-hidden size={30}/><span>Floristería <strong className={script.className}>Anabelle</strong></span></Link><nav aria-label="Navegación de compra" className="customer-desktop-nav"><Link href="/#catalogo">Catálogo</Link><Link href="/checkout">Mi compra</Link><Link href="/seguimiento">Seguir pedido</Link></nav><Link href="/seguimiento" aria-label="Consultar un pedido" className="customer-back"><Search size={20}/></Link></header>
+  return <StorefrontMediaProvider><main className={`customer-experience nova-checkout ${lato.className} ${tracking ? "customer-with-nav" : ""}`}>
+    <header className="customer-header"><Link href="/" aria-label="Volver a la tienda" className="customer-back"><ArrowLeft size={20} /></Link><Link href="/" className="customer-brand"><BrandLogo className="h-12 max-w-[176px]"/></Link><nav aria-label="Navegación de compra" className="customer-desktop-nav"><Link href="/#catalogo">Catálogo</Link><Link href="/checkout">Mi compra</Link><Link href="/seguimiento">Seguir pedido</Link></nav><Link href="/seguimiento" aria-label="Consultar un pedido" className="customer-back"><Search size={20}/></Link></header>
     <div className="customer-content">{children}</div>
     {tracking && <MobileNavigation tracking/>}
-  </main>;
+  </main></StorefrontMediaProvider>;
 }
 
 export function WaitingFlower() {

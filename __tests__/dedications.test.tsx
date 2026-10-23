@@ -14,7 +14,7 @@ describe("Dedicatorias conectadas al carrito y checkout (unitario, no permisos r
   });
   it("tarjeta incluye límites, firma, contador y preview lavanda accesible", () => {
     const html = renderToStaticMarkup(<DedicationEditor count={1} value={[dedication]} onChange={() => {}}/>);
-    expect(html).toContain("Una dedicatoria especial");
+    expect(html).toContain("Personaliza tu tarjeta");
     expect(html).toContain('maxLength="250"');
     expect(html).toContain('maxLength="60"');
     expect(html).toContain("#f6f0fa");
@@ -56,6 +56,17 @@ describe("Dedicatorias conectadas al carrito y checkout (unitario, no permisos r
   });
   it("dos tarjetas por unidad se representan explícitamente", () => {
     expect(resizeDedications([dedication], 4)).toEqual([dedication, ...Array.from({ length: 3 }, () => ({ message: "", signature: "" }))]);
+  });
+  it("compra rápida sin tocar el editor conserva cada tarjeta en blanco en el pedido", () => {
+    const cart = sanitizeCart([{ ...product, dedications: undefined, quantity: 2 }]);
+    const payload = orderPayload(cart, { customer_name: "TEST Cliente", customer_phone: "00012345", delivery: "retiro", address: "", notes: "", promotion_id: "" }, "blank-quick-add");
+    expect(payload.items[0].dedications).toEqual([{ message: "", signature: "" }, { message: "", signature: "" }]);
+    expect(payload.items[0].message).toBeNull();
+  });
+  it("completa tarjetas faltantes sin replicar ni descartar mensajes existentes", () => {
+    const cart = sanitizeCart([{ ...product, quantity: 2 }]);
+    const payload = orderPayload(cart, { customer_name: "TEST Cliente", customer_phone: "00012345", delivery: "retiro", address: "", notes: "", promotion_id: "" }, "missing-blank-card");
+    expect(payload.items[0].dedications).toEqual([dedication, { message: "", signature: "" }]);
   });
   it("clasificación se guarda explícitamente, no por nombre", () => {
     expect(createInventoryItemSchema.parse({ name: "Papel con nombre Tarjeta", item_type: "insumo" }).is_dedication_card).toBe(false);

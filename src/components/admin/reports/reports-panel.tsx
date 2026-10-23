@@ -303,7 +303,7 @@ function SalesReportView({ data }: { data: SalesReport }) {
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(100%,19rem),1fr))] gap-4">
         <StatCard icon={<Receipt />} label="Ventas netas" value={`Bs ${formatMoney(summary.net_sales)}`} />
         <StatCard icon={<Receipt />} label="Ventas brutas" value={`Bs ${formatMoney(summary.gross_sales)}`} />
         <StatCard icon={<Banknote />} label="Reintegros monetarios" value={`Bs ${formatMoney(summary.refunds)}`} />

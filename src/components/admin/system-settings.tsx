@@ -150,7 +150,7 @@ export default function SystemSettings() {
           <p className="text-text-secondary">No hay configuraciones registradas.</p>
         </Card>
       ) : (
-        settings.filter(setting => setting.key !== "store_location").map((setting) => (
+        settings.filter(setting => !["store_location", "storefront_media"].includes(setting.key)).map((setting) => (
           <Card
             key={setting.key}
             className="flex-col gap-4 md:flex-row md:items-center md:justify-between"

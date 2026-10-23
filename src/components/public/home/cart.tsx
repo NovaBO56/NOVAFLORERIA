@@ -1,7 +1,7 @@
 "use client";
 
 import { DedicationEditor, DedicationPreview } from "../dedication-card";
-import { type Dedication } from "@/lib/public/dedications";
+import { dedicationsSchema, type Dedication } from "@/lib/public/dedications";
 import { useEffect, useMemo, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import Link from "next/link";
@@ -60,6 +60,9 @@ export function useCart() {
 }
 
 export function clearCart() { cartStore.update(() => []); selectPromotion(""); }
+export function updateCartDedications(id: string, dedications: Dedication[]) {
+  cartStore.update(items => items.map(item => item.id === id ? { ...item, message: undefined, dedications } : item));
+}
 export function addComboToCart(lines: { product: PublicProduct; quantity: number; options: CustomizationOption[]; message: string; dedications?: Dedication[]; cardQuantity?: number }[]) {
   cartStore.update(items => addCartBatch(items, lines.map(line => ({ quantity: line.quantity, product: {
     id: line.product.id, name: line.product.name,
@@ -239,8 +242,9 @@ export function CartDrawer({
   // Cada vez que se abre el carrito se actualizan precios y disponibilidad.
   useCartAvailability(open);
 
+  const invalidCards = cart.items.some(item => item.dedications && !dedicationsSchema.safeParse(item.dedications).success);
   const canContinue =
-    cart.items.length > 0 && !cart.hasUnavailable && acceptingOrders;
+    cart.items.length > 0 && !cart.hasUnavailable && acceptingOrders && !invalidCards;
 
   const whatsappHref = whatsappLink(
     whatsappNumber,
@@ -352,7 +356,7 @@ export function CartDrawer({
                     </p>
 
                     {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6c6278]">{option.name}</p>)}
-                    <DedicationPreview entries={item.dedications}/>{item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
+                    <DedicationPreview entries={item.dedications} compact/>{item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
                     {(item.dedication_card_quantity ?? 0) > 0 ? <div className="mt-3"><button type="button" className="min-h-11 text-sm font-bold text-[#65358e] underline" onClick={() => setEditingDedication(editingDedication === item.id ? null : item.id)}>{editingDedication === item.id ? "Terminar edición" : "Editar dedicatorias"}</button>{editingDedication === item.id && <DedicationEditor count={item.quantity * (item.dedication_card_quantity ?? 0)} value={item.dedications ?? (item.message ? [{ message: item.message, signature: "" }] : [])} onChange={dedications => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications } : line))}/>}</div> : item.dedications?.length || item.message ? <div className="mt-3"><ShoppingNotice>Este detalle ya no incluye tarjeta. Conservamos tu texto para que puedas revisarlo.</ShoppingNotice><button type="button" className="min-h-11 text-sm underline" onClick={() => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications: undefined } : line))}>Continuar sin dedicatorias</button></div> : null}
                     {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#f4edf8] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#59436c]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#65358e] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#604581]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
                     {!item.available ? (
@@ -422,7 +426,7 @@ export function CartDrawer({
             </p>
           ) : null}
 
-          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : cart.items.length > 0 ? <div className="mt-4"><ShoppingNotice>Revisa la disponibilidad de tus productos y el horario de la tienda para continuar.</ShoppingNotice></div> : null}
+          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : cart.items.length > 0 ? <div className="mt-4"><ShoppingNotice>{invalidCards ? "Escribe los mensajes de tus tarjetas o elige dejarlas en blanco para continuar." : "Revisa la disponibilidad de tus productos y el horario de la tienda para continuar."}</ShoppingNotice></div> : null}
           {whatsappHref && cart.items.length > 0 ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center gap-2 text-sm text-[#65358e]"><MessageCircle size={16} /> Comprar por WhatsApp</a> : null}
         </div>
       </aside>

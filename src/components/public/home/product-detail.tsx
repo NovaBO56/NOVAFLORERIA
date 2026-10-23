@@ -1,7 +1,7 @@
 "use client";
 
 import { DedicationEditor } from "../dedication-card";
-import { hasDedication, resizeDedications, type Dedication } from "@/lib/public/dedications";
+import { dedicationsSchema, hasDedication, resizeDedications, type Dedication } from "@/lib/public/dedications";
 import { useEffect, useRef, useState } from "react";
 import { SafeImage as Image } from "@/components/public/safe-image";
 import { Heart, ShoppingBag } from "lucide-react";
@@ -16,6 +16,7 @@ import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion
 import { script } from "./shared";
 import { ComboProgress } from "../combo-progress";
 import { ShoppingNotice } from "../shopping-notice";
+import { useCart } from "./cart";
 
 type DetailState = { id: string; data: ProductDetail | null } | null;
 
@@ -30,6 +31,8 @@ type ProductDetailSectionProps = {
   promotion?: PublicPromotion;
   comboGuide?: { step: number; total: number; cancel: () => void };
   error?: string;
+  embedded?: boolean;
+  hideFavorite?: boolean;
 };
 
 /**
@@ -48,7 +51,10 @@ export function ProductDetailSection({
   promotion,
   comboGuide,
   error,
+  embedded = false,
+  hideFavorite = false,
 }: ProductDetailSectionProps) {
+  const cart = useCart();
   const [detail, setDetail] = useState<DetailState>(null);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [dedications, setDedications] = useState<Dedication[]>([]);
@@ -105,17 +111,21 @@ export function ProductDetailSection({
 
   async function addSelection() {
     if (adding.current || !full) return;
+    const cards = dedicationsSchema.safeParse(resizeDedications(dedications, quantity * cardQuantity));
+    if (!cards.success) { setAvailabilityError(cards.error.issues[0]?.message || "Revisa tus tarjetas."); return; }
     if (quantity * cardQuantity > 198 && hasDedication(dedications)) {
       setAvailabilityError("Para conservar tus dedicatorias, elige una cantidad menor o quita los mensajes de esta selección."); return;
     }
     adding.current = true; setChecking(true); setAvailabilityError("");
     try {
       if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW !== "true") {
+        const items = [...cart.items.map(item => ({ product_id:item.id.split(":")[0], quantity:item.quantity, customization_option_ids:item.options?.map(option=>option.id) ?? [] })), { product_id: product.id, quantity, customization_option_ids: selectedOptions }];
+        if (items.length > 50) { setAvailabilityError("Tu carrito ya tiene el máximo de líneas. Revisa el carrito antes de agregar otro detalle."); return; }
         const response = await fetch("/api/products/availability", { method: "POST", headers: { "content-type": "application/json" },
-          body: JSON.stringify({ items: [{ product_id: product.id, quantity, customization_option_ids: selectedOptions }] }) });
+          body: JSON.stringify({ items, combine:true }) });
         const result = await response.json();
-        if (!response.ok || result.availability?.[0]?.is_available !== true) {
-          setAvailabilityError(response.ok ? "Este detalle ya no está disponible en la cantidad elegida. Prueba otra cantidad u otro producto." : "No pudimos comprobar la disponibilidad. Intenta nuevamente."); return;
+        if (!response.ok || !result.availability?.length || result.availability.some((item: {is_available:boolean})=>!item.is_available)) {
+          setAvailabilityError(response.ok ? "No hay existencias suficientes para esta selección junto con tu carrito. Revisa las cantidades o elige otro detalle." : "No pudimos comprobar la disponibilidad. Intenta nuevamente."); return;
         }
       }
       if (onAdd(quantity, full.customization_options?.filter(option => selectedOptions.includes(option.id)) ?? [], "", cardQuantity && quantity * cardQuantity <= 198 ? resizeDedications(dedications, quantity * cardQuantity) : undefined, cardQuantity) !== false) setAdded(true);
@@ -133,11 +143,11 @@ export function ProductDetailSection({
 
   return (
     <section
-      id="detalle"
-      className="nova-enter scroll-mt-20 border-y border-[#e8e0ea] bg-white px-5 py-16 sm:px-8 sm:py-20"
+      id={embedded ? undefined : "detalle"}
+      className={embedded ? "min-w-0 bg-white py-2" : "nova-enter scroll-mt-20 border-y border-[#e8e0ea] bg-white px-5 py-16 sm:px-8 sm:py-20"}
     >
       <div className="mx-auto max-w-[1180px]">
-        <div className="mb-8">
+        <div className={embedded ? "hidden" : "mb-8"}>
           <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
             Vista de producto
           </p>
@@ -302,7 +312,7 @@ export function ProductDetailSection({
 
               {availabilityError && <p className="customer-error" role="alert">{availabilityError}</p>}
 
-              <button
+              {!hideFavorite && <button
                 type="button"
                 onClick={onToggleFavorite}
                 aria-pressed={isFavorite}
@@ -311,8 +321,8 @@ export function ProductDetailSection({
                   isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"
                 }
               >
-                <Heart size={18} className={isFavorite ? "fill-current" : ""} />
-              </button>
+                <Heart key={String(isFavorite)} size={18} className={isFavorite ? "nova-favorite fill-current text-[#a14370]" : "text-[#a14370]"} />
+              </button>}
             </div>
           </div>
         </div>

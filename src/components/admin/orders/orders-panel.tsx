@@ -347,7 +347,7 @@ function paymentLabel(order: OrderRow) {
   if (Number(order.total) === 0) return "No requiere pago";
   const payment = order.payments.find(item => item.status === "pendiente") ?? order.payments.find(item => item.status === "confirmado") ?? order.payments.find(item => item.status === "rechazado");
   if (!payment) return "Pago sin reportar";
-  return `${payment.method === "qr" ? "QR" : "Efectivo"} · ${payment.status === "pendiente" ? "por verificar" : payment.status === "confirmado" ? "verificado" : "rechazado"}`;
+  return `${payment.method === "qr" ? "QR" : payment.method === "efectivo" ? "Efectivo" : "Método por verificar"} · ${payment.status === "pendiente" ? "por verificar" : payment.status === "confirmado" ? "verificado" : "rechazado"}`;
 }
 
 type PendingAction = "cancel" | "reject-payment" | "request-deletion" | "confirm-payment" | null;

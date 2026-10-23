@@ -2,6 +2,47 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Brand header only: preserve the owner's opaque artwork without cutting petals. */
+.anabelle-brand-header {
+  isolation: isolate;
+  overflow: clip;
+  padding: 8px clamp(8px, 2vw, 30px);
+  background: linear-gradient(110deg, #faf2ee, #f6e8ef 48%, #f4eff9);
+  border-bottom: 1px solid #e8dce9;
+}
+.anabelle-header-bar {
+  border: 1px solid #fff8;
+  border-radius: 36px;
+  background: #f3dee6;
+  box-shadow: 0 4px 18px #76506b0b;
+}
+.anabelle-header-logo img,
+.anabelle-mobile-menu img { mix-blend-mode: darken; }
+.anabelle-mobile-menu { background: #f3dee6; }
+.anabelle-hours-notice { background: linear-gradient(100deg, #50305f, #644075, #50305f); box-shadow: inset 0 1px #ffffff20; }
+.nova-storefront :is(#inicio, #catalogo, #promociones, #detalle, #nosotros, #ubicacion, #contacto) { scroll-margin-top: 112px; }
+.anabelle-header-botanical {
+  position: absolute;
+  top: 5px;
+  bottom: 5px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #bc8ca5;
+  opacity: .2;
+  pointer-events: none;
+  z-index: -1;
+}
+.anabelle-header-botanical svg:first-child { width: 45px; height: 65px; stroke-width: .8; }
+.anabelle-header-botanical svg:last-child { width: 28px; height: 44px; stroke-width: 1; }
+.anabelle-header-botanical-left { left: 0; transform: rotate(-16deg); }
+.anabelle-header-botanical-right { right: 0; transform: rotate(16deg); }
+@media (max-width: 639px) {
+  .anabelle-brand-header { padding: 5px 6px; }
+  .anabelle-header-bar { min-height: 72px; border-radius: 24px; }
+  .anabelle-header-botanical { opacity: .12; }
+}
+
 .promotion-arrow { display:flex; align-items:center; justify-content:center; min-width:44px; min-height:44px; border:1px solid #d8c8de; border-radius:14px; color:#65358e; background:white; }
 .promotion-arrow:focus-visible { outline:2px solid #65358e; outline-offset:3px; }
 
@@ -422,6 +463,27 @@
 @keyframes nova-fade {
   from { opacity: .35; }
   to { opacity: 1; }
+}
+
+/* Seven storefront interactions reuse finite opacity/transform effects. */
+@keyframes nova-petal-enter {
+  from { opacity: 0; transform: translate3d(0,-6px,0) rotate(-8deg); }
+  to { opacity: .45; transform: translate3d(0,0,0) rotate(0); }
+}
+@keyframes nova-heart {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(1.12); }
+}
+.nova-hero-petals::before,.nova-hero-petals::after {
+  content: ""; position: absolute; width: 24px; height: 36px;
+  border-radius: 65% 35% 65% 35%; background: #dfcbe7; opacity: .45;
+}
+.nova-hero-petals::before { inset-inline-start: 3%; inset-block-start: 12%; }
+.nova-hero-petals::after { inset-inline-end: 5%; inset-block-end: 8%; background: #edcddc; }
+@media (prefers-reduced-motion: no-preference) {
+  .nova-hero-petals::before,.nova-hero-petals::after { animation: nova-petal-enter 350ms ease-out both; }
+  .nova-favorite { animation: nova-heart 160ms ease-out; }
+  .nova-dedication { animation: nova-enter 160ms ease-out; }
 }
 @keyframes nova-enter {
   from { opacity: 0; transform: translateY(4px); }
@@ -880,7 +942,7 @@
   color:white;
   box-shadow:0 0 0 5px #eee8fa
 }
-.customer-timeline .timeline-icon[data-stage=complete] { background:#e6f1e9; color:#386647; }
+.customer-timeline li[data-reached=true] .timeline-icon[data-stage=complete] { background:#e6f1e9; color:#386647; }
 .customer-timeline strong {
   display:block
 }
@@ -1021,4 +1083,23 @@
   .customer-total strong {
     font-size:26px
   }
+}
+/* Keep product actions within reach, including long catalogue names. */
+.product-admin-table th:last-child,
+.product-admin-table td:last-child:not([colspan]) {
+  position: sticky;
+  right: 0;
+  background: var(--color-surface, #fff);
+  box-shadow: -3px 0 8px #3624460a;
+}
+.customer-general-notes { border: 1px solid #c8dbe9; border-radius: 1rem; background: #f1f7fb; padding: 1rem; color: #315c79; }
+@media (max-width: 639px) {
+  .product-admin-table table { min-width: 0; }
+  .product-admin-table thead { display: none; }
+  .product-admin-table tbody > tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding: .5rem; }
+  .product-admin-table td { min-width: 0; padding: .5rem; }
+  .product-admin-table td:nth-child(2), .product-admin-table td:nth-child(3) { display: none; }
+  .product-admin-table td:first-child { grid-column: 1 / -1; }
+  .product-admin-table td:last-child:not([colspan]) { position: static; box-shadow: none; }
+  .product-admin-table td[colspan] { grid-column: 1 / -1; overflow-wrap: anywhere; }
 }
