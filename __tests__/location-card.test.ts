@@ -28,10 +28,10 @@ describe("Location card markup; visual layout tested separately", () => {
     const html=renderToStaticMarkup(createElement(LocationCard,{location:null,hours:null}));
     expect(html).toContain("Ubicación por configurar");expect(html).not.toContain("<iframe");expect(html).not.toContain("Cómo llegar");
   });
-  it("configured preview is lazy, accessible, borderless and bounded", () => {
+  it("configured preview is opt-in, with address and an always available Maps link", () => {
     const location=storeLocationSchema.parse({latitude:0,longitude:0,address:"TEST ADDRESS",reference:"TEST REFERENCE"});
     const html=renderToStaticMarkup(createElement(LocationCard,{location,hours:"08:00 – 20:00"}));
-    expect(html).toContain('loading="lazy"');expect(html).toContain('title="Mapa de la ubicación configurada');expect(html).toContain('border-0');expect(html).toContain('overflow-hidden');expect(html).toContain("TEST REFERENCE");expect(html).toContain("08:00 – 20:00");expect(html).toContain("Cómo llegar");
+    expect(html).not.toContain("<iframe");expect(html).toContain("Mostrar mapa de Google");expect(html).toContain("Abrir en Google Maps");expect(html).toContain('overflow-hidden');expect(html).toContain("TEST REFERENCE");expect(html).toContain("08:00 – 20:00");expect(html).toContain("Cómo llegar");
   });
   it("unavailable configuration is distinct from not yet configured", () => expect(renderToStaticMarkup(createElement(LocationCard,{location:null,hours:null,unavailable:true}))).toContain("No pudimos consultar la ubicación"));
 });

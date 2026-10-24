@@ -7,13 +7,12 @@ import { SafeImage as Image } from "@/components/public/safe-image";
 import { Heart, ShoppingBag } from "lucide-react";
 import {
   formatMoney,
-  initials,
   isPurchasable,
   promotionBenefit,
 } from "@/lib/public/format";
 import { MAX_QUANTITY } from "@/lib/public/cart-logic";
 import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion } from "@/lib/public/types";
-import { script } from "./shared";
+import { ProductPlaceholder } from "../product-placeholder";
 import { ComboProgress } from "../combo-progress";
 import { ShoppingNotice } from "../shopping-notice";
 import { useCart } from "./cart";
@@ -144,16 +143,16 @@ export function ProductDetailSection({
   return (
     <section
       id={embedded ? undefined : "detalle"}
-      className={embedded ? "min-w-0 bg-white py-2" : "nova-enter scroll-mt-20 border-y border-[#e8e0ea] bg-white px-5 py-16 sm:px-8 sm:py-20"}
+      className={embedded ? "public-quick-detail min-w-0 bg-white py-2" : "nova-enter scroll-mt-20 border-y border-[#eadcdd] bg-white px-5 py-16 sm:px-8 sm:py-20"}
     >
       <div className="mx-auto max-w-[1180px]">
         <div className={embedded ? "hidden" : "mb-8"}>
-          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
+          <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b5965]">
             Vista de producto
           </p>
 
           <h2
-            className={`${script.className} mt-2 text-[50px] leading-none text-[#4c285f]`}
+            className="mt-2 text-3xl font-semibold tracking-tight text-[#392b38]"
           >
             Detalle
           </h2>
@@ -161,10 +160,10 @@ export function ProductDetailSection({
 
         {comboGuide && <ComboProgress step={comboGuide.step} total={comboGuide.total} product={product} quantity={requiredQuantity ?? 1} name={promotion?.name} onCancel={comboGuide.cancel}/>}
         {error && <div className="mb-6"><ShoppingNotice tone="error">{error}</ShoppingNotice></div>}
-        <div className="grid min-w-0 gap-8 [overflow-wrap:anywhere] lg:grid-cols-[minmax(0,1.05fr)_minmax(0,.95fr)]">
+        <div className="public-product-detail-grid grid min-w-0 gap-6 [overflow-wrap:anywhere] md:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
           <div
-            className={`grid gap-4 ${
-              images.length > 1 ? "grid-cols-[84px_minmax(0,1fr)]" : "grid-cols-1"
+            className={`public-product-gallery grid content-start gap-3 ${
+              images.length > 1 ? "grid-cols-[52px_minmax(0,1fr)]" : "grid-cols-1"
             }`}
           >
             {images.length > 1 ? (
@@ -176,17 +175,17 @@ export function ProductDetailSection({
                     onClick={() => setActiveImage(index)}
                     aria-label={`Ver imagen ${index + 1} de ${product.name}`}
                     aria-pressed={index === activeImage}
-                    className={`relative block aspect-square w-full overflow-hidden rounded-xl bg-[#ead9df] ${
+                    className={`relative block aspect-square w-full overflow-hidden rounded-xl bg-[#f5eeea] ${
                       index === activeImage
-                        ? "border-2 border-[#65358e]"
-                        : "border border-[#ded2e2]"
+                        ? "border-2 border-[#873c58]"
+                        : "border border-[#e6d7d8]"
                     }`}
                   >
                     <Image
                       src={image.public_url}
                       alt=""
                       fill
-                      sizes="84px"
+                      sizes="52px"
                       className="object-cover"
                     />
                   </button>
@@ -194,7 +193,7 @@ export function ProductDetailSection({
               </div>
             ) : null}
 
-            <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#ead9df]">
+            <div className="public-product-image relative aspect-square overflow-hidden rounded-2xl bg-[#f5eeea]">
               {current ? (
                 <Image
                   key={current.id}
@@ -202,61 +201,55 @@ export function ProductDetailSection({
                   alt={current.alt_text ?? product.name}
                   fill
                   sizes="(min-width: 1024px) 560px, 100vw"
-                  className="nova-fade object-cover"
+                  className="nova-fade object-contain"
                 />
               ) : (
-                <div className="flex h-full items-center justify-center">
-                  <div className="flex size-[55%] items-center justify-center rounded-full border border-white/60 bg-white/20">
-                    <span className={`${script.className} text-7xl text-[#76547f]`}>
-                      {initials(product.name)}
-                    </span>
-                  </div>
-                </div>
+                <ProductPlaceholder/>
               )}
             </div>
           </div>
 
           <div className="flex min-w-0 flex-col justify-center">
             {categoryName ? (
-              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#78657f]">
+              <span className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6b5965]">
                 {categoryName}
               </span>
             ) : null}
 
             <h3
-              className={`${script.className} mt-3 break-words text-[55px] leading-none text-[#4c285f]`}
+              className="mt-3 break-words text-2xl font-semibold leading-tight tracking-tight text-[#392b38] sm:text-3xl"
             >
               {product.name}
             </h3>
 
-            <p key={product.price} className="nova-value mt-5 text-2xl font-black text-[#65358e]">
+            <p key={product.price} className="nova-value mt-5 text-2xl font-black text-[#873c58]">
               {formatMoney(product.price)}
             </p>
 
             {loadingDetail ? (
               <div className="mt-5 space-y-2" aria-busy="true">
-                <div className="h-3 w-full max-w-[480px] animate-pulse rounded bg-[#eee5f0]" />
-                <div className="h-3 w-4/5 max-w-[400px] animate-pulse rounded bg-[#eee5f0]" />
+                <div className="h-3 w-full max-w-[480px] animate-pulse rounded bg-[#f5eeea]" />
+                <div className="h-3 w-4/5 max-w-[400px] animate-pulse rounded bg-[#f5eeea]" />
               </div>
             ) : full?.description ? (
-              <p className="mt-5 max-w-[480px] text-sm leading-7 text-[#6a5e6e]">
+              <p className="mt-5 max-w-[480px] text-sm leading-7 text-[#6b5965]">
                 {full.description}
               </p>
             ) : null}
 
             {includes.length > 0 ? (
-              <p className="mt-4 max-w-[480px] text-sm leading-6 text-[#6a5e6e]">
-                <span className="font-black text-[#5b4d60]">Incluye:</span>{" "}
+              <p className="mt-4 max-w-[480px] text-sm leading-6 text-[#6b5965]">
+                <span className="font-black text-[#645460]">Incluye:</span>{" "}
                 {includes.join(", ")}
               </p>
             ) : null}
 
             <div className="mt-7 border-y border-[#e9e1eb] py-5">
-              <p className="text-xs font-black uppercase tracking-wider text-[#5b4d60]">
+              <p className="text-xs font-black uppercase tracking-wider text-[#645460]">
                 Cantidad
               </p>
 
-              <div className="mt-3 inline-flex items-center rounded-xl border border-[#ded2e2]">
+              <div className="mt-3 inline-flex items-center rounded-xl border border-[#e6d7d8]">
                 <button
                   type="button"
                   onClick={() => setQuantity((value) => Math.max(1, value - 1))}
@@ -269,7 +262,7 @@ export function ProductDetailSection({
 
                 <span
                   key={quantity}
-                  className="nova-value flex size-11 items-center justify-center border-x border-[#ded2e2] text-sm font-black"
+                  className="nova-value flex size-11 items-center justify-center border-x border-[#e6d7d8] text-sm font-black"
                   aria-live="polite"
                 >
                   {quantity}
@@ -295,12 +288,12 @@ export function ProductDetailSection({
               <DedicationEditor count={quantity * cardQuantity} value={dedications} onChange={setDedications}/>
               {hasDedication(dedications.slice(quantity * cardQuantity)) && <ShoppingNotice>La selección cambió. Las dedicatorias de las tarjetas que ya no están incluidas no se agregarán al pedido.</ShoppingNotice>}
             </div>
-            <div className="mt-6 flex flex-col gap-3 sm:flex-row">
+            <div className="public-product-actions mt-6 flex flex-col gap-3 sm:flex-row">
               <button
                 type="button"
                 onClick={() => void addSelection()}
                 disabled={checking || added || !purchasable || loadingDetail || !full}
-                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-3 py-3 sm:flex-1 text-sm font-black text-white transition hover:bg-[#572d7a] disabled:cursor-not-allowed disabled:opacity-50"
+                className="flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#873c58] px-3 py-3 sm:flex-1 text-sm font-black text-white transition hover:bg-[#713048] disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <ShoppingBag size={17} />
                 {purchasable
@@ -316,7 +309,7 @@ export function ProductDetailSection({
                 type="button"
                 onClick={onToggleFavorite}
                 aria-pressed={isFavorite}
-                className="flex h-12 items-center justify-center rounded-xl border border-[#d8cadd] px-5 text-[#65358e] transition hover:bg-[#f5eff7]"
+                className="flex h-12 items-center justify-center rounded-xl border border-[#d9bfc6] px-5 text-[#873c58] transition hover:bg-[#fbf2ef]"
                 aria-label={
                   isFavorite ? "Quitar de favoritos" : "Agregar a favoritos"
                 }

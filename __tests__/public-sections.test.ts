@@ -86,13 +86,15 @@ describe("Public brand, contact and location sections", () => {
     expect(html).not.toContain("<iframe");
   });
 
-  it("shows the actual contact hours in Monday-to-Sunday order", () => {
+  it("keeps today in contact and the full configured week in location and footer", () => {
     const html = renderToStaticMarkup(createElement(ContactSection, { whatsappHref: null, status, week }));
     const content = text(html);
     expect(content).toContain("08:00 – 20:00");
-    expect(content).toContain("09:00 – 14:00");
-    expect(content.indexOf("Lunes")).toBeGreaterThan(-1);
-    expect(content.indexOf("Domingo")).toBeGreaterThan(content.indexOf("Lunes"));
+    expect(content).not.toContain("Domingo");
+    const fullWeek = text(renderToStaticMarkup(createElement(SiteFooter, footerProps)));
+    expect(fullWeek).toContain("09:00 – 14:00");
+    expect(fullWeek.indexOf("Lunes")).toBeGreaterThan(-1);
+    expect(fullWeek.indexOf("Domingo")).toBeGreaterThan(fullWeek.indexOf("Lunes"));
   });
 
   it("keeps a single location anchor and no fabricated destination in the unconfigured state", () => {
@@ -103,12 +105,12 @@ describe("Public brand, contact and location sections", () => {
     expect(html).not.toContain("maps/dir");
   });
 
-  it("renders the configured location once with an accessible lazy panoramic map", () => {
+  it("keeps the configured address and external destination before explicitly loading the map", () => {
     const html = renderToStaticMarkup(createElement(LocationSection, { location, hours: "08:00 – 20:00", week, loading: false, unavailable: false }));
     expect(html.match(/id="ubicacion"/g)).toHaveLength(1);
-    expect(html.match(/<iframe/g)).toHaveLength(1);
-    expect(html).toContain('loading="lazy"');
-    expect(html).toMatch(/<iframe[^>]+title="[^"]+"/);
+    expect(html).not.toContain("<iframe");
+    expect(html).toContain("Mostrar mapa de Google");
+    expect(html).toContain("Abrir en Google Maps");
     expect(html).toContain("Entrada configurada de prueba");
     expect(html).toContain("Dirección configurada de prueba &amp; referencia");
     expect(html).toContain("destination=0,0");

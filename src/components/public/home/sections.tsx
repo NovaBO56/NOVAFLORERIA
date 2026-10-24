@@ -1,7 +1,6 @@
 "use client";
 import { BrandLogo, useStorefrontMedia } from "../storefront-media";
 import { LocationCard } from "../location-card";
-import { WeeklyHours } from "../weekly-hours";
 import type { StoreLocation } from "@/validations/store-location";
 
 
@@ -39,7 +38,7 @@ export function ClosedBanner({ status }: { status: BusinessStatus | null }) {
   const hours = todayHoursLabel(status);
 
   return (
-    <div role="status" className="anabelle-hours-notice bg-[#4c285f] px-5 py-2.5 text-center text-xs text-white">
+    <div role="status" className="anabelle-hours-notice bg-[#392b38] px-5 py-2.5 text-center text-xs text-white">
       <span className="font-black">Estamos cerrados en este momento.</span>{" "}
       {status.accept_orders_outside_hours
         ? "Puedes dejar tu pedido y lo atenderemos en cuanto abramos."
@@ -56,17 +55,17 @@ export function ClosedBanner({ status }: { status: BusinessStatus | null }) {
 
 export function HeroSection({ status }: { status: BusinessStatus | null }) {
   const hours = todayHoursLabel(status);
-  return <section id="inicio" className="anabelle-floral-hero relative isolate overflow-hidden scroll-mt-28 bg-[#fff8f4]">
+  return <section id="inicio" className="anabelle-floral-hero relative isolate overflow-hidden scroll-mt-28 bg-[#fff9f4]">
     <div className="mx-auto grid max-w-[1380px] items-center gap-2 px-6 py-10 sm:px-10 sm:py-12 lg:min-h-[520px] lg:grid-cols-[.45fr_.55fr] lg:gap-8 lg:px-14 lg:py-14">
       <div className="relative z-10 min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#6a5e6e]">Floristería Anabelle</p>
-        <h1 className={`${script.className} mt-5 text-[64px] leading-[.95] text-[#4c285f] sm:text-[80px] lg:text-[88px]`}>Flores<br />que hablan</h1>
-        <p className="mt-6 max-w-[470px] text-[15px] leading-7 text-[#6a5e6e] sm:text-base">Arreglos florales, regalos y detalles diseñados para acompañar los momentos que quieres recordar.</p>
+        <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#6b5965]">Floristería Anabelle</p>
+        <h1 className={`${script.className} mt-5 text-[64px] leading-[.95] text-[#392b38] sm:text-[80px] lg:text-[88px]`}>Flores<br />que hablan</h1>
+        <p className="mt-6 max-w-[470px] text-[15px] leading-7 text-[#6b5965] sm:text-base">Arreglos florales, regalos y detalles diseñados para acompañar los momentos que quieres recordar.</p>
         <div className="mt-7 flex flex-wrap gap-3">
-          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
-          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#cdb5d2] bg-white/80 px-5 py-3 text-sm font-bold text-[#4c285f] hover:bg-[#f6f0f8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Elegir por ocasión</a>
+          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#873c58] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#713048] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
+          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#cdb5d2] bg-white/80 px-5 py-3 text-sm font-bold text-[#392b38] hover:bg-[#f3e3e5] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]">Ver categorías</a>
         </div>
-        {hours && <p className="mt-6 text-xs text-[#6a5e6e]">horario de hoy: <strong>{hours}</strong></p>}
+        {hours && <p className="mt-6 text-xs text-[#6b5965]">horario de hoy: <strong>{hours}</strong></p>}
       </div>
       <div className="flex min-w-0 items-center justify-center pt-4 lg:pt-0">
         <div className="relative aspect-[360/542] w-[200px] max-w-full sm:w-[240px] lg:w-[320px]">
@@ -101,7 +100,7 @@ const services = [
 
 export function ServiceStrip() {
   return (
-    <section className="border-b border-[#e8e0ea] bg-white">
+    <section className="border-b border-[#eadcdd] bg-white">
       <div className="mx-auto grid max-w-[1100px] sm:grid-cols-3">
         {services.map((item, index) => {
           const Icon = item.icon;
@@ -115,12 +114,12 @@ export function ServiceStrip() {
                   : ""
               }`}
             >
-              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#f3ebf6] text-[#65358e]">
+              <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-[#f3e3e5] text-[#873c58]">
                 <Icon size={19} strokeWidth={1.7} />
               </div>
 
               <div>
-                <p className="text-sm font-black text-[#403344]">
+                <p className="text-sm font-black text-[#392b38]">
                   {item.title}
                 </p>
 
@@ -160,30 +159,30 @@ export function AboutSection({ photo = null }: { photo?: PublicImage | null }) {
 
         <div className="order-1 flex min-w-0 items-center px-6 py-9 sm:px-10 sm:py-12 lg:order-2 lg:px-14">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b5965]">
               Nuestra esencia
             </p>
 
             <h2
               id="nosotros-title"
-              className={`${script.className} mt-3 text-[52px] leading-[.95] text-[#4c285f] sm:text-[60px]`}
+              className={`${script.className} mt-3 text-[52px] leading-[.95] text-[#392b38] sm:text-[60px]`}
             >
               Hecho con
               <br />
               intención
             </h2>
 
-            <p className="mt-6 text-sm leading-7 text-[#6a5e6e]">
+            <p className="mt-6 text-sm leading-7 text-[#6b5965]">
               Hay muchas formas de decir «te quiero», «gracias» o «estoy contigo».
               En Floristería Anabelle puedes elegir arreglos florales, regalos y
               detalles para acompañar esos momentos.
             </p>
-            <p className="mt-4 text-sm leading-7 text-[#6a5e6e]">Preparamos cada pedido con atención a su composición y presentación.
+            <p className="mt-4 text-sm leading-7 text-[#6b5965]">Preparamos cada pedido con atención a su composición y presentación.
               Si tu detalle incluye tarjeta, añade una dedicatoria. Consulta las
               opciones de cada producto para darle tu toque personal.</p>
             <div className="mt-7 flex flex-wrap gap-3">
-              <a href="#catalogo" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
-              <a href="#contacto" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d8c8de] px-4 py-3 text-sm font-bold text-[#65358e] transition-colors hover:bg-[#f5eff7] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Contactar</a>
+              <a href="#catalogo" className="inline-flex min-h-11 items-center justify-center gap-2 rounded-xl bg-[#873c58] px-4 py-3 text-sm font-bold text-white transition-colors hover:bg-[#713048] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
+              <a href="#contacto" className="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#d9bfc6] px-4 py-3 text-sm font-bold text-[#873c58] transition-colors hover:bg-[#fbf2ef] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]">Contactar</a>
             </div>
           </div>
         </div>
@@ -193,10 +192,10 @@ export function AboutSection({ photo = null }: { photo?: PublicImage | null }) {
 }
 
 export function LocationSection({ location, hours, week, loading, unavailable }: { location: StoreLocation | null; hours: string | null; week: WeekDay[]; loading: boolean; unavailable: boolean }) {
-  return <section id="ubicacion" aria-labelledby="ubicacion-title" className="scroll-mt-44 px-5 pb-16 sm:px-8 sm:pb-20">
+  return <section id="ubicacion" aria-labelledby="ubicacion-title" className="scroll-mt-44 px-5 pb-16 pt-12 sm:px-8 sm:pb-20">
     <div className="mx-auto max-w-[1180px]">
-      <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#796481]">Nuestro punto de encuentro</p>
-      <h2 id="ubicacion-title" className={`${script.className} mt-3 text-[50px] leading-none text-[#4c285f] sm:text-[60px]`}>Ven a conocernos</h2>
+      <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#6b5965]">Nuestro punto de encuentro</p>
+      <h2 id="ubicacion-title" className={`mt-7 text-3xl font-semibold leading-tight tracking-tight text-[#392b38] sm:text-4xl`}>Ven a conocernos</h2>
       <LocationCard location={location} hours={hours} week={week} loading={loading} unavailable={unavailable} />
     </div>
   </section>;
@@ -209,7 +208,6 @@ export function LocationSection({ location, hours, week, loading, unavailable }:
 export function ContactSection({
   whatsappHref,
   status,
-  week = [],
 }: {
   whatsappHref: string | null;
   status: BusinessStatus | null;
@@ -221,24 +219,23 @@ export function ContactSection({
     <section
       id="contacto"
       aria-labelledby="contacto-title"
-      className="scroll-mt-44 border-t border-[#e8e0ea] bg-[#f6f0f8] px-5 py-14 sm:px-8 sm:py-16"
+      className="scroll-mt-44 border-t border-[#eadcdd] bg-[#f3e3e5] px-5 py-14 sm:px-8 sm:py-16"
     >
       <div className="mx-auto grid max-w-[1180px] items-center gap-8 lg:grid-cols-[1.15fr_.85fr] lg:gap-16">
         <div className="min-w-0">
-        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
+        <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b5965]">
           Contacto
         </p>
 
         <h2
           id="contacto-title"
-          className={`${script.className} mt-3 text-[55px] leading-none text-[#4c285f]`}
+          className={`mt-3 text-3xl font-semibold tracking-tight leading-tight text-[#392b38] sm:text-4xl`}
         >
           ¿Hablamos?
         </h2>
 
-        <p className="mt-4 max-w-[500px] text-sm leading-7 text-[#6a5e6e]">
-          Escríbenos y te ayudamos a elegir el detalle ideal para esa persona
-          especial.
+        <p className="mt-4 max-w-[500px] text-sm leading-7 text-[#6b5965]">
+          {whatsappHref ? "Cuéntanos qué tienes en mente. Te ayudamos a elegir y personalizar un detalle especial." : "Consulta tu pedido o encuentra la información para visitarnos."}
         </p>
 
         {whatsappHref ? (
@@ -246,18 +243,17 @@ export function ContactSection({
             href={whatsappHref}
             target="_blank"
             rel="noopener noreferrer"
-            className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-6 py-3 text-sm font-black text-white transition-colors hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]"
+            className="mt-7 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#873c58] px-6 py-3 text-sm font-black text-white transition-colors hover:bg-[#713048] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]"
           >
             <MessageCircle size={17} aria-hidden />
             Escribir por WhatsApp
           </a>
         ) : <p className="mt-6 rounded-2xl border border-[#dfd2e5] bg-white/70 px-4 py-3 text-sm leading-6 text-[#66546f]">WhatsApp no está disponible por el momento. Puedes explorar el catálogo y consultar aquí el estado de tu pedido.</p>}
-        <a href="/seguimiento" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#65358e] underline decoration-[#b9a6cf] underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Consultar mi pedido<ArrowRight size={15} aria-hidden /></a>
+        <a href="/seguimiento" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#873c58] underline decoration-[#b9a6cf] underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]">Consultar mi pedido<ArrowRight size={15} aria-hidden /></a>
         </div>
-        <div className="min-w-0 rounded-[28px] border border-[#e4d8e8] bg-white/80 p-6 sm:p-7">
-          <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f2eaf7] text-[#79578c]"><Clock size={18} aria-hidden /></span><div><h3 className="font-bold text-[#4c285f]">Horario de hoy</h3><p className="mt-1 text-sm text-[#6a5e6e]">{hours || "Horario por confirmar"}</p></div></div>
-          <WeeklyHours week={week} />
-          <a href="#ubicacion" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#65358e] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]"><MapPin size={17} aria-hidden />Ver ubicación y cómo llegar<ArrowRight size={15} aria-hidden /></a>
+        <div className="min-w-0 rounded-[28px] border border-[#eadcdd] bg-white/80 p-6 sm:p-7">
+          <div className="flex items-start gap-3"><span className="grid size-10 shrink-0 place-items-center rounded-full bg-[#f2eaf7] text-[#873c58]"><Clock size={18} aria-hidden /></span><div><h3 className="font-bold text-[#392b38]">Horario de hoy</h3><p className="mt-1 text-sm text-[#6b5965]">{hours || "Horario por confirmar"}</p></div></div>
+          <a href="#ubicacion" className="mt-5 inline-flex min-h-11 items-center gap-2 rounded-lg text-sm font-bold text-[#873c58] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#873c58]"><MapPin size={17} aria-hidden />Ver ubicación y cómo llegar<ArrowRight size={15} aria-hidden /></a>
         </div>
       </div>
     </section>
@@ -286,88 +282,14 @@ export function SiteFooter({
   const days = orderedWeek(week);
 
   return (
-    <footer className="bg-[#28202d] px-5 py-12 text-white sm:px-8">
-      <div className="mx-auto grid max-w-[1180px] grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-4 [&>div]:min-w-0">
-        <div>
-          <div className="inline-flex max-w-full items-center rounded-2xl bg-[#f3dee6] px-4 py-3 [&_img]:mix-blend-darken"><BrandLogo className="h-16 max-w-[220px]"/></div>
-
-          <p className="mt-5 max-w-[260px] text-xs leading-6 text-white/60">
-            Flores, regalos y detalles para acompañar tus momentos especiales.
-          </p>
-        </div>
-
-        <div>
-          <p className="text-xs font-black uppercase tracking-wider text-white/80">
-            Catálogo
-          </p>
-
-          <div className="mt-4 flex flex-col items-start gap-3 text-xs text-white/60">
-            <a href="#catalogo" className="hover:text-white">
-              Todos los productos
-            </a>
-
-            {categories.slice(0, 4).map((category) => (
-              <button
-                key={category.id}
-                type="button"
-                onClick={() => onSelectCategory(category.id)}
-                className="text-left hover:text-white"
-              >
-                {category.name}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <p className="text-xs font-black uppercase tracking-wider text-white/80">
-            Horario de atención
-          </p>
-
-          {days.length > 0 ? (
-            <dl className="mt-4 flex flex-col gap-2 text-xs text-white/60">
-              {days.map((day) => (
-                <div key={day.day_of_week} className="flex justify-between gap-4">
-                  <dt>{DAY_NAMES[day.day_of_week]}</dt>
-
-                  <dd className="text-white/80">{dayHoursLabel(day)}</dd>
-                </div>
-              ))}
-            </dl>
-          ) : (
-            <p className="mt-4 text-xs text-white/60">
-              {whatsappHref ? "Consulta nuestro horario por WhatsApp." : "Horario por configurar."}
-            </p>
-          )}
-        </div>
-
-        <div>
-          <p className="text-xs font-black uppercase tracking-wider text-white/80">
-            Contacto
-          </p>
-
-          <div className="mt-4 flex flex-col items-start gap-3 text-xs text-white/60">
-            {whatsappHref ? (
-              <a
-                href={whatsappHref}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:text-white"
-              >
-                WhatsApp
-              </a>
-            ) : (
-              <span>Pronto compartiremos nuestro WhatsApp.</span>
-            )}
-            <a href="#ubicacion" className="inline-flex min-h-11 items-center gap-2 rounded-lg text-white/80 hover:text-white focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-white"><MapPin size={15} aria-hidden />Ubicación</a>
-            {location?.address && <address className="line-clamp-2 max-w-full not-italic leading-6 text-white/75 [overflow-wrap:anywhere]">{location.address}</address>}
-          </div>
-        </div>
+    <footer className="public-footer bg-[#392b38] px-5 py-9 text-white sm:px-8">
+      <div className="mx-auto grid max-w-[1280px] gap-6 sm:grid-cols-2 lg:grid-cols-[1.2fr_1fr_1fr_1.1fr]">
+        <div className="min-w-0"><div className="inline-flex max-w-full items-center rounded-2xl bg-[#f3e3e5] px-3 py-2 [&_img]:mix-blend-darken"><BrandLogo className="h-14 max-w-[200px]"/></div><p className="mt-4 max-w-64 text-sm leading-6 text-white/85">Flores y detalles para acompañar tus momentos.</p></div>
+        <details className="public-footer-group min-w-0"><summary className="min-h-11 cursor-pointer text-sm font-bold">Explorar el catálogo</summary><div className="public-footer-content mt-2 grid gap-1 text-sm text-white/85"><a className="inline-flex min-h-11 items-center" href="#catalogo">Todos los productos</a>{categories.slice(0,4).map(category => <button key={category.id} type="button" className="min-h-11 text-left [overflow-wrap:anywhere]" onClick={() => onSelectCategory(category.id)}>{category.name}</button>)}</div></details>
+        <details className="public-footer-group min-w-0"><summary className="min-h-11 cursor-pointer text-sm font-bold">Horarios de atención</summary>{days.length ? <dl className="public-footer-content mt-2 grid gap-3 text-sm text-white/85">{days.map(day => <div key={day.day_of_week} className="flex flex-wrap justify-between gap-2"><dt>{DAY_NAMES[day.day_of_week]}</dt><dd>{dayHoursLabel(day)}</dd></div>)}</dl> : <p className="mt-2 text-sm text-white/85">{whatsappHref ? "Consulta nuestro horario por WhatsApp." : "Horario por configurar."}</p>}</details>
+        <div className="min-w-0"><h3 className="flex min-h-11 items-center text-sm font-bold">Tu visita y tu pedido</h3><div className="grid gap-1 text-sm text-white/85">{whatsappHref && <a className="inline-flex min-h-11 items-center" href={whatsappHref} target="_blank" rel="noopener noreferrer">Escribir por WhatsApp</a>}<a className="inline-flex min-h-11 items-center gap-2" href="#ubicacion"><MapPin size={16} aria-hidden/>Ubicación y cómo llegar</a><a className="inline-flex min-h-11 items-center" href="/seguimiento">Consultar mi pedido</a>{location?.address && <address className="mt-1 not-italic text-sm leading-6 [overflow-wrap:anywhere]">{location.address}</address>}</div></div>
       </div>
-
-      <div className="mx-auto mt-10 max-w-[1180px] border-t border-white/10 pt-6 text-center text-[11px] text-white/60">
-        © {year} Floristería Anabelle. Todos los derechos reservados.
-      </div>
+      <div className="mx-auto mt-7 max-w-[1280px] border-t border-white/20 pt-5 text-xs leading-5 text-white/80">© {year} Floristería Anabelle. Todos los derechos reservados.</div>
     </footer>
   );
 }

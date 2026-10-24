@@ -26,7 +26,7 @@ describe("Connected promotion shopping (unit/markup, not browser evidence)", () 
   });
   it("renders only one offer at a time and accessible carousel controls", () => {
     const html = renderToStaticMarkup(createElement(PromotionSection, { promotions: [promotion, { ...promotion, id: "other", name: "Otra oferta" }] }));
-    expect(html).toContain('aria-roledescription="carrusel"'); expect(html).toContain("Promoción siguiente"); expect(html.match(/<article/g)).toHaveLength(1); expect(html).toContain('aria-current="true"');
+    expect(html).toContain('aria-roledescription="carrusel"'); expect(html).toContain("Promoción siguiente"); expect(html.match(/<article/g)).toHaveLength(1); expect(html).toContain('aria-label="Elegir promoción"'); expect(html).toContain('value="offer" selected=""');
   });
   it("return from cart opens the exact selected offer", () => {
     const html = renderToStaticMarkup(createElement(PromotionSection, { promotions: [promotion, { ...promotion, id: "other", name: "Otra oferta" }], initialPromotionId: "other" }));

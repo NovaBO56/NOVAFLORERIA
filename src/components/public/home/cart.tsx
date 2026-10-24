@@ -31,7 +31,7 @@ import { cartPromotion } from "@/lib/public/cart-promotions";
 import { PromotionCartSummary } from "../promotion-cart-summary";
 import { ShoppingNotice } from "../shopping-notice";
 import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion } from "@/lib/public/types";
-import { script, useDialog } from "./shared";
+import { useDialog } from "./shared";
 
 /* ============================================================
    ALMACÉN DEL CARRITO (persiste en localStorage)
@@ -256,7 +256,7 @@ export function CartDrawer({
       hidden={!open}
       inert={!open}
       aria-hidden={!open}
-      className="nova-cart-overlay fixed inset-0 z-[110] overflow-hidden bg-[#28202d]/40 backdrop-blur-[2px]"
+      className="nova-cart-overlay fixed inset-0 z-[110] overflow-hidden bg-[#392b38]/40 backdrop-blur-[2px]"
       onMouseDown={(event) => {
         if (event.target === event.currentTarget) close();
       }}
@@ -266,17 +266,17 @@ export function CartDrawer({
         role="dialog"
         aria-modal="true"
         aria-labelledby="cart-title"
-        className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col bg-[#faf8fd] shadow-2xl"
+        className="nova-cart-panel absolute right-0 top-0 flex h-full w-full max-w-[460px] flex-col bg-[#fff9f4] shadow-2xl"
       >
         <div className="flex shrink-0 items-center justify-between border-b border-[#e7dfe9] px-6 py-5">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#796481]">
+            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#6b5965]">
               Tu compra
             </p>
 
             <h2
               id="cart-title"
-              className={`${script.className} mt-1 text-[46px] leading-none text-[#4c285f]`}
+              className={`mt-1 text-3xl font-semibold tracking-tight text-[#392b38]`}
             >
               Carrito
             </h2>
@@ -285,7 +285,7 @@ export function CartDrawer({
           <button
             type="button"
             onClick={close}
-            className="flex size-10 items-center justify-center rounded-xl border border-[#e1d6e3] text-[#55485b] transition hover:bg-[#f5eff7]"
+            className="flex size-10 items-center justify-center rounded-xl border border-[#e1d6e3] text-[#55485b] transition hover:bg-[#fbf2ef]"
             aria-label="Cerrar carrito"
           >
             <X size={19} />
@@ -296,17 +296,17 @@ export function CartDrawer({
           {feedback && <div className="mb-4"><ShoppingNotice tone="success" onDismiss={() => setFeedback("")}>{feedback}</ShoppingNotice></div>}
           {cart.items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
-              <div className="flex size-16 items-center justify-center rounded-full bg-[#f3ebf6] text-[#65358e]">
+              <div className="flex size-16 items-center justify-center rounded-full bg-[#f3e3e5] text-[#873c58]">
                 <ShoppingBag size={26} strokeWidth={1.5} />
               </div>
 
               <h3
-                className={`${script.className} mt-5 text-4xl text-[#4c285f]`}
+                className={`mt-5 text-2xl font-semibold text-[#392b38]`}
               >
                 Tu carrito está vacío
               </h3>
 
-              <p className="mt-2 max-w-[260px] text-xs leading-5 text-[#746876]">
+              <p className="mt-2 max-w-[260px] text-xs leading-5 text-[#6b5965]">
                 Agrega algún detalle del catálogo para comenzar tu compra.
               </p>
 
@@ -316,7 +316,7 @@ export function CartDrawer({
                   close();
                   onBrowse();
                 }}
-                className="mt-6 rounded-xl bg-[#65358e] px-5 py-3 text-xs font-black text-white transition hover:bg-[#572d7a]"
+                className="mt-6 rounded-xl bg-[#873c58] px-5 py-3 text-xs font-black text-white transition hover:bg-[#713048]"
               >
                 Ver catálogo
               </button>
@@ -328,7 +328,7 @@ export function CartDrawer({
                 className="nova-enter border-b border-[#eee7f0] py-5 first:pt-0"
               >
                 <div className="flex gap-4">
-                  <div className="relative flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#eee5f0]">
+                  <div className="relative flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f5eeea]">
                     {item.image ? (
                       <Image
                         src={item.image}
@@ -339,42 +339,42 @@ export function CartDrawer({
                       />
                     ) : (
                       <span
-                        className={`${script.className} text-3xl text-[#76547f]`}
+                        className={`px-2 text-center text-[10px] leading-4 text-[#6b5965]`}
                       >
-                        Anabelle
+                        Sin imagen
                       </span>
                     )}
                   </div>
 
                   <div className="min-w-0 flex-1">
-                    <p className="break-words text-sm font-black text-[#30283c]">
+                    <p className="break-words text-sm font-black text-[#392b38]">
                       {item.name}
                     </p>
 
-                    <p className="mt-1 text-sm font-black text-[#65358e]">
+                    <p className="mt-1 text-sm font-black text-[#873c58]">
                       {formatMoney(item.price)}
                     </p>
 
-                    {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6c6278]">{option.name}</p>)}
-                    <DedicationPreview entries={item.dedications} compact/>{item.message && <p className="mt-1 break-words text-xs text-[#6c6278]">Tarjeta: {item.message}</p>}
-                    {(item.dedication_card_quantity ?? 0) > 0 ? <div className="mt-3"><button type="button" className="min-h-11 text-sm font-bold text-[#65358e] underline" onClick={() => setEditingDedication(editingDedication === item.id ? null : item.id)}>{editingDedication === item.id ? "Terminar edición" : "Editar dedicatorias"}</button>{editingDedication === item.id && <DedicationEditor count={item.quantity * (item.dedication_card_quantity ?? 0)} value={item.dedications ?? (item.message ? [{ message: item.message, signature: "" }] : [])} onChange={dedications => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications } : line))}/>}</div> : item.dedications?.length || item.message ? <div className="mt-3"><ShoppingNotice>Este detalle ya no incluye tarjeta. Conservamos tu texto para que puedas revisarlo.</ShoppingNotice><button type="button" className="min-h-11 text-sm underline" onClick={() => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications: undefined } : line))}>Continuar sin dedicatorias</button></div> : null}
-                    {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#f4edf8] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#59436c]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#65358e] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#604581]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
+                    {item.options?.map(option => <p key={option.id} className="mt-1 break-words text-xs text-[#6b5965]">{option.name}</p>)}
+                    <DedicationPreview entries={item.dedications} compact/>{item.message && <p className="mt-1 break-words text-xs text-[#6b5965]">Tarjeta: {item.message}</p>}
+                    {(item.dedication_card_quantity ?? 0) > 0 ? <div className="mt-3"><button type="button" className="min-h-11 text-sm font-bold text-[#873c58] underline" onClick={() => setEditingDedication(editingDedication === item.id ? null : item.id)}>{editingDedication === item.id ? "Terminar edición" : "Editar dedicatorias"}</button>{editingDedication === item.id && <DedicationEditor count={item.quantity * (item.dedication_card_quantity ?? 0)} value={item.dedications ?? (item.message ? [{ message: item.message, signature: "" }] : [])} onChange={dedications => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications } : line))}/>}</div> : item.dedications?.length || item.message ? <div className="mt-3"><ShoppingNotice>Este detalle ya no incluye tarjeta. Conservamos tu texto para que puedas revisarlo.</ShoppingNotice><button type="button" className="min-h-11 text-sm underline" onClick={() => cartStore.update(items => items.map(line => line.id === item.id ? { ...line, message: undefined, dedications: undefined } : line))}>Continuar sin dedicatorias</button></div> : null}
+                    {removing === item.id && <div className="my-3 rounded-xl border border-[#d8c6e3] bg-[#fbf2ef] p-3" role="group" aria-label="Confirmar eliminación"><p className="text-sm font-bold text-[#645460]">¿Eliminar este producto del carrito?</p><div className="mt-2 flex flex-wrap gap-2"><button type="button" className="min-h-11 rounded-xl bg-[#873c58] px-3 py-2 text-sm font-bold text-white" onClick={() => { notifyChange(removeFromCart(item.id), "Producto eliminado del carrito."); setRemoving(null); }}>Sí, eliminar producto</button><button type="button" className="min-h-11 rounded-xl border border-[#cebbdb] bg-white px-3 py-2 text-sm font-bold text-[#873c58]" onClick={() => setRemoving(null)}>Conservar producto</button></div></div>}
                     {!item.available ? (
                       <div className="mt-3"><ShoppingNotice tone="error">No podemos preparar este detalle en la cantidad elegida. Prueba una cantidad menor o elige otro producto para continuar.</ShoppingNotice></div>
                     ) : null}
 
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-2">
-                      <div className="inline-flex items-center rounded-lg border border-[#ded2e2]">
+                      <div className="inline-flex items-center rounded-lg border border-[#e6d7d8]">
                         <button
                           type="button"
                           onClick={() => item.quantity === 1 ? setRemoving(item.id) : notifyChange(changeQuantity(item.id, -1), "Cantidad actualizada.")}
-                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7]"
+                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#fbf2ef]"
                           aria-label={`Disminuir cantidad de ${item.name}`}
                         >
                           −
                         </button>
 
-                        <span key={item.quantity} className="nova-value flex size-9 items-center justify-center border-x border-[#ded2e2] text-xs font-black">
+                        <span key={item.quantity} className="nova-value flex size-9 items-center justify-center border-x border-[#e6d7d8] text-xs font-black">
                           {item.quantity}
                         </span>
 
@@ -382,7 +382,7 @@ export function CartDrawer({
                           type="button"
                           onClick={() => notifyChange(changeQuantity(item.id, 1), "Cantidad actualizada.")}
                           disabled={!item.available || item.quantity >= MAX_QUANTITY}
-                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#f5eff7] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="flex size-11 items-center justify-center text-[#5c4e61] transition hover:bg-[#fbf2ef] disabled:cursor-not-allowed disabled:opacity-40"
                           aria-label={`Aumentar cantidad de ${item.name}`}
                         >
                           +
@@ -392,7 +392,7 @@ export function CartDrawer({
                       <button
                         type="button"
                         onClick={() => setRemoving(item.id)}
-                        className="px-1 py-2 text-[11px] font-bold text-[#756779] transition hover:text-[#65358e]"
+                        className="px-1 py-2 text-[11px] font-bold text-[#6b5965] transition hover:text-[#873c58]"
                       >
                         Eliminar
                       </button>
@@ -412,7 +412,7 @@ export function CartDrawer({
             <span key={cart.total} className="nova-value tabular-nums">{formatMoney(cart.total)}</span>
           </div>
 
-          <div className="mt-2 flex items-center justify-between text-lg font-black text-[#403344]">
+          <div className="mt-2 flex items-center justify-between text-lg font-black text-[#392b38]">
             <span>Total estimado</span>
             <span key={discount?.total ?? cart.total} className="nova-value tabular-nums">{formatMoney(discount?.total ?? cart.total)}</span>
           </div>
@@ -420,14 +420,14 @@ export function CartDrawer({
           {!acceptingOrders && closedNotice ? (
             <p
               role="status"
-              className="mt-4 rounded-xl bg-[#f6f0f8] px-4 py-3 text-xs leading-5 text-[#55455c]"
+              className="mt-4 rounded-xl bg-[#f3e3e5] px-4 py-3 text-xs leading-5 text-[#645460]"
             >
               {closedNotice}
             </p>
           ) : null}
 
-          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#65358e] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : cart.items.length > 0 ? <div className="mt-4"><ShoppingNotice>{invalidCards ? "Escribe los mensajes de tus tarjetas o elige dejarlas en blanco para continuar." : "Revisa la disponibilidad de tus productos y el horario de la tienda para continuar."}</ShoppingNotice></div> : null}
-          {whatsappHref && cart.items.length > 0 ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center gap-2 text-sm text-[#65358e]"><MessageCircle size={16} /> Comprar por WhatsApp</a> : null}
+          {canContinue ? <Link href="/checkout" className="mt-5 flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-[#873c58] text-sm font-black text-white">Continuar compra <ArrowRight size={16} /></Link> : cart.items.length > 0 ? <div className="mt-4"><ShoppingNotice>{invalidCards ? "Escribe los mensajes de tus tarjetas o elige dejarlas en blanco para continuar." : "Revisa la disponibilidad de tus productos y el horario de la tienda para continuar."}</ShoppingNotice></div> : null}
+          {whatsappHref && cart.items.length > 0 ? <a href={whatsappHref} target="_blank" rel="noopener noreferrer" className="mt-3 flex min-h-11 items-center justify-center gap-2 text-sm text-[#873c58]"><MessageCircle size={16} /> Comprar por WhatsApp</a> : null}
         </div>
       </aside>
     </div>

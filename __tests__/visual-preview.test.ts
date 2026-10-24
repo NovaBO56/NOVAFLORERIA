@@ -32,7 +32,6 @@ describe("Database-free visual preview (unit, not a published deployment)", () =
     { ...flags, SUPABASE_SECRET_KEY: "fake-test-value" }, { ...flags, NOVA_LOCAL_LAB: "true" },
   ])("fails closed with conflicting deployment or database configuration", env => expect(() => visualPreviewEnabled(env)).toThrow());
   it("serves a local snapshot with pagination, filters and product customization only", () => {
-    expect(query("/api/catalog/occasions").body).toMatchObject({ occasions: [] });
     expect(query("/api/products").body).toMatchObject({ success: true, visual_preview: true, pagination: { total: 1 } });
     expect(query("/api/products", "&page=100").body).toMatchObject({ products: [] });
     expect(query("/api/products", "&search=other").body).toMatchObject({ products: [] });

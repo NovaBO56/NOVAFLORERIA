@@ -139,7 +139,7 @@ const initialCatalog: CatalogData = {
   loadingMore: false,
 };
 
-function productsUrl(page: number, category: string | null, search: string, occasion: string | null = null) {
+function productsUrl(page: number, category: string | null, search: string) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(PAGE_SIZE),
@@ -147,7 +147,6 @@ function productsUrl(page: number, category: string | null, search: string, occa
 
   if (category) params.set("category_id", category);
   if (search) params.set("search", search);
-  if (occasion) params.set("occasion", occasion);
 
   return `/api/products?${params.toString()}`;
 }
@@ -172,9 +171,6 @@ export default function HomePage({ year }: { year: number }) {
 
   // Filtros del catálogo
   const [category, setCategory] = useState<string | null>(null);
-  const [occasion, setOccasion] = useState<string | null>(null);
-  const [occasions, setOccasions] = useState<string[]>([]);
-  const [occasionsUnavailable, setOccasionsUnavailable] = useState(false);
   const [promotionsOnly, setPromotionsOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
@@ -195,10 +191,6 @@ export default function HomePage({ year }: { year: number }) {
   const [shoppingNotice, setShoppingNotice] = useState("");
   const [offerReturn, setOfferReturn] = useState(0);
   useEffect(() => {
-    let cancelled = false;
-    getJson<{ occasions: string[] }>("/api/catalog/occasions")
-      .then(data => { if (!cancelled) setOccasions(data.occasions); })
-      .catch(() => { if (!cancelled) setOccasionsUnavailable(true); });
     const followHash = () => {
       if (["#promociones", "#catalogo-promociones"].includes(window.location.hash)) {
         setPromotionsOnly(true); setFavoritesOnly(false);
@@ -207,7 +199,7 @@ export default function HomePage({ year }: { year: number }) {
     };
     followHash();
     window.addEventListener("hashchange", followHash);
-    return () => { cancelled = true; window.removeEventListener("hashchange", followHash); };
+    return () => { window.removeEventListener("hashchange", followHash); };
   }, []);
   const visibleIds = JSON.stringify([...new Set([...catalogData.items, ...favoritesData.items].map(product => product.id))]);
   useEffect(() => {
@@ -295,7 +287,7 @@ export default function HomePage({ year }: { year: number }) {
 
   /* ---------- catálogo (se recarga al cambiar filtros) ---------- */
 
-  const filterKey = `${category ?? ""}|${occasion ?? ""}|${search}|${reloadToken}`;
+  const filterKey = `${category ?? ""}|${search}|${reloadToken}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -303,7 +295,7 @@ export default function HomePage({ year }: { year: number }) {
     (async () => {
       try {
         const data = await getJson<ProductsResponse>(
-          productsUrl(1, category, search, occasion),
+          productsUrl(1, category, search),
         );
 
         if (cancelled) return;
@@ -329,7 +321,7 @@ export default function HomePage({ year }: { year: number }) {
     return () => {
       cancelled = true;
     };
-  }, [category, occasion, search, filterKey]);
+  }, [category, search, filterKey]);
 
   async function loadMore() {
     if (catalogData.loadingMore || catalogData.page >= catalogData.totalPages) {
@@ -343,7 +335,7 @@ export default function HomePage({ year }: { year: number }) {
 
     try {
       const data = await getJson<ProductsResponse>(
-        productsUrl(nextPage, category, search, occasion),
+        productsUrl(nextPage, category, search),
       );
 
       setCatalogData((current) =>
@@ -444,17 +436,13 @@ export default function HomePage({ year }: { year: number }) {
 
   function selectCategory(id: string | null) {
     setCategory(id);
-    setOccasion(null);
     setPromotionsOnly(false);
     setFavoritesOnly(false);
   }
 
-  function selectOccasion(value: string | null) {
-    setOccasion(value); setCategory(null); setPromotionsOnly(false); setFavoritesOnly(false);
-  }
 
   function showPromotions() {
-    setPromotionsOnly(true); setCategory(null); setOccasion(null); setFavoritesOnly(false); setSearch("");
+    setPromotionsOnly(true); setCategory(null); setFavoritesOnly(false); setSearch("");
   }
 
   function handleSearch(term: string) {
@@ -544,7 +532,7 @@ export default function HomePage({ year }: { year: number }) {
   ];
 
   return (
-    <main className={`${lato.className} nova-page nova-storefront public-with-bottom-nav min-h-screen bg-[#fff8f4] text-[#4c285f]`}>
+    <main className={`${lato.className} nova-page nova-storefront public-with-bottom-nav min-h-screen bg-[#fff9f4] text-[#392b38]`}>
       <SiteHeader
         navItems={navItems}
         cartCount={cart.count}
@@ -552,7 +540,7 @@ export default function HomePage({ year }: { year: number }) {
         favoritesActive={favoritesOnly}
         searchTerm={search}
         onSearch={handleSearch}
-        onToggleFavorites={() => { setPromotionsOnly(false); setCategory(null); setOccasion(null); setFavoritesOnly((current) => !current); }}
+        onToggleFavorites={() => { setPromotionsOnly(false); setCategory(null); setFavoritesOnly((current) => !current); }}
         onOpenCart={() => setCartOpen(true)}
       />
 
@@ -565,10 +553,6 @@ export default function HomePage({ year }: { year: number }) {
       <ServiceStrip />
 
       <CatalogSection
-        occasions={occasions}
-        occasionsUnavailable={occasionsUnavailable}
-        selectedOccasion={occasion}
-        onSelectOccasion={selectOccasion}
         promotionsOnly={promotionsOnly}
         onSelectPromotions={showPromotions}
         onClearFilters={() => { selectCategory(null); setSearch(""); }}
@@ -629,7 +613,7 @@ export default function HomePage({ year }: { year: number }) {
       <MobileNavigation/>
 
       <Modal open={Boolean(quickView)} onOpenChange={open => { if (!open) setQuickView(null); }}>
-        <ModalContent voice="public" className="md:max-w-5xl" onCloseAutoFocus={event => { event.preventDefault(); if (!addedProduct) quickViewTrigger.current?.focus(); }}>
+        <ModalContent voice="public" className="public-quick-modal md:max-w-5xl" onCloseAutoFocus={event => { event.preventDefault(); if (!addedProduct) quickViewTrigger.current?.focus(); }}>
           <ModalTitle className="pr-10">Vista rápida</ModalTitle>
           <ModalDescription>Personaliza tu detalle antes de agregarlo al carrito.</ModalDescription>
           {quickView && <ProductDetailSection key={quickView.id} embedded product={quickView}

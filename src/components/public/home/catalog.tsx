@@ -6,7 +6,7 @@ import { Heart, ShoppingBag, SlidersHorizontal } from "lucide-react";
 import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 import { formatMoney, isPurchasable, pickImage } from "@/lib/public/format";
 import type { PublicCategory, PublicProduct } from "@/lib/public/types";
-import { script } from "./shared";
+import { ProductPlaceholder } from "../product-placeholder";
 
 export type CatalogState = {
   status: "loading" | "ready" | "error";
@@ -18,9 +18,9 @@ export type CatalogState = {
 
 const chipBase =
   "inline-flex min-h-11 max-w-full items-center gap-2 rounded-full px-4 py-2.5 text-xs font-black transition";
-const chipActive = "bg-[#65358e] text-white";
+const chipActive = "bg-[#873c58] text-white";
 const chipIdle =
-  "border border-[#ded2e2] bg-white text-[#66596b] hover:border-[#65358e] hover:text-[#65358e]";
+  "border border-[#e6d7d8] bg-white text-[#66596b] hover:border-[#873c58] hover:text-[#873c58]";
 
 /* ============================================================
    TARJETA DE PRODUCTO
@@ -43,8 +43,8 @@ function ProductCard({
   const purchasable = isPurchasable(product);
 
   return (
-    <article className="nova-product-card group min-w-0 [overflow-wrap:anywhere]">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#eee5f0]">
+    <article className="nova-product-card public-product-card group min-w-0 [overflow-wrap:anywhere]">
+      <div className="relative aspect-[1/1.08] overflow-hidden rounded-2xl bg-[#f5eeea]">
         <button
           type="button"
           onClick={onOpenDetail}
@@ -62,11 +62,7 @@ function ProductCard({
               }`}
             />
           ) : (
-            <span className="flex h-full items-center justify-center">
-              <span className={`${script.className} text-5xl text-[#73547f]`}>
-                Anabelle
-              </span>
-            </span>
+            <ProductPlaceholder/>
           )}
         </button>
 
@@ -74,8 +70,8 @@ function ProductCard({
           type="button"
           onClick={onToggleFavorite}
           aria-pressed={isFavorite}
-          className={`absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-xl border border-white/70 bg-white shadow-sm transition hover:text-[#65358e] ${
-            isFavorite ? "text-[#65358e]" : "text-[#66596b]"
+          className={`absolute right-3 top-3 z-10 flex size-10 items-center justify-center rounded-xl border border-white/70 bg-white shadow-sm transition hover:text-[#873c58] ${
+            isFavorite ? "text-[#873c58]" : "text-[#66596b]"
           }`}
           aria-label={
             isFavorite
@@ -91,32 +87,32 @@ function ProductCard({
         </button>
 
         {!purchasable ? (
-          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[#28202d] px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
+          <div className="pointer-events-none absolute left-3 top-3 rounded-full bg-[#392b38] px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-white">
             {product.is_sold_out ? "Agotado" : "No disponible"}
           </div>
         ) : null}
 
         {product.occasion ? (
-          <div className="pointer-events-none absolute bottom-3 left-3 rounded-full bg-white px-3 py-1 text-[9px] font-black uppercase tracking-[0.12em] text-[#6e6073] shadow-sm">
+          <div className="pointer-events-none absolute bottom-2 left-2 right-2 w-fit max-w-[calc(100%-1rem)] rounded-lg bg-white/95 px-2 py-1 text-[10px] font-semibold leading-4 text-[#645460] shadow-sm">
             {product.occasion}
           </div>
         ) : null}
       </div>
 
-      <div className="pt-4">
+      <div className="flex flex-1 flex-col px-3 pb-4 pt-4 sm:px-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="text-sm font-black leading-5 text-[#403344]">
+            <h3 className="text-sm font-black leading-5 text-[#392b38]">
               <button
                 type="button"
                 onClick={onOpenDetail}
-                className="-my-0.5 inline-block max-w-full py-0.5 text-left hover:text-[#65358e]"
+                className="-my-0.5 inline-block max-w-full py-0.5 text-left hover:text-[#873c58]"
               >
                 {product.name}
               </button>
             </h3>
 
-            <p className="mt-2 text-sm font-black text-[#65358e]">
+            <p className="mt-2 text-sm font-black text-[#873c58]">
               {formatMoney(product.price)}
             </p>
           </div>
@@ -125,7 +121,7 @@ function ProductCard({
             type="button"
             onClick={onAdd}
             disabled={!purchasable}
-            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#ded2e2] text-[#65358e] transition hover:bg-[#f3ebf6] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
+            className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-[#e6d7d8] text-[#873c58] transition hover:bg-[#f3e3e5] disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:bg-transparent"
             aria-label={
               purchasable
                 ? `Agregar ${product.name} al carrito`
@@ -145,10 +141,6 @@ function ProductCard({
    ============================================================ */
 
 type CatalogSectionProps = {
-  occasions: string[];
-  occasionsUnavailable: boolean;
-  selectedOccasion: string | null;
-  onSelectOccasion: (occasion: string | null) => void;
   promotionsOnly: boolean;
   onSelectPromotions: () => void;
   promotionContent: ReactNode;
@@ -171,10 +163,6 @@ type CatalogSectionProps = {
 };
 
 export function CatalogSection({
-  occasions,
-  occasionsUnavailable,
-  selectedOccasion,
-  onSelectOccasion,
   promotionsOnly,
   onSelectPromotions,
   promotionContent,
@@ -201,52 +189,46 @@ export function CatalogSection({
 
   function choose(action: () => void) { action(); setFiltersOpen(false); }
   const filters = <div className="space-y-5">
-    <div className="flex items-center justify-between gap-3"><h3 className="font-bold text-[#4c285f]">Filtros</h3><button type="button" onClick={() => choose(onClearFilters)} className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#65358e] underline underline-offset-4">Limpiar</button></div>
-    <div role="group" aria-label="Ocasión" className="space-y-1">
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[.18em] text-[#6a5e6e]">Ocasión</p>
-      <button type="button" onClick={() => choose(() => { onSelectCategory(null); onSelectOccasion(null); onShowAll(); })} aria-pressed={!selectedCategory && !selectedOccasion && !promotionsOnly && !favoritesOnly} className={`${chipBase} w-full rounded-xl text-left ${!selectedCategory && !selectedOccasion && !promotionsOnly && !favoritesOnly ? chipActive : chipIdle}`}>Toda ocasión</button>
-      {occasions.map(occasion => <button type="button" key={occasion} onClick={() => choose(() => onSelectOccasion(occasion))} aria-pressed={!promotionsOnly && selectedOccasion === occasion} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedOccasion === occasion ? chipActive : chipIdle}`}>{occasion}</button>)}
-      <button type="button" onClick={() => choose(onSelectPromotions)} aria-pressed={promotionsOnly} className={`${chipBase} w-full rounded-xl text-left ${promotionsOnly ? chipActive : chipIdle}`}>Promociones</button>
-      {occasionsUnavailable && <p role="status" className="px-2 text-xs leading-5 text-[#6a5e6e]">No pudimos cargar las ocasiones. Puedes explorar por categoría.</p>}
+    <div className="flex items-center justify-between gap-3"><h3 className="font-bold text-[#392b38]">Categorías</h3><button type="button" onClick={() => choose(onClearFilters)} className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#873c58] underline underline-offset-4">Limpiar</button></div>
+    <div role="group" aria-label="Categorías" className="space-y-1">
+      <button type="button" onClick={() => choose(() => { onSelectCategory(null); onShowAll(); })} aria-pressed={!selectedCategory && !promotionsOnly && !favoritesOnly} className={`${chipBase} w-full rounded-xl text-left ${!selectedCategory && !promotionsOnly && !favoritesOnly ? chipActive : chipIdle}`}>Todos los productos</button>
+      {categoriesLoading ? <p className="text-sm text-[#6b5965]" role="status">Cargando categorías…</p> : categories.map(category => <button key={category.id} type="button" onClick={() => choose(() => onSelectCategory(category.id))} aria-pressed={!promotionsOnly && selectedCategory === category.id} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedCategory === category.id ? chipActive : chipIdle}`}>{category.name}</button>)}
     </div>
-    <div role="group" aria-label="Categorías" className="space-y-1 border-t border-[#eadde6] pt-5">
-      <p className="mb-3 text-[10px] font-black uppercase tracking-[.18em] text-[#6a5e6e]">Categorías</p>
-      {categoriesLoading ? <p className="text-sm text-[#6a5e6e]" role="status">Cargando categorías…</p> : categories.map(category => <button key={category.id} type="button" onClick={() => choose(() => onSelectCategory(category.id))} aria-pressed={!promotionsOnly && selectedCategory === category.id} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedCategory === category.id ? chipActive : chipIdle}`}>{category.name}</button>)}
-    </div>
+    <div className="border-t border-[#eadde6] pt-5"><button type="button" onClick={() => choose(onSelectPromotions)} aria-pressed={promotionsOnly} className={`${chipBase} w-full rounded-xl text-left ${promotionsOnly ? chipActive : chipIdle}`}>Promociones</button></div>
   </div>;
 
   return (
     <section
       id="catalogo"
-      className="scroll-mt-28 bg-[#fff8f4] px-5 py-12 sm:px-8 sm:py-16"
+      className="scroll-mt-28 bg-[#fff9f4] px-5 py-12 sm:px-8 sm:py-16"
     >
       <div className="mx-auto max-w-[1380px]">
         <span id="catalogo-promociones" className="block scroll-mt-28" aria-hidden="true" />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
-            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
+            <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#6b5965]">
               Catálogo
             </p>
 
             <h2
-              className={`${script.className} mt-2 text-[52px] leading-none text-[#4c285f] sm:text-[64px]`}
+              className={`mt-2 text-3xl font-semibold leading-tight tracking-tight text-[#392b38] sm:text-4xl`}
             >
               Elige tu detalle
             </h2>
 
-            <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#736877]">
+            <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#6b5965]">
               Encuentra flores y regalos para cada ocasión.
             </p>
 
             {filtered ? (
-              <p className="mt-4 text-xs text-[#736877]" role="status">
+              <p className="mt-4 text-xs text-[#6b5965]" role="status">
                 {favoritesOnly
                   ? "Mostrando tus favoritos."
                   : `Resultados para «${searchTerm}».`}{" "}
                 <button
                   type="button"
                   onClick={favoritesOnly ? onShowAll : onClearSearch}
-                  className="font-black text-[#65358e] underline underline-offset-2"
+                  className="font-black text-[#873c58] underline underline-offset-2"
                 >
                   {favoritesOnly ? "Ver todo el catálogo" : "Quitar búsqueda"}
                 </button>
@@ -255,7 +237,7 @@ export function CatalogSection({
           </div>
         </div>
 
-        <button ref={filterTrigger} type="button" onClick={() => setFiltersOpen(true)} className="mt-6 inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl border border-[#d8c8de] bg-white px-5 py-3 text-left text-sm font-bold text-[#65358e] lg:hidden" aria-haspopup="dialog"><SlidersHorizontal size={18} className="shrink-0" aria-hidden /><span className="min-w-0 [overflow-wrap:anywhere]">Filtros{promotionsOnly ? " · Promociones" : selectedOccasion ? ` · ${selectedOccasion}` : selectedCategory ? ` · ${categories.find(entry => entry.id === selectedCategory)?.name || "Categoría"}` : ""}</span></button>
+        <button ref={filterTrigger} type="button" onClick={() => setFiltersOpen(true)} className="mt-6 inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl border border-[#d9bfc6] bg-white px-5 py-3 text-left text-sm font-bold text-[#873c58] lg:hidden" aria-haspopup="dialog"><SlidersHorizontal size={18} className="shrink-0" aria-hidden /><span className="min-w-0 [overflow-wrap:anywhere]">Filtros{promotionsOnly ? " · Promociones"  : selectedCategory ? ` · ${categories.find(entry => entry.id === selectedCategory)?.name || "Categoría"}` : ""}</span></button>
         <div className="mt-8 grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-10">
           <aside aria-label="Filtros del catálogo" className="hidden min-w-0 rounded-3xl border border-[#eadde6] bg-white p-5 lg:block">{filters}</aside>
           <div className="min-w-0">
@@ -267,12 +249,12 @@ export function CatalogSection({
             >
               {Array.from({ length: 4 }).map((_, index) => (
                 <div key={index} className="min-w-0">
-                  <div className="aspect-[4/5] animate-pulse rounded-2xl bg-[#eee5f0]" />
+                  <div className="aspect-[4/5] animate-pulse rounded-2xl bg-[#f5eeea]" />
 
                   <div className="space-y-3 pt-4">
-                    <div className="h-4 w-3/4 animate-pulse rounded bg-[#eee5f0]" />
+                    <div className="h-4 w-3/4 animate-pulse rounded bg-[#f5eeea]" />
 
-                    <div className="h-4 w-1/3 animate-pulse rounded bg-[#eee5f0]" />
+                    <div className="h-4 w-1/3 animate-pulse rounded bg-[#f5eeea]" />
                   </div>
                 </div>
               ))}
@@ -293,7 +275,7 @@ export function CatalogSection({
               <button
                 type="button"
                 onClick={onRetry}
-                className="mt-5 rounded-xl bg-[#65358e] px-5 py-3 text-xs font-black text-white transition hover:bg-[#572d7a]"
+                className="mt-5 rounded-xl bg-[#873c58] px-5 py-3 text-xs font-black text-white transition hover:bg-[#713048]"
               >
                 Reintentar
               </button>
@@ -331,7 +313,7 @@ export function CatalogSection({
 
               {state.hasMore ? (
                 <div className="mt-10 flex flex-col items-center gap-3">
-                  <p className="text-xs text-[#736877]">
+                  <p className="text-xs text-[#6b5965]">
                     Mostrando {state.items.length} de {state.total} productos
                   </p>
 
@@ -339,7 +321,7 @@ export function CatalogSection({
                     type="button"
                     onClick={onLoadMore}
                     disabled={state.loadingMore}
-                    className="inline-flex h-12 items-center rounded-xl border border-[#d8c8de] bg-white px-6 text-sm font-bold text-[#55455c] transition hover:border-[#65358e] hover:text-[#65358e] disabled:cursor-wait disabled:opacity-60"
+                    className="inline-flex h-12 items-center rounded-xl border border-[#d9bfc6] bg-white px-6 text-sm font-bold text-[#645460] transition hover:border-[#873c58] hover:text-[#873c58] disabled:cursor-wait disabled:opacity-60"
                   >
                     {state.loadingMore ? "Cargando…" : "Ver más productos"}
                   </button>
@@ -350,7 +332,7 @@ export function CatalogSection({
           </>}
           </div>
         </div>
-        <Modal open={filtersOpen} onOpenChange={setFiltersOpen}><ModalContent voice="public" onCloseAutoFocus={event => { event.preventDefault(); filterTrigger.current?.focus(); }}><ModalTitle>Filtros del catálogo</ModalTitle><ModalDescription>Elige una ocasión o categoría, o consulta las promociones vigentes.</ModalDescription>{filters}</ModalContent></Modal>
+        <Modal open={filtersOpen} onOpenChange={setFiltersOpen}><ModalContent voice="public" onCloseAutoFocus={event => { event.preventDefault(); filterTrigger.current?.focus(); }}><ModalTitle>Filtros del catálogo</ModalTitle><ModalDescription>Elige una categoría o consulta las promociones vigentes.</ModalDescription>{filters}</ModalContent></Modal>
       </div>
     </section>
   );

@@ -14,7 +14,7 @@ const products: PublicProduct[] = ["Ramo romántico", "Ramo pequeño", "Caja flo
   is_sold_out: [true,false,false,true][index], available_quantity: [0,1,1,0][index],
 }));
 function catalog(items: PublicProduct[]) {
-  return renderToStaticMarkup(createElement(CatalogSection, {occasions: [], occasionsUnavailable: false, selectedOccasion: null, onSelectOccasion: vi.fn(), promotionsOnly: false, onSelectPromotions: vi.fn(), promotionContent: null, onClearFilters: vi.fn(), categories: [], categoriesLoading: false, selectedCategory: null,
+  return renderToStaticMarkup(createElement(CatalogSection, {promotionsOnly: false, onSelectPromotions: vi.fn(), promotionContent: null, onClearFilters: vi.fn(), categories: [], categoriesLoading: false, selectedCategory: null,
     searchTerm: "", favoritesOnly: false, favoriteIds: [], onSelectCategory: vi.fn(), onClearSearch: vi.fn(), onShowAll: vi.fn(),
     onRetry: vi.fn(), onLoadMore: vi.fn(), onToggleFavorite: vi.fn(), onAdd: vi.fn(), onOpenDetail: vi.fn(),
     state: {status: "ready", items, total: items.length, hasMore: false, loadingMore: false}}));

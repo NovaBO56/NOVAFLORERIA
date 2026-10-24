@@ -18,6 +18,10 @@ export function WaitingFlower() {
   return <div className="waiting-flower" aria-hidden="true"><span/><Flower2 size={76} strokeWidth={1}/></div>;
 }
 
+export function CheckoutIntro() {
+  return <div className="customer-intro"><span className="customer-floral-mark" aria-hidden="true"><Flower2 size={32} strokeWidth={1.2}/></span><div><p className="customer-kicker">Floristería Anabelle · Tu compra, paso a paso</p><h1>Completa tu pedido</h1><p className="customer-muted mt-3 max-w-xl text-sm leading-6">Elige cómo recibir tus flores y revisa cada detalle antes de confirmar. Si requiere pago, nuestro equipo lo verificará personalmente.</p></div></div>;
+}
+
 export function CheckoutProgress({ step }: { step: number }) {
   return <ol className="customer-progress" aria-label="Progreso de compra">{["Tus datos", "Entrega", "Pago", "Confirmación"].map((label, index) => <li key={label} aria-current={step === index ? "step" : undefined} data-complete={index < step}><span>{index + 1}</span><small>{label}</small></li>)}</ol>;
 }

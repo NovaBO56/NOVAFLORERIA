@@ -24,7 +24,7 @@ export function PromotionChooser({ promotions, items, selectedId, now, onSelect 
   const suggestion = !selectedId ? choices[0] : null;
   if (!selectedId && !choices.length) return null;
   const displayed = selected ?? suggestion?.promotion;
-  return <section aria-label="Promoción de tu compra" className="min-w-0 rounded-xl border border-[#dfd1e7] bg-[#f6f0f8] p-4 text-sm text-[#55455c]">
+  return <section aria-label="Promoción de tu compra" className="min-w-0 rounded-xl border border-[#e6d7d8] bg-[#f3e3e5] p-4 text-sm text-[#645460]">
     <div key={`${selectedId}-${applied?.discount ?? 0}`} role="status" aria-live="polite" className="nova-fade break-words">
       <p className="flex items-center gap-2 text-xs font-bold uppercase tracking-wide"><Tag size={16} className="shrink-0 text-[#946a13]" aria-hidden/>{selectedId ? "Tu promoción seleccionada" : "Sugerencia · mayor ahorro"}</p>
       <h3 className="mt-1 text-base font-bold">{displayed?.name ?? "Oferta seleccionada no disponible"}</h3>
@@ -33,9 +33,9 @@ export function PromotionChooser({ promotions, items, selectedId, now, onSelect 
     </div>
     {suggestion && <button type="button" onClick={() => onSelect(suggestion.promotion.id)} className="customer-secondary mt-3 w-full">Usar esta promoción</button>}
     {selectedId && <button type="button" onClick={() => onSelect("")} className="mt-2 min-h-11 font-bold underline">{applied ? "Continuar sin promoción" : "Quitar oferta seleccionada"}</button>}
-    {choices.some(choice => choice.promotion.id !== (selectedId || suggestion?.promotion.id)) && <details className="mt-3 border-t border-[#dfd1e7] pt-2">
-      <summary className="min-h-11 cursor-pointer py-3 font-bold focus-visible:outline-2 focus-visible:outline-[#74599f]">Ver otras promociones</summary>
-      <label className="block pb-2">Elige una sola promoción<select className="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-[#d8c8de] bg-white px-2 text-sm" value={selectedId} onChange={event => onSelect(event.target.value)}>
+    {choices.some(choice => choice.promotion.id !== (selectedId || suggestion?.promotion.id)) && <details className="mt-3 border-t border-[#e6d7d8] pt-2">
+      <summary className="min-h-11 cursor-pointer py-3 font-bold focus-visible:outline-2 focus-visible:outline-[#873c58]">Ver otras promociones</summary>
+      <label className="block pb-2">Elige una sola promoción<select className="mt-2 min-h-12 w-full min-w-0 rounded-lg border border-[#d9bfc6] bg-white px-2 text-sm" value={selectedId} onChange={event => onSelect(event.target.value)}>
         <option value="">Sin promoción</option>
         {selectedId && !applied && <option value={selectedId} disabled>{selected?.name ?? "Oferta no disponible"} · no aplicada</option>}
         {choices.map(choice => <option key={choice.promotion.id} value={choice.promotion.id}>{choice.promotion.name} · ahorro {formatMoney(choice.discount)}</option>)}
