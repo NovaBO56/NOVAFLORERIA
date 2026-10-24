@@ -1,8 +1,9 @@
 "use client";
 
 import { SafeImage as Image } from "@/components/public/safe-image";
-import { useStorefrontMedia } from "../storefront-media";
-import { Flower2, Heart, ShoppingBag } from "lucide-react";
+import { useRef, useState, type ReactNode } from "react";
+import { Heart, ShoppingBag, SlidersHorizontal } from "lucide-react";
+import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 import { formatMoney, isPurchasable, pickImage } from "@/lib/public/format";
 import type { PublicCategory, PublicProduct } from "@/lib/public/types";
 import { script } from "./shared";
@@ -56,7 +57,7 @@ function ProductCard({
               alt={image.alt_text ?? product.name}
               fill
               sizes="(min-width: 1024px) 280px, (min-width: 768px) 33vw, 50vw"
-              className={`object-cover motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.02] ${
+              className={`object-contain motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.02] ${
                 purchasable ? "" : "opacity-60"
               }`}
             />
@@ -144,6 +145,14 @@ function ProductCard({
    ============================================================ */
 
 type CatalogSectionProps = {
+  occasions: string[];
+  occasionsUnavailable: boolean;
+  selectedOccasion: string | null;
+  onSelectOccasion: (occasion: string | null) => void;
+  promotionsOnly: boolean;
+  onSelectPromotions: () => void;
+  promotionContent: ReactNode;
+  onClearFilters: () => void;
   categories: PublicCategory[];
   categoriesLoading: boolean;
   selectedCategory: string | null;
@@ -162,6 +171,14 @@ type CatalogSectionProps = {
 };
 
 export function CatalogSection({
+  occasions,
+  occasionsUnavailable,
+  selectedOccasion,
+  onSelectOccasion,
+  promotionsOnly,
+  onSelectPromotions,
+  promotionContent,
+  onClearFilters,
   categories,
   categoriesLoading,
   selectedCategory,
@@ -178,15 +195,33 @@ export function CatalogSection({
   onAdd,
   onOpenDetail,
 }: CatalogSectionProps) {
-  const media = useStorefrontMedia();
+  const [filtersOpen, setFiltersOpen] = useState(false);
+  const filterTrigger = useRef<HTMLButtonElement>(null);
   const filtered = Boolean(searchTerm) || favoritesOnly;
+
+  function choose(action: () => void) { action(); setFiltersOpen(false); }
+  const filters = <div className="space-y-5">
+    <div className="flex items-center justify-between gap-3"><h3 className="font-bold text-[#4c285f]">Filtros</h3><button type="button" onClick={() => choose(onClearFilters)} className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#65358e] underline underline-offset-4">Limpiar</button></div>
+    <div role="group" aria-label="Ocasión" className="space-y-1">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[.18em] text-[#6a5e6e]">Ocasión</p>
+      <button type="button" onClick={() => choose(() => { onSelectCategory(null); onSelectOccasion(null); onShowAll(); })} aria-pressed={!selectedCategory && !selectedOccasion && !promotionsOnly && !favoritesOnly} className={`${chipBase} w-full rounded-xl text-left ${!selectedCategory && !selectedOccasion && !promotionsOnly && !favoritesOnly ? chipActive : chipIdle}`}>Toda ocasión</button>
+      {occasions.map(occasion => <button type="button" key={occasion} onClick={() => choose(() => onSelectOccasion(occasion))} aria-pressed={!promotionsOnly && selectedOccasion === occasion} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedOccasion === occasion ? chipActive : chipIdle}`}>{occasion}</button>)}
+      <button type="button" onClick={() => choose(onSelectPromotions)} aria-pressed={promotionsOnly} className={`${chipBase} w-full rounded-xl text-left ${promotionsOnly ? chipActive : chipIdle}`}>Promociones</button>
+      {occasionsUnavailable && <p role="status" className="px-2 text-xs leading-5 text-[#6a5e6e]">No pudimos cargar las ocasiones. Puedes explorar por categoría.</p>}
+    </div>
+    <div role="group" aria-label="Categorías" className="space-y-1 border-t border-[#eadde6] pt-5">
+      <p className="mb-3 text-[10px] font-black uppercase tracking-[.18em] text-[#6a5e6e]">Categorías</p>
+      {categoriesLoading ? <p className="text-sm text-[#6a5e6e]" role="status">Cargando categorías…</p> : categories.map(category => <button key={category.id} type="button" onClick={() => choose(() => onSelectCategory(category.id))} aria-pressed={!promotionsOnly && selectedCategory === category.id} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedCategory === category.id ? chipActive : chipIdle}`}>{category.name}</button>)}
+    </div>
+  </div>;
 
   return (
     <section
       id="catalogo"
-      className="scroll-mt-20 px-5 py-16 sm:px-8 sm:py-20"
+      className="scroll-mt-28 bg-[#fff8f4] px-5 py-12 sm:px-8 sm:py-16"
     >
-      <div className="mx-auto max-w-[1180px]">
+      <div className="mx-auto max-w-[1380px]">
+        <span id="catalogo-promociones" className="block scroll-mt-28" aria-hidden="true" />
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
@@ -202,49 +237,6 @@ export function CatalogSection({
             <p className="mt-3 max-w-[500px] text-sm leading-6 text-[#736877]">
               Encuentra flores y regalos para cada ocasión.
             </p>
-
-            <div className="mt-6 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  onSelectCategory(null);
-                  onShowAll();
-                }}
-                aria-pressed={selectedCategory === null && !favoritesOnly}
-                className={`${chipBase} ${
-                  selectedCategory === null && !favoritesOnly
-                    ? chipActive
-                    : chipIdle
-                }`}
-              >
-                Todos
-              </button>
-
-              {categoriesLoading ? (
-                <>
-                  {Array.from({ length: 3 }).map((_, index) => (
-                    <div
-                      key={index}
-                      className="h-9 w-20 animate-pulse rounded-full bg-[#eee5f0]"
-                    />
-                  ))}
-                </>
-              ) : (
-                categories.map((category) => (
-                  <button
-                    key={category.id}
-                    type="button"
-                    onClick={() => onSelectCategory(category.id)}
-                    aria-pressed={selectedCategory === category.id}
-                    className={`${chipBase} ${
-                      selectedCategory === category.id ? chipActive : chipIdle
-                    }`}
-                  >
-                    {media.categories[category.id] ? <Image src={media.categories[category.id]} width={36} height={36} alt="" sizes="36px" className="size-9 shrink-0 rounded-full object-cover"/> : <span aria-hidden="true" className="flex size-9 shrink-0 items-center justify-center rounded-full bg-[#eee3f4] text-[#74558c]"><Flower2 size={20}/></span>}<span className="min-w-0 text-left [overflow-wrap:anywhere]">{category.name}</span>
-                  </button>
-                ))
-              )}
-            </div>
 
             {filtered ? (
               <p className="mt-4 text-xs text-[#736877]" role="status">
@@ -263,10 +255,14 @@ export function CatalogSection({
           </div>
         </div>
 
-        <div className="mt-10">
+        <button ref={filterTrigger} type="button" onClick={() => setFiltersOpen(true)} className="mt-6 inline-flex min-h-12 max-w-full items-center gap-2 rounded-xl border border-[#d8c8de] bg-white px-5 py-3 text-left text-sm font-bold text-[#65358e] lg:hidden" aria-haspopup="dialog"><SlidersHorizontal size={18} className="shrink-0" aria-hidden /><span className="min-w-0 [overflow-wrap:anywhere]">Filtros{promotionsOnly ? " · Promociones" : selectedOccasion ? ` · ${selectedOccasion}` : selectedCategory ? ` · ${categories.find(entry => entry.id === selectedCategory)?.name || "Categoría"}` : ""}</span></button>
+        <div className="mt-8 grid items-start gap-7 lg:grid-cols-[240px_minmax(0,1fr)] xl:gap-10">
+          <aside aria-label="Filtros del catálogo" className="hidden min-w-0 rounded-3xl border border-[#eadde6] bg-white p-5 lg:block">{filters}</aside>
+          <div className="min-w-0">
+          {promotionsOnly ? promotionContent : <>
           {state.status === "loading" ? (
             <div
-              className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6"
+              className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-3 lg:gap-6"
               aria-busy="true"
             >
               {Array.from({ length: 4 }).map((_, index) => (
@@ -320,7 +316,7 @@ export function CatalogSection({
             </div>
           ) : (
             <>
-              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4 lg:gap-6">
+              <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-3 lg:gap-6">
                 {state.items.map((product) => (
                   <ProductCard
                     key={product.id}
@@ -351,7 +347,10 @@ export function CatalogSection({
               ) : null}
             </>
           )}
+          </>}
+          </div>
         </div>
+        <Modal open={filtersOpen} onOpenChange={setFiltersOpen}><ModalContent voice="public" onCloseAutoFocus={event => { event.preventDefault(); filterTrigger.current?.focus(); }}><ModalTitle>Filtros del catálogo</ModalTitle><ModalDescription>Elige una ocasión o categoría, o consulta las promociones vigentes.</ModalDescription>{filters}</ModalContent></Modal>
       </div>
     </section>
   );

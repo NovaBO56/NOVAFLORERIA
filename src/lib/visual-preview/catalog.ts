@@ -32,6 +32,7 @@ export function visualCatalogResponse(snapshot: VisualSnapshot, url: URL) {
     return product ? ok({ product }) : fail(404, "El producto no existe.");
   }
   if (route === "/api/categories") return ok({ categories: snapshot.categories });
+  if (route === "/api/catalog/occasions") return ok({ occasions: [...new Set(snapshot.products.flatMap(product => product.occasion?.trim() ? [product.occasion] : []))].sort((a, b) => a.localeCompare(b, "es")) });
   if (route === "/api/promotions") return ok({ promotions: snapshot.promotions });
   if (route === "/api/business-hours") return ok(snapshot.hours);
   if (route === "/api/store-location") return ok({ location: null });

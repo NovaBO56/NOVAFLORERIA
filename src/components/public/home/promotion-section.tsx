@@ -8,7 +8,8 @@ import { canBuildCombo, promotionIsCurrent, promotionPricePreview } from "@/lib/
 import type { PublicProduct, PublicPromotion } from "@/lib/public/types";
 import { script } from "./shared";
 
-export function PromotionSection({ promotions, onChooseProduct, onBuildCombo, initialPromotionId }: {
+export function PromotionSection({ promotions, onChooseProduct, onBuildCombo, initialPromotionId, embedded = false }: {
+  embedded?: boolean;
   promotions: PublicPromotion[];
   onChooseProduct?: (promotion: PublicPromotion, product: PublicProduct) => void;
   onBuildCombo?: (promotion: PublicPromotion) => void;
@@ -21,7 +22,7 @@ export function PromotionSection({ promotions, onChooseProduct, onBuildCombo, in
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => { const timer = setInterval(() => setNow(Date.now()), 30000); return () => clearInterval(timer); }, []);
   const offers = promotions.filter(promotion => promotionIsCurrent(promotion, now));
-  if (!offers.length) return null;
+  if (!offers.length) return embedded ? <p role="status" className="rounded-3xl border border-[#e2d5e5] bg-white p-8 text-sm text-[#6a5e6e]">No hay promociones vigentes en este momento. Puedes explorar los productos de toda ocasión.</p> : null;
   const index = active % offers.length, promotion = offers[index];
   const lines = promotion.products ?? [];
   const eligible = lines.flatMap(line => line.product ? [line.product] : []);
@@ -35,9 +36,9 @@ export function PromotionSection({ promotions, onChooseProduct, onBuildCombo, in
     else if (single && onChooseProduct && isPurchasable(eligible[0])) onChooseProduct(promotion, eligible[0]);
     else setExpanded(true);
   }
-  return <section id="promociones" aria-labelledby="promotion-title" className="scroll-mt-44 px-5 pb-16 sm:px-8 sm:pb-20">
+  return <section id={embedded ? "ofertas-catalogo" : "promociones"} aria-labelledby="promotion-title" className={embedded ? "min-w-0" : "scroll-mt-44 px-5 pb-16 sm:px-8 sm:pb-20"}>
     <div className="mx-auto max-w-[1180px]">
-      <div className="mb-5 flex items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#796481]">Un detalle especial</p><h2 id="promotion-title" className={`${script.className} mt-2 text-5xl text-[#4c285f]`}>Ofertas para ti</h2></div>
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-4"><div><p className="text-xs font-bold uppercase tracking-widest text-[#796481]">Un detalle especial</p><h2 id="promotion-title" className={`${script.className} mt-2 text-5xl text-[#4c285f]`}>{embedded ? "Promociones" : "Ofertas para ti"}</h2></div>
         {offers.length > 1 && <div className="flex gap-2"><button type="button" aria-label="Promoción anterior" className="promotion-arrow" onClick={() => move(-1)}><ChevronLeft aria-hidden size={20}/></button><button type="button" aria-label="Promoción siguiente" className="promotion-arrow" onClick={() => move(1)}><ChevronRight aria-hidden size={20}/></button></div>}
       </div>
       <div role="region" aria-roledescription="carrusel" aria-label="Promociones disponibles" tabIndex={0}

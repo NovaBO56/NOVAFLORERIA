@@ -49,6 +49,7 @@ export async function updateSession(request: NextRequest) {
     "/api/storefront-media",
     "/api/products",
     "/api/categories",
+    "/api/catalog/occasions",
     "/api/seasons",
     "/api/promotions",
   ];

@@ -6,7 +6,7 @@ import { storeLocationSchema } from "@/validations/store-location";
 
 vi.mock("@/components/public/home/shared", () => ({ script: { className: "script-font" } }));
 vi.mock("@/components/public/safe-image", () => ({
-  SafeImage: ({ src, alt }: { src: string; alt: string }) => createElement("img", { src, alt }),
+  SafeImage: ({ src, alt, className }: { src: string; alt: string; className?: string }) => createElement("img", { src, alt, className }),
 }));
 
 import {
@@ -48,12 +48,13 @@ const footerProps = {
 const text = (html: string) => html.replace(/<[^>]+>/g, " ").replace(/\s+/g, " ");
 
 describe("Public brand, contact and location sections", () => {
-  it("keeps the brand heading and both useful About actions without inventing a shop photograph", () => {
+  it("keeps the brand heading and actions with the owner's supplied bouquet", () => {
     const html = renderToStaticMarkup(createElement(AboutSection));
     expect(text(html)).toContain("Hecho con intención");
     expect(html).toContain('href="#catalogo"');
     expect(html).toContain('href="#contacto"');
-    expect(html).not.toContain("<img");
+    expect(html).toContain('src="/brand/banners/essence-bouquet-original.webp"');
+    expect(html).toContain("object-contain");
     expect(html).not.toContain("<iframe");
   });
 

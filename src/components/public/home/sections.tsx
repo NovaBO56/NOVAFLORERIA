@@ -19,14 +19,12 @@ import {
   DAY_NAMES,
   dayHoursLabel,
   orderedWeek,
-  pickImage,
   todayHoursLabel,
 } from "@/lib/public/format";
 import type {
   BusinessStatus,
   PublicCategory,
   PublicImage,
-  PublicProduct,
   WeekDay,
 } from "@/lib/public/types";
 import { script } from "./shared";
@@ -56,127 +54,27 @@ export function ClosedBanner({ status }: { status: BusinessStatus | null }) {
    PORTADA
    ============================================================ */
 
-export function HeroSection({
-  status,
-  heroProduct,
-  hasPromotions,
-}: {
-  status: BusinessStatus | null;
-  heroProduct: PublicProduct | null;
-  hasPromotions: boolean;
-}) {
-  const heroImage = heroProduct ? pickImage(heroProduct) : null;
+export function HeroSection({ status }: { status: BusinessStatus | null }) {
   const hours = todayHoursLabel(status);
-
-  return (
-    <section id="inicio" className="nova-hero relative isolate overflow-hidden scroll-mt-20 border-b border-[#e8e0ea] bg-[#f6f0f8]">
-      <div className="nova-hero-petals pointer-events-none absolute inset-0 -z-10" aria-hidden="true"/><div className="mx-auto grid max-w-[1280px] lg:grid-cols-[1fr_1fr]">
-        <div className="flex items-center px-6 py-10 sm:px-10 sm:py-14 lg:px-16 lg:py-24">
-          <div className="max-w-[580px]">
-            <div className="mb-5 flex items-center gap-3">
-              <span className="h-px w-8 bg-[#9270a4]" />
-
-              <span className="text-[10px] font-black uppercase tracking-[0.2em] text-[#735a7d]">
-                Floristería Anabelle
-              </span>
-            </div>
-
-            <h1
-              className={`${script.className} text-[64px] leading-[0.9] text-[#4c285f] sm:text-[80px] lg:text-[92px]`}
-            >
-              Flores
-              <br />
-              que hablan
-            </h1>
-
-            <p className="mt-7 max-w-[490px] text-[15px] leading-7 text-[#6e6372] sm:text-base">
-              Arreglos florales, regalos y detalles diseñados para acompañar
-              los momentos que quieres recordar.
-            </p>
-
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a
-                href="#catalogo"
-                className="inline-flex h-12 items-center gap-2 rounded-xl bg-[#65358e] px-6 text-sm font-black text-white shadow-[0_8px_20px_rgba(101,53,142,.18)] transition motion-safe:hover:-translate-y-0.5 hover:bg-[#572d7a]"
-              >
-                Explorar catálogo
-                <ArrowRight size={16} />
-              </a>
-
-              {hasPromotions ? (
-                <a
-                  href="#promociones"
-                  className="inline-flex h-12 items-center rounded-xl border border-[#d8c8de] bg-white px-6 text-sm font-bold text-[#55455c] transition hover:border-[#65358e] hover:text-[#65358e]"
-                >
-                  Ver promociones
-                </a>
-              ) : null}
-            </div>
-
-            <div className="mt-10 flex flex-wrap gap-6 border-t border-[#ded2e2] pt-6">
-              <div>
-                <p className="text-lg font-black text-[#403344]">
-                  {hours ?? "—"}
-                </p>
-
-                <p className="mt-1 text-xs text-[#736877]">horario de hoy</p>
-              </div>
-            </div>
-          </div>
+  return <section id="inicio" className="anabelle-floral-hero relative isolate overflow-hidden scroll-mt-28 bg-[#fff8f4]">
+    <div className="mx-auto grid max-w-[1380px] items-center gap-2 px-6 py-10 sm:px-10 sm:py-12 lg:min-h-[520px] lg:grid-cols-[.45fr_.55fr] lg:gap-8 lg:px-14 lg:py-14">
+      <div className="relative z-10 min-w-0">
+        <p className="text-[10px] font-black uppercase tracking-[.2em] text-[#6a5e6e]">Floristería Anabelle</p>
+        <h1 className={`${script.className} mt-5 text-[64px] leading-[.95] text-[#4c285f] sm:text-[80px] lg:text-[88px]`}>Flores<br />que hablan</h1>
+        <p className="mt-6 max-w-[470px] text-[15px] leading-7 text-[#6a5e6e] sm:text-base">Arreglos florales, regalos y detalles diseñados para acompañar los momentos que quieres recordar.</p>
+        <div className="mt-7 flex flex-wrap gap-3">
+          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-[#65358e] px-5 py-3 text-sm font-bold text-white transition-colors hover:bg-[#572d7a] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Explorar catálogo<ArrowRight size={16} aria-hidden /></a>
+          <a href="#catalogo" className="inline-flex min-h-12 items-center justify-center rounded-xl border border-[#cdb5d2] bg-white/80 px-5 py-3 text-sm font-bold text-[#4c285f] hover:bg-[#f6f0f8] focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[#65358e]">Elegir por ocasión</a>
         </div>
-
-        {/* IMAGEN PRINCIPAL: foto de un producto destacado si existe */}
-        <div className="relative min-h-[320px] bg-[#e7dce9] sm:min-h-[420px] lg:min-h-[620px]">
-          <div className="absolute inset-6 border border-white/70 sm:inset-10" />
-
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-[56%] max-w-[280px] sm:w-[64%] sm:max-w-[300px] lg:w-[72%] lg:max-w-[420px]">
-              <div className="relative aspect-[4/5] overflow-hidden rounded-2xl bg-[#d9c9df] shadow-[0_25px_60px_rgba(65,39,75,.12)]">
-                {heroImage ? (
-                  <>
-                    <Image
-                      src={heroImage.public_url}
-                      alt={heroImage.alt_text ?? heroProduct?.name ?? "Producto destacado"}
-                      fill
-                      priority
-                      sizes="(min-width: 1024px) 420px, 72vw"
-                      className="object-cover"
-                    />
-
-                    <div className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-[#28202d]/55 to-transparent px-6 pb-6 pt-16">
-                      <p className={`${script.className} text-right text-4xl text-white`}>
-                        Tu momento
-                      </p>
-                    </div>
-                  </>
-                ) : (
-                  <div className="flex h-full flex-col items-center justify-center">
-                    <div className="text-[120px] opacity-80">✿</div>
-
-                    <p
-                      className={`${script.className} mt-3 text-5xl text-[#694778]`}
-                    >
-                      Tu momento
-                    </p>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="absolute bottom-8 left-8 hidden rounded-xl border border-white/80 bg-white px-5 py-4 shadow-lg sm:block">
-            <p className="text-[10px] font-black uppercase tracking-[0.18em] text-[#75677b]">
-              Detalles especiales
-            </p>
-
-            <p className="mt-1 text-sm font-black text-[#433548]">
-              Hechos para ti
-            </p>
-          </div>
+        {hours && <p className="mt-6 text-xs text-[#6a5e6e]">horario de hoy: <strong>{hours}</strong></p>}
+      </div>
+      <div className="flex min-w-0 items-center justify-center pt-4 lg:pt-0">
+        <div className="relative aspect-[360/542] w-[200px] max-w-full sm:w-[240px] lg:w-[320px]">
+          <Image src="/brand/banners/hero-tulips.png" alt="Ramo original de tulipanes blancos y rosas rojas con lazo rojo" fill priority sizes="(min-width: 1024px) 320px, (min-width: 640px) 240px, 200px" className="object-contain" />
         </div>
       </div>
-    </section>
-  );
+    </div>
+  </section>;
 }
 
 /* ============================================================
@@ -252,19 +150,18 @@ export function AboutSection({ photo = null }: { photo?: PublicImage | null }) {
   const media = useStorefrontMedia();
   const configuredPhoto = media.about ? { id: "configured-about", public_url: media.about, alt_text: "Fotografía configurada de Floristería Anabelle", sort_order: 0 } : photo;
   return (
-    <section id="nosotros" aria-labelledby="nosotros-title" className="scroll-mt-44 px-5 py-16 sm:px-8 sm:py-20">
-      <div className="mx-auto grid max-w-[1180px] overflow-hidden rounded-[32px] border border-[#e2d7e4] bg-white shadow-[0_18px_50px_-36px_rgba(76,40,95,.25)] lg:grid-cols-[.9fr_1.1fr]">
-        <div className="relative order-2 flex min-h-[180px] items-center justify-center overflow-hidden bg-[radial-gradient(ellipse_at_top_left,#f6e3ee,#eee7f5)] p-6 sm:min-h-[240px] lg:order-1 lg:min-h-[440px]">
-          {configuredPhoto?.public_url ? <Image src={configuredPhoto.public_url} alt={configuredPhoto.alt_text || "Fotografía de Floristería Anabelle"} fill sizes="(min-width: 1024px) 530px, 100vw" className="object-cover" /> : <div className="flex items-center gap-5 text-center lg:flex-col lg:gap-0">
-            <div aria-hidden="true" className="flex size-24 shrink-0 items-center justify-center rounded-full border border-[#d9c7df] bg-white/50 lg:size-36"><span className="text-5xl text-[#704b7d] lg:text-6xl">✿</span></div>
-            <div><p className={`${script.className} text-4xl text-[#5d3a69] lg:mt-5 lg:text-5xl`}>Anabelle</p><p className="mt-3 text-[10px] font-bold uppercase tracking-[.16em] text-[#715e7b]">Ilustración floral</p></div>
-          </div>}
+    <section id="nosotros" aria-labelledby="nosotros-title" className="anabelle-floral-essence scroll-mt-28 px-5 py-10 sm:px-8 sm:py-14">
+      <div className="mx-auto grid max-w-[1280px] items-center gap-6 lg:grid-cols-[.95fr_1.05fr] lg:gap-12">
+        <div className="order-2 flex min-w-0 items-end justify-center px-5 pt-2 lg:order-1 lg:self-stretch lg:px-7 lg:pt-8">
+          <div className="relative aspect-[1122/1402] w-[250px] max-w-full sm:w-[300px] lg:w-[440px]">
+            <Image src={configuredPhoto?.public_url || "/brand/banners/essence-bouquet-original.webp"} alt={configuredPhoto?.alt_text || "Ramo de rosas sostenido por una mano"} fill sizes="(min-width: 1024px) 440px, (min-width: 640px) 300px, 250px" className="object-contain" />
+          </div>
         </div>
 
         <div className="order-1 flex min-w-0 items-center px-6 py-9 sm:px-10 sm:py-12 lg:order-2 lg:px-14">
           <div>
             <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#796481]">
-              Nosotros
+              Nuestra esencia
             </p>
 
             <h2

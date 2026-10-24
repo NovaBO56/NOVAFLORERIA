@@ -6,7 +6,7 @@ import type { FormEvent } from "react";
 import { Flower2, Leaf, Heart, Menu, Search, ShoppingBag, X } from "lucide-react";
 import { scrollToId, useDialog } from "./shared";
 
-export type NavItem = { label: string; href: string };
+export type NavItem = { label: string; href: string; onNavigate?: () => void };
 
 type SiteHeaderProps = {
   navItems: NavItem[];
@@ -133,11 +133,11 @@ export function SiteHeader({
             </div>
 
             <nav aria-label="Principal móvil" className="mt-4 flex flex-col">
-              {navItems.map(({ label, href }) => (
+              {navItems.map(({ label, href, onNavigate }) => (
                 <a
                   key={label}
                   href={href}
-                  onClick={() => setMenuOpen(false)}
+                  onClick={() => { onNavigate?.(); setMenuOpen(false); }}
                   className="rounded-lg border-b border-[#eee8f0] px-2 py-4 text-sm font-bold text-[#44384a] transition hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2"
                 >
                   {label}
@@ -187,10 +187,11 @@ export function SiteHeader({
             aria-label="Principal"
             className="hidden min-w-0 flex-1 items-center justify-center gap-0.5 lg:flex xl:gap-1.5 2xl:gap-2"
           >
-            {navItems.map(({ label, href }) => (
+            {navItems.map(({ label, href, onNavigate }) => (
               <a
                 key={label}
                 href={href}
+                onClick={onNavigate}
                 className="inline-flex min-h-11 items-center whitespace-nowrap rounded-full px-2 text-[12px] font-bold text-[#574b5c] transition-colors hover:bg-[#f0d9e3] hover:text-[#65358e] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#65358e] focus-visible:ring-offset-2 xl:text-[13px]"
               >
                 {label}

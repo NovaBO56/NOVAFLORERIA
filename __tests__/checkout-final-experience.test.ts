@@ -19,7 +19,7 @@ const render = (promotions: PublicPromotion[], selectedId = "") => renderToStati
 
 describe("Final checkout presentation (unit/markup, not browser validation)", () => {
   it("removes the catalogue counter while keeping the configured hours and CTA", () => {
-    const html = renderToStaticMarkup(createElement(HeroSection, { status: { is_open: true, opens_at: "08:00:00", closes_at: "20:00:00", is_closed_today: false, accept_orders_outside_hours: false }, heroProduct: null, hasPromotions: true }));
+    const html = renderToStaticMarkup(createElement(HeroSection, { status: { is_open: true, opens_at: "08:00:00", closes_at: "20:00:00", is_closed_today: false, accept_orders_outside_hours: false } }));
     expect(html).not.toContain("productos en el catálogo"); expect(html).toContain("horario de hoy"); expect(html).toContain("Explorar catálogo");
   });
   it("suggests the greatest eligible saving without applying or persisting it", () => {

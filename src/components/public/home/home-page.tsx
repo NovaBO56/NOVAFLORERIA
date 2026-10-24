@@ -139,7 +139,7 @@ const initialCatalog: CatalogData = {
   loadingMore: false,
 };
 
-function productsUrl(page: number, category: string | null, search: string) {
+function productsUrl(page: number, category: string | null, search: string, occasion: string | null = null) {
   const params = new URLSearchParams({
     page: String(page),
     limit: String(PAGE_SIZE),
@@ -147,6 +147,7 @@ function productsUrl(page: number, category: string | null, search: string) {
 
   if (category) params.set("category_id", category);
   if (search) params.set("search", search);
+  if (occasion) params.set("occasion", occasion);
 
   return `/api/products?${params.toString()}`;
 }
@@ -171,6 +172,10 @@ export default function HomePage({ year }: { year: number }) {
 
   // Filtros del catálogo
   const [category, setCategory] = useState<string | null>(null);
+  const [occasion, setOccasion] = useState<string | null>(null);
+  const [occasions, setOccasions] = useState<string[]>([]);
+  const [occasionsUnavailable, setOccasionsUnavailable] = useState(false);
+  const [promotionsOnly, setPromotionsOnly] = useState(false);
   const [search, setSearch] = useState("");
   const [favoritesOnly, setFavoritesOnly] = useState(false);
   const [reloadToken, setReloadToken] = useState(0);
@@ -189,6 +194,21 @@ export default function HomePage({ year }: { year: number }) {
   const [shoppingError, setShoppingError] = useState("");
   const [shoppingNotice, setShoppingNotice] = useState("");
   const [offerReturn, setOfferReturn] = useState(0);
+  useEffect(() => {
+    let cancelled = false;
+    getJson<{ occasions: string[] }>("/api/catalog/occasions")
+      .then(data => { if (!cancelled) setOccasions(data.occasions); })
+      .catch(() => { if (!cancelled) setOccasionsUnavailable(true); });
+    const followHash = () => {
+      if (["#promociones", "#catalogo-promociones"].includes(window.location.hash)) {
+        setPromotionsOnly(true); setFavoritesOnly(false);
+        requestAnimationFrame(() => scrollToId("catalogo"));
+      }
+    };
+    followHash();
+    window.addEventListener("hashchange", followHash);
+    return () => { cancelled = true; window.removeEventListener("hashchange", followHash); };
+  }, []);
   const visibleIds = JSON.stringify([...new Set([...catalogData.items, ...favoritesData.items].map(product => product.id))]);
   useEffect(() => {
     if (process.env.NEXT_PUBLIC_NOVA_VISUAL_PREVIEW === "true") return;
@@ -275,7 +295,7 @@ export default function HomePage({ year }: { year: number }) {
 
   /* ---------- catálogo (se recarga al cambiar filtros) ---------- */
 
-  const filterKey = `${category ?? ""}|${search}|${reloadToken}`;
+  const filterKey = `${category ?? ""}|${occasion ?? ""}|${search}|${reloadToken}`;
 
   useEffect(() => {
     let cancelled = false;
@@ -283,7 +303,7 @@ export default function HomePage({ year }: { year: number }) {
     (async () => {
       try {
         const data = await getJson<ProductsResponse>(
-          productsUrl(1, category, search),
+          productsUrl(1, category, search, occasion),
         );
 
         if (cancelled) return;
@@ -309,7 +329,7 @@ export default function HomePage({ year }: { year: number }) {
     return () => {
       cancelled = true;
     };
-  }, [category, search, filterKey]);
+  }, [category, occasion, search, filterKey]);
 
   async function loadMore() {
     if (catalogData.loadingMore || catalogData.page >= catalogData.totalPages) {
@@ -323,7 +343,7 @@ export default function HomePage({ year }: { year: number }) {
 
     try {
       const data = await getJson<ProductsResponse>(
-        productsUrl(nextPage, category, search),
+        productsUrl(nextPage, category, search, occasion),
       );
 
       setCatalogData((current) =>
@@ -424,11 +444,22 @@ export default function HomePage({ year }: { year: number }) {
 
   function selectCategory(id: string | null) {
     setCategory(id);
+    setOccasion(null);
+    setPromotionsOnly(false);
     setFavoritesOnly(false);
+  }
+
+  function selectOccasion(value: string | null) {
+    setOccasion(value); setCategory(null); setPromotionsOnly(false); setFavoritesOnly(false);
+  }
+
+  function showPromotions() {
+    setPromotionsOnly(true); setCategory(null); setOccasion(null); setFavoritesOnly(false); setSearch("");
   }
 
   function handleSearch(term: string) {
     setSearch(term);
+    setPromotionsOnly(false);
     setFavoritesOnly(false);
   }
 
@@ -504,7 +535,7 @@ export default function HomePage({ year }: { year: number }) {
     { label: "Inicio", href: "#inicio" },
     { label: "Catálogo", href: "#catalogo" },
     ...(meta.promotions.length > 0
-      ? [{ label: "Promociones", href: "#promociones" }]
+      ? [{ label: "Promociones", href: "#catalogo-promociones", onNavigate: showPromotions }]
       : []),
     { label: "Nosotros", href: "#nosotros" },
     { label: "Ubicación", href: "#ubicacion" },
@@ -513,7 +544,7 @@ export default function HomePage({ year }: { year: number }) {
   ];
 
   return (
-    <main className={`${lato.className} nova-page nova-storefront public-with-bottom-nav min-h-screen bg-[#faf8fb] text-[#28202d]`}>
+    <main className={`${lato.className} nova-page nova-storefront public-with-bottom-nav min-h-screen bg-[#fff8f4] text-[#4c285f]`}>
       <SiteHeader
         navItems={navItems}
         cartCount={cart.count}
@@ -521,7 +552,7 @@ export default function HomePage({ year }: { year: number }) {
         favoritesActive={favoritesOnly}
         searchTerm={search}
         onSearch={handleSearch}
-        onToggleFavorites={() => setFavoritesOnly((current) => !current)}
+        onToggleFavorites={() => { setPromotionsOnly(false); setCategory(null); setOccasion(null); setFavoritesOnly((current) => !current); }}
         onOpenCart={() => setCartOpen(true)}
       />
 
@@ -529,13 +560,19 @@ export default function HomePage({ year }: { year: number }) {
 
       <HeroSection
         status={meta.status}
-        heroProduct={meta.heroProduct}
-        hasPromotions={meta.promotions.length > 0}
       />
 
       <ServiceStrip />
 
       <CatalogSection
+        occasions={occasions}
+        occasionsUnavailable={occasionsUnavailable}
+        selectedOccasion={occasion}
+        onSelectOccasion={selectOccasion}
+        promotionsOnly={promotionsOnly}
+        onSelectPromotions={showPromotions}
+        onClearFilters={() => { selectCategory(null); setSearch(""); }}
+        promotionContent={<PromotionSection embedded key={offerReturn} promotions={meta.promotions} initialPromotionId={selectedPromotionId} onChooseProduct={chooseOfferProduct} onBuildCombo={buildCombo}/>}
         categories={meta.categories}
         categoriesLoading={!meta.loaded}
         selectedCategory={category}
@@ -554,7 +591,6 @@ export default function HomePage({ year }: { year: number }) {
       />
 
       {shoppingNotice && <div id="shopping-feedback" className="mx-auto max-w-[1180px] scroll-mt-24 px-5 py-4"><ShoppingNotice onDismiss={() => setShoppingNotice("")}>{shoppingNotice}</ShoppingNotice></div>}
-      <PromotionSection key={offerReturn} promotions={meta.promotions} initialPromotionId={selectedPromotionId} onChooseProduct={chooseOfferProduct} onBuildCombo={buildCombo}/>
 
       {detailProduct ? (
         <ProductDetailSection
@@ -623,7 +659,7 @@ export default function HomePage({ year }: { year: number }) {
         }
         whatsappNumber={meta.whatsapp}
         promotions={meta.promotions}
-        onReturnToOffer={() => { setOfferReturn(value => value + 1); requestAnimationFrame(() => scrollToId("promociones")); }}
+        onReturnToOffer={() => { showPromotions(); setOfferReturn(value => value + 1); requestAnimationFrame(() => scrollToId("catalogo")); }}
       />
     </main>
   );

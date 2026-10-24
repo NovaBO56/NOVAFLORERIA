@@ -2,6 +2,34 @@
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
 
+/* Owner-supplied artwork, optimized without redrawing or changing its colors. */
+.anabelle-floral-hero {
+  background-image: url('/brand/banners/hero-background.webp');
+  background-position: center;
+  background-size: cover;
+}
+.anabelle-floral-essence {
+  background-color: #fff8f4;
+  background-image: url('/brand/banners/essence-background.webp');
+  background-position: center;
+  background-size: cover;
+}
+.nova-storefront {
+  --anabelle-cream: #fff8f4;
+  --anabelle-lavender: #f6f0f8;
+  --anabelle-rose: #f3dee6;
+  --anabelle-heading: #4c285f;
+  --anabelle-button: #65358e;
+  --anabelle-accent: #c77f9e;
+  --anabelle-secondary: #6a5e6e;
+}
+.nova-storefront :is(button, a):focus-visible {
+  outline: 2px solid #65358e;
+  outline-offset: 3px;
+}
+.nova-storefront footer a:focus-visible,
+.nova-storefront footer button:focus-visible { outline-color: #fff8f4; }
+
 /* Brand header only: preserve the owner's opaque artwork without cutting petals. */
 .anabelle-brand-header {
   isolation: isolate;
