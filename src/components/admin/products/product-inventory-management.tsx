@@ -34,6 +34,7 @@ type InventoryRequirement = {
 
 type ProductInventoryManagementProps = {
   productId: string;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 const selectClassName =
@@ -53,6 +54,7 @@ function formatUnit(unit: string) {
 
 export default function ProductInventoryManagement({
   productId,
+  onDirtyChange,
 }: ProductInventoryManagementProps) {
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>(
     [],
@@ -77,6 +79,8 @@ export default function ProductInventoryManagement({
 
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
+  const dirty = inventoryItemId !== "" || inventoryQuantity !== "1" || editingRequirementId !== null || saving;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   const loadInventoryItems = useCallback(async () => {
     setLoadingItems(true);
@@ -311,15 +315,14 @@ export default function ProductInventoryManagement({
   }
 
   return (
-    <div className="flex flex-col gap-4">
+    <div className="flex flex-col gap-4 [&_button]:min-h-11">
       <div>
         <h4 className="font-medium text-text">
           Consumo de inventario
         </h4>
 
         <p className="mt-1 text-xs text-text-secondary">
-          Define qué cantidad de cada ítem se descuenta cuando
-          se vende una unidad de este producto.
+          Receta de insumos: define qué cantidad de cada ítem se consume por una unidad vendida. No son complementos opcionales para el cliente.
         </p>
       </div>
 

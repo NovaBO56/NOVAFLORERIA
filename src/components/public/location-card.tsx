@@ -7,13 +7,12 @@ import type { WeekDay } from "@/lib/public/types";
 import { WeeklyHours } from "./weekly-hours";
 
 function MapPreview({ preview, directions, name }: { preview: string; directions: string | null; name: string }) {
-  const [opened, setOpened] = useState(false);
   const [failed, setFailed] = useState(false);
   return <div className="public-map-card min-w-0 overflow-hidden rounded-[26px] border border-[#eadcdd] bg-[#f8efed]">
     <div className="relative aspect-[16/9] w-full overflow-hidden sm:aspect-[2/1] lg:aspect-auto lg:h-[300px]">
-      {opened && !failed ? <iframe title={`Mapa de ${name} en Google Maps`} src={preview} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full border-0"/> : <div className="public-map-placeholder absolute inset-0 flex flex-col items-center justify-center gap-3 px-5 text-center"><MapPin size={28} strokeWidth={1.4} aria-hidden/><p className="text-sm font-semibold">{failed ? "No pudimos mostrar el mapa" : name}</p><button type="button" className="min-h-11 rounded-full border border-[#d9bfc6] bg-white px-5 text-sm font-semibold text-[#873c58]" onClick={() => { setFailed(false); setOpened(true); }}>{failed ? "Volver a intentar" : "Mostrar mapa de Google"}</button></div>}
+      {!failed ? <iframe title={`Mapa de ${name} en Google Maps`} src={preview} loading="lazy" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen onError={() => setFailed(true)} className="absolute inset-0 block h-full w-full border-0"/> : <div className="public-map-placeholder absolute inset-0 flex flex-col items-center justify-center gap-3 px-5 text-center"><MapPin size={28} strokeWidth={1.4} aria-hidden/><p className="text-sm font-semibold">No pudimos mostrar el mapa</p><button type="button" className="min-h-11 rounded-full border border-[#d9bfc6] bg-white px-5 text-sm font-semibold text-[#873c58]" onClick={() => setFailed(false)}>Volver a intentar</button></div>}
     </div>
-    <div className="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 text-xs text-[#645460]"><span>Google Maps · {opened ? "¿No se muestra el mapa?" : "Se carga al solicitarlo"}</span>{opened && <button type="button" className="min-h-11 font-semibold text-[#873c58] underline underline-offset-4" onClick={() => setOpened(false)}>Ocultar mapa</button>}{directions && <a className="inline-flex min-h-11 items-center gap-1 font-semibold text-[#873c58] underline underline-offset-4" href={directions} target="_blank" rel="noopener noreferrer">Abrir en Google Maps<ArrowUpRight size={14} aria-hidden/></a>}</div>
+    <div className="flex flex-wrap items-center justify-between gap-2 bg-white px-4 py-3 text-xs text-[#645460]"><span>Google Maps · {name}</span>{directions && <a className="inline-flex min-h-11 items-center gap-1 font-semibold text-[#873c58] underline underline-offset-4" href={directions} target="_blank" rel="noopener noreferrer">Abrir en Google Maps<ArrowUpRight size={14} aria-hidden/></a>}</div>
   </div>;
 }
 

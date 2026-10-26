@@ -36,7 +36,7 @@ export default async function AdminLayout({
   const sections = getNavSectionsForRole(profile.role);
 
   return (
-    <div className="theme-admin min-h-dvh lg:grid lg:grid-cols-[16rem_minmax(0,1fr)]">
+    <div className="theme-admin admin-workspace min-h-dvh">
       <a
         href="#contenido"
         className="sr-only focus:not-sr-only focus:fixed focus:left-2 focus:top-2 focus:z-50 focus:rounded-sm focus:bg-brand focus:px-3 focus:py-2 focus:text-white"
@@ -44,14 +44,12 @@ export default async function AdminLayout({
         Saltar al contenido
       </a>
 
+      <AdminHeader name={profile.full_name} role={profile.role} sections={sections} />
+      <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
       <AdminSidebar sections={sections} />
 
-      <div className="flex min-h-dvh min-w-0 flex-col bg-admin-wash-end bg-[linear-gradient(to_bottom,var(--admin-wash-start),var(--admin-wash-end)_280px)] bg-no-repeat">
-        <AdminHeader
-          name={profile.full_name}
-          role={profile.role}
-          sections={sections}
-        />
+      <div className="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-col bg-bg-admin">
+
 
         <SessionGuard />
 
@@ -59,6 +57,7 @@ export default async function AdminLayout({
         <div id="contenido" className="flex-1 px-4 py-6 md:px-6 lg:px-8">
           {children}
         </div>
+      </div>
       </div>
     </div>
   );

@@ -15,3 +15,55 @@ describe("Customer order summary (markup only, not visual evidence)",()=>{
  it("pickup ready uses pickup wording in both status and timeline",()=>{const html=render({status:"listo",payment_status:"confirmado"});expect(html).toContain("Listo para recoger");expect(html).not.toContain("Listo para entregar");});
  it("unknown historical delivery method is not invented",()=>expect(render({customer_message:null})).toContain("Entrega o recojo por coordinar"));
 });
+
+describe("Customer tracking schedule", () => {
+ const scheduledFor = "2026-10-26T02:30:00Z";
+
+ it.each([
+  ["proposed", "Horario propuesto", "La florería propone este horario. Coordina con la tienda para confirmarlo."],
+  ["confirmed", "Horario confirmado", "Este horario fue registrado por la florería como coordinado contigo."],
+ ] as const)("shows the %s state with the correct customer guidance", (status, heading, guidance) => {
+  const html = render({ scheduled_for: scheduledFor, schedule_status: status });
+  expect(html).toContain(`<h3 class="font-bold">${heading}</h3>`);
+  expect(html).toContain(guidance);
+  expect(html).not.toContain(status === "proposed" ? "Horario confirmado" : "Horario propuesto");
+ });
+
+ it.each(["proposed", "confirmed"] as const)("shows %s dates in Bolivia even when UTC is on the next day", status => {
+  const html = render({ scheduled_for: scheduledFor, schedule_status: status });
+  expect(html).toContain(`<time dateTime="${scheduledFor}">`);
+  expect(html).toContain("25 de octubre de 2026");
+  expect(html).toMatch(/(?:10:30 p\. m\.|22:30)/);
+  expect(html).toContain("Hora de Bolivia");
+  expect(html).not.toContain("26 de octubre de 2026");
+  expect(html).not.toContain("02:30</time>");
+ });
+
+ it.each(["pendiente_pago", "confirmado", "en_preparacion", "listo"])("keeps an unscheduled %s order pending coordination", status => {
+  const html = render({ status, scheduled_for: null, schedule_status: "pending" });
+  expect(html).toContain("Horario por coordinar");
+  expect(html).toContain("La florería coordinará contigo la fecha y hora de recojo.");
+  expect(html).not.toContain("Horario propuesto");
+  expect(html).not.toContain("Horario confirmado");
+  expect(html).not.toContain("<time ");
+ });
+
+ it.each(["finalizado", "cancelado", "rechazado"])("does not promise future coordination for unscheduled %s orders", status => {
+  const html = render({ status, scheduled_for: null, schedule_status: "pending" });
+  expect(html).toContain("Sin horario registrado");
+  expect(html).toContain("Este pedido no tiene una fecha y hora programadas registradas.");
+  expect(html).not.toContain("La florería coordinará contigo");
+  expect(html).not.toContain("<time ");
+ });
+
+ it("uses the client presentation without administration controls", () => {
+  const html = render({ scheduled_for: scheduledFor, schedule_status: "confirmed" });
+  expect(html).toContain('class="customer-card customer-stack"');
+  expect(html).toContain('class="customer-note" aria-label="Horario del pedido"');
+  expect(html).not.toContain("admin-order-dialog");
+  expect(html).not.toContain("order-schedule-time");
+  expect(html).not.toContain("Programar horario");
+  expect(html).not.toContain("Cambiar horario");
+  expect(html).not.toContain("Guardar horario");
+ });
+});

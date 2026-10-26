@@ -1,7 +1,7 @@
 
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,10 @@ export type Product = {
   is_sold_out: boolean;
   catalog_order: number;
   is_active: boolean;
+  available_quantity?: number;
+  calculated_available?: boolean;
+  calculated_sold_out?: boolean;
+  images?: { id: string; public_url: string | null; alt_text: string | null; sort_order: number }[];
 };
 
 export type ProductFormData = {
@@ -54,6 +58,7 @@ type ProductFormProps = {
   editingProduct: Product | null;
   onSaved: (product: Product, wasEditing: boolean) => void;
   onCancel: () => void;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 function getInitialForm(product: Product | null): ProductFormData {
@@ -94,6 +99,7 @@ export default function ProductForm({
   editingProduct,
   onSaved,
   onCancel,
+  onDirtyChange,
 }: ProductFormProps) {
   const [form, setForm] = useState<ProductFormData>(() =>
     getInitialForm(editingProduct),
@@ -101,6 +107,9 @@ export default function ProductForm({
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState("");
+  const [baseline, setBaseline] = useState(() => getInitialForm(editingProduct));
+  const dirty = JSON.stringify(form) !== JSON.stringify(baseline);
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   const isEditing = Boolean(editingProduct);
 
@@ -153,10 +162,10 @@ export default function ProductForm({
         occasion: occasion || null,
         season_id: form.seasonId || null,
         is_featured: form.isFeatured,
-        is_available: form.isAvailable,
+        is_available: editingProduct ? form.isAvailable : false,
         is_sold_out: form.isSoldOut,
         catalog_order: catalogOrder,
-        is_active: form.isActive,
+        is_active: editingProduct ? form.isActive : false,
       };
 
       const url = editingProduct
@@ -181,6 +190,8 @@ export default function ProductForm({
         );
       }
 
+      const next = getInitialForm(result.product as Product);
+      setForm(next); setBaseline(next);
       onSaved(result.product as Product, Boolean(editingProduct));
     } catch (error) {
       setError(
@@ -194,7 +205,7 @@ export default function ProductForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-5">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-5 [&_button]:min-h-11">
       <div>
         <h3 className="text-lg font-semibold text-text">
           {isEditing ? "Editar producto" : "Nuevo producto"}
@@ -203,12 +214,12 @@ export default function ProductForm({
         <p className="mt-1 text-sm text-text-secondary">
           {isEditing
             ? "Actualiza la información del producto."
-            : "Crea el producto inactivo. Después abre su Receta, configura el consumo y actívalo para vender."}
+            : "Vamos a crear tu producto. Primero registra sus datos. Después podrás añadir fotografías, configurar los materiales y publicarlo."}
         </p>
       </div>
 
       {error && (
-        <div className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">
+        <div role="alert" className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">
           {error}
         </div>
       )}
@@ -223,7 +234,7 @@ export default function ProductForm({
           />
         </Field>
 
-        <Field label="Precio" required>
+        <Field label="Precio" required hint="Precio de venta en bolivianos (Bs).">
           <Input
             type="number"
             min="0.01"
@@ -245,10 +256,10 @@ export default function ProductForm({
             <option value="">Sin categoría</option>
 
             {categories
-              .filter((category) => category.is_active)
+              .filter((category) => category.is_active || category.id === form.categoryId)
               .map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name}
+                  {category.name}{category.is_active ? "" : " (inactiva)"}
                 </option>
               ))}
           </select>
@@ -264,16 +275,16 @@ export default function ProductForm({
             <option value="">Sin temporada</option>
 
             {seasons
-              .filter((season) => season.is_active)
+              .filter((season) => season.is_active || season.id === form.seasonId)
               .map((season) => (
                 <option key={season.id} value={season.id}>
-                  {season.name}
+                  {season.name}{season.is_active ? "" : " (inactiva)"}
                 </option>
               ))}
           </select>
         </Field>
 
-        <Field label="Ocasión">
+        <Field label="Ocasión" optional>
           <Input
             value={form.occasion}
             onChange={(event) => updateForm("occasion", event.target.value)}
@@ -327,10 +338,10 @@ export default function ProductForm({
             onChange={(event) =>
               updateForm("isAvailable", event.target.checked)
             }
-            disabled={saving}
+            disabled={saving || !isEditing}
             className="size-4 accent-brand"
           />
-          Disponible
+          Venta habilitada (Disponible)
         </label>
 
         <label className="flex items-center gap-2 rounded-xl border border-border-decorative bg-surface px-3 py-3 text-sm text-text">
@@ -351,16 +362,16 @@ export default function ProductForm({
             type="checkbox"
             checked={form.isActive}
             onChange={(event) => updateForm("isActive", event.target.checked)}
-            disabled={saving}
+            disabled={saving || !isEditing}
             className="size-4 accent-brand"
           />
-          Activo
+          Publicado (Activo)
         </label>
       </div>
-      <p className="text-sm text-text-secondary">Para activar un producto, configura primero sus insumos y cantidades en Productos → Receta. Sin receta válida no puede ponerse a la venta.</p>
+      <p className="text-sm text-text-secondary">La receta de materiales debe ser válida según el servidor. Configúrala en «Receta y materiales»; usa «Productos incluidos» cuando corresponda y consulta «Revisar y publicar» antes de habilitar la venta. Los productos nuevos se guardan sin publicar.</p>
 
-      <div className="flex flex-wrap justify-end gap-2 border-t border-border-decorative pt-4">
-        {isEditing && (
+      <div className="sticky -bottom-4 flex flex-wrap justify-end gap-2 border-t border-border-decorative bg-surface py-3">
+        {(
           <Button
             type="button"
             variant="outline"

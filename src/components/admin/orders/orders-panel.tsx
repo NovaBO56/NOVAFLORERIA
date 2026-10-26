@@ -5,7 +5,8 @@ import type { Dedication } from "@/lib/public/dedications";
 import Link from "next/link";
 import { OrderReturns } from "./order-returns";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Search, TriangleAlert } from "lucide-react";
+import { Eye, Search, TriangleAlert, X, Flower2, CalendarDays, Printer } from "lucide-react";
+import { OrderOverview } from "./order-overview";
 import { Badge, type OrderStatus } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -23,6 +24,8 @@ import type { UserRole } from "@/lib/auth/permissions";
 import { formatDateTime, formatMoney } from "@/lib/format";
 import { whatsappLink } from "@/lib/public/format";
 import { orderDelivery } from "@/lib/public/order-journey";
+import { OrderComposition, OrderContact, OrderHistory, OrderPayment, OrderProgress, OrderSchedule } from "./order-detail-sections";
+import type { RecipeSnapshot, ScheduleFields } from "@/lib/admin/order-detail";
 
 type OneOrMany<T> = T | T[] | null;
 
@@ -67,9 +70,10 @@ type OrderItem = {
   message: string | null;
   dedications?: Dedication[];
   note: string | null;
+  recipe_snapshot?: RecipeSnapshot | null;
 };
 
-type OrderDetail = OrderRow & {
+type OrderDetail = OrderRow & ScheduleFields & {
   inventory_review_required?: boolean;
   customer_message: string | null;
   internal_note: string | null;
@@ -77,6 +81,11 @@ type OrderDetail = OrderRow & {
 };
 
 type PendingPayment = {
+  status?: string;
+  confirmed_at?: string | null;
+  created_at?: string;
+  rejected_at?: string | null;
+  rejection_reason?: string | null;
   qr_slot?: string | null;
   qr_label?: string | null;
   id: string;
@@ -107,28 +116,29 @@ const TYPE_CHIPS: { value: "todos" | "online" | "fisica"; label: string }[] = [
 
 const NEXT_STATUS: Partial<Record<OrderStatus, { value: "en_preparacion" | "listo" | "finalizado"; label: string }>> =
   {
-    confirmado: { value: "en_preparacion", label: "Marcar en preparación" },
-    en_preparacion: { value: "listo", label: "Marcar listo" },
+    confirmado: { value: "en_preparacion", label: "Iniciar preparación" },
+    en_preparacion: { value: "listo", label: "Marcar como listo" },
     listo: { value: "finalizado", label: "Finalizar pedido" },
   };
 
 type OrdersPanelProps = {
   role: UserRole;
   initialStatus?: string;
+  initialSearch?: string;
   initialPendingPaymentOnly?: boolean;
 };
 
-export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: OrdersPanelProps) {
+export function OrdersPanel({ role, initialStatus, initialSearch, initialPendingPaymentOnly }: OrdersPanelProps) {
   const [orders, setOrders] = useState<OrderRow[] | null>(null);
   const [pendingPayments, setPendingPayments] = useState<PendingPayment[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const initialChip = STATUS_CHIPS.find((chip) => chip.value === initialStatus)?.value;
-  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | "expirados" | OrderStatus>(initialChip ?? "activos");
+  const [statusFilter, setStatusFilter] = useState<"activos" | "todos" | "expirados" | OrderStatus>(initialChip ?? (initialSearch ? "todos" : "activos"));
   const [typeFilter, setTypeFilter] = useState<"todos" | "online" | "fisica">("todos");
   const [pendingOnly, setPendingOnly] = useState(Boolean(initialPendingPaymentOnly));
-  const [search, setSearch] = useState("");
+  const [search, setSearch] = useState(initialSearch ?? "");
 
   const [page, setPage] = useState(1);
   const [pagination, setPagination] = useState({ total: 0, total_pages: 1 });
@@ -172,9 +182,11 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
   const filteredOrders = orders ?? [];
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-3">
-        <div className="flex flex-wrap gap-2">
+    <div className="admin-orders flex flex-col gap-5">
+      <OrderOverview refreshToken={orders} />
+      <section aria-label="Listado de pedidos" className="admin-orders-surface overflow-hidden rounded-2xl border border-border-decorative bg-surface shadow-sm">
+      <div className="bg-surface flex flex-col gap-0">
+        <div className="admin-order-tabs flex overflow-x-auto gap-1 border-b border-border-decorative px-4 pt-3">
           {STATUS_CHIPS.map((chip) => (
             <Button
               key={chip.value}
@@ -187,7 +199,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
             </Button>
           ))}
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-50/70 px-4 py-3">
           {TYPE_CHIPS.map((chip) => (
             <Button
               key={chip.value}
@@ -222,7 +234,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
         </div>
       </div>
 
-      <p className="rounded-2xl border border-brand/15 bg-brand-soft p-4 text-sm text-text-secondary">Primero revisa los <strong className="text-text">pagos por verificar</strong> en el banco. Reportar un pago no lo confirma. Los pedidos confirmados pueden pasar a preparación, luego a listo y finalmente a entrega o recojo.</p>
+      <p className="border-y border-border-decorative bg-slate-50/50 px-4 py-2 text-xs leading-5 text-text-secondary">Primero revisa los <strong className="text-text">pagos por verificar</strong> en el banco. Reportar un pago no lo confirma. Los pedidos confirmados pueden pasar a preparación, luego a listo y finalmente a entrega o recojo.</p>
 
       {loading ? (
         <div className="flex flex-col gap-2">
@@ -245,17 +257,18 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
         </Card>
       ) : (
         <>
-          <Card className="hidden overflow-hidden p-0 md:block">
+          <div className="hidden overflow-x-auto md:block">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Número</TableHead>
+                  <TableHead>Pedido</TableHead>
                   <TableHead>Cliente</TableHead>
-                  <TableHead>Tipo</TableHead>
-                  <TableHead>Modalidad / pago</TableHead>
+                  <TableHead>Canal</TableHead>
+                  <TableHead>Modalidad</TableHead>
+                  <TableHead>Estado de pago</TableHead>
                   <TableHead>Estado</TableHead>
                   <TableHead numeric>Total</TableHead>
-                  <TableHead>Hora</TableHead>
+                  <TableHead>Acciones</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -275,10 +288,10 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                       }}
                       onClick={() => setSelectedId(order.id)}
                     >
-                      <TableCell className="font-mono">#{order.order_number}</TableCell>
-                      <TableCell>{customer?.name ?? "Cliente anónimo"}</TableCell>
-                      <TableCell>{order.order_type === "online" ? "Online" : "Física"}</TableCell>
-                      <TableCell><p className="text-xs">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p><p className="text-xs text-text-secondary">{paymentLabel(order)}</p></TableCell>
+                      <TableCell><span className="rounded-lg bg-brand-soft px-2 py-1 text-xs font-bold text-brand">#{order.order_number}</span><p className="mt-2 whitespace-nowrap text-[10px] text-text-secondary">{formatDateTime(order.created_at)}</p></TableCell>
+                      <TableCell><div className="flex items-center gap-3"><span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-[10px] font-bold text-brand">{(customer?.name ?? "Cliente").split(/\s+/).map(part => part[0]).slice(0, 2).join("").toUpperCase()}</span><div><p className="font-semibold">{customer?.name ?? "Cliente anónimo"}</p><p className="mt-1 text-[11px] text-text-secondary">{customer?.phone}</p></div></div></TableCell>
+                      <TableCell><span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700">{order.order_type === "online" ? "Online" : "Tienda"}</span></TableCell>
+                      <TableCell><p className="text-xs font-medium">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p></TableCell><TableCell><span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${pendingPaymentByOrder.has(order.id) ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border-decorative bg-slate-50 text-text-secondary"}`}>{paymentLabel(order)}</span></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge status={order.status} />
@@ -287,16 +300,16 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                           )}
                         </div>
                       </TableCell>
-                      <TableCell numeric>{formatMoney(order.total)}</TableCell>
-                      <TableCell>{formatDateTime(order.created_at)}</TableCell>
+                      <TableCell numeric><span className="whitespace-nowrap font-bold">Bs. {formatMoney(order.total)}</span></TableCell>
+                      <TableCell><Button variant="ghost" size="sm" aria-label={`Abrir detalle del pedido ${order.order_number}`} className="bg-brand-soft text-brand" onClick={event => { event.stopPropagation(); setSelectedId(order.id); }}><Eye aria-hidden className="size-4" /></Button></TableCell>
                     </TableRow>
                   );
                 })}
               </TableBody>
             </Table>
-          </Card>
+          </div>
 
-          <div className="flex flex-col gap-2 md:hidden">
+          <div className="flex flex-col gap-2 p-3 md:hidden">
             {filteredOrders.map((order) => {
               const customer = first(order.customer);
               return (
@@ -315,7 +328,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
                   className="gap-2 focus-visible:outline-2 focus-visible:outline-brand"
                   onClick={() => setSelectedId(order.id)}
                 >
-                  <div className="flex items-center justify-between gap-2">
+                  <div className="order-product-heading"><span className="order-product-icon"><Flower2 aria-hidden /></span>
                     <span className="font-mono text-sm">#{order.order_number}</span>
                     <span className="font-medium tabular-nums">{formatMoney(order.total)}</span>
                   </div>
@@ -333,7 +346,7 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
         </>
       )}
 
-      <nav aria-label="Paginación de pedidos" className="flex flex-wrap items-center justify-between gap-3">
+      <nav aria-label="Paginación de pedidos" className="flex flex-wrap items-center justify-between gap-3 border-t border-border-decorative bg-slate-50 px-4 py-3">
         <span className="text-sm text-text-secondary">{pagination.total} pedidos · Página {page} de {pagination.total_pages}</span>
         <div className="flex gap-2">
           <Button variant="outline" disabled={loading || page <= 1} onClick={() => setPage(current => current - 1)}>Anterior</Button>
@@ -341,10 +354,11 @@ export function OrdersPanel({ role, initialStatus, initialPendingPaymentOnly }: 
         </div>
       </nav>
 
+      </section>
       <OrderDetailModal
+        key={selectedId ?? "closed"}
         orderId={selectedId}
         role={role}
-        pendingPayment={selectedId ? (pendingPaymentByOrder.get(selectedId) ?? null) : null}
         onClose={() => setSelectedId(null)}
         onChanged={() => void loadOrders()}
       />
@@ -364,13 +378,11 @@ type PendingAction = "cancel" | "reject-payment" | "request-deletion" | "confirm
 function OrderDetailModal({
   orderId,
   role,
-  pendingPayment,
   onClose,
   onChanged,
 }: {
   orderId: string | null;
   role: UserRole;
-  pendingPayment: PendingPayment | null;
   onClose: () => void;
   onChanged: () => void;
 }) {
@@ -382,6 +394,16 @@ function OrderDetailModal({
   const [actionError, setActionError] = useState("");
   const [pendingAction, setPendingAction] = useState<PendingAction>(null);
   const [reason, setReason] = useState("");
+  const [scheduleDirty, setScheduleDirty] = useState(false);
+  const [actionSuccess, setActionSuccess] = useState("");
+  const pendingPayment = order?.payments.find(payment => payment.status === "pendiente") ?? null;
+
+  async function refreshDetail() {
+    const response = await fetch(`/api/admin/orders/${orderId}`);
+    const body = await response.json();
+    if (!response.ok || !body.success) throw new Error("No se pudo actualizar el detalle. Vuelve a abrir el pedido.");
+    setOrder(body.order);
+  }
 
   useEffect(() => {
     if (!orderId) {
@@ -425,6 +447,7 @@ function OrderDetailModal({
     try {
       setBusy(true);
       setActionError("");
+      setActionSuccess("");
       const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -437,10 +460,8 @@ function OrderDetailModal({
       setPendingAction(null);
       setReason("");
       onChanged();
-      if (orderId) {
-        const detail = await fetch(`/api/admin/orders/${orderId}`).then((r) => r.json());
-        if (detail.success) setOrder(detail.order);
-      }
+      setActionSuccess("Acción registrada por el servidor.");
+      if (orderId) await refreshDetail().catch(() => setActionError("La acción se registró, pero no se pudo actualizar la vista. Vuelve a abrir el pedido antes de otra acción."));
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "No se pudo completar la acción.");
     } finally {
@@ -456,12 +477,15 @@ function OrderDetailModal({
   const next = order && order.order_type === "online" ? NEXT_STATUS[order.status] : undefined;
 
   return (
-    <Modal open={Boolean(orderId)} onOpenChange={(open) => !open && onClose()}>
-      <ModalContent className="md:max-w-lg" dismissible={!busy} showCloseButton={!busy}>
-        <ModalHeader>
-          <ModalTitle>{order ? `Pedido #${order.order_number}` : "Pedido"}</ModalTitle>
+    <Modal open={Boolean(orderId)} onOpenChange={(open) => { if (!open && !busy && (!scheduleDirty || window.confirm("Hay un horario sin guardar. ¿Cerrar sin guardarlo?"))) onClose(); }}>
+      <ModalContent className="admin-order-dialog gap-0 p-0 md:p-0" dismissible={!busy} showCloseButton={false}>
+        <ModalHeader className="sticky top-0 z-10 border-b border-border-decorative bg-surface p-5 pr-14 text-left">
+          <Button aria-label="Cerrar detalle del pedido" variant="ghost" className="absolute right-3 top-3 size-11 p-0" disabled={busy} onClick={() => { if (!scheduleDirty || window.confirm("Hay un horario sin guardar. ¿Cerrar sin guardarlo?")) onClose(); }}><X aria-hidden className="size-5" /></Button>
+          {order && <span className="order-number-tile">#{order.order_number}</span>}
+          {order?.receipt_token && <Button asChild variant="ghost" className="order-header-receipt"><Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer" aria-label="Ver o descargar recibo"><Printer aria-hidden /></Link></Button>}
+          <div className="order-title-line"><ModalTitle>{order ? `Pedido #${order.order_number}` : "Pedido"}</ModalTitle>{order && <Badge status={order.status} />}</div>
           <ModalDescription>
-            {order ? formatDateTime(order.created_at) : "Cargando información del pedido…"}
+            <CalendarDays aria-hidden />{order ? formatDateTime(order.created_at) : "Cargando información del pedido…"}
           </ModalDescription>
         </ModalHeader>
 
@@ -470,26 +494,19 @@ function OrderDetailModal({
         ) : error ? (
           <p className="text-danger">{error}</p>
         ) : order ? (
-          <div className="flex flex-col gap-4">
-            <div className="flex flex-wrap items-center gap-2">
-              <Badge status={order.status} />
-              {pendingPayment && <Badge variant="outline">Pago por verificar</Badge>}
-            </div>
-            <div className="rounded-xl bg-brand-soft p-3 text-sm"><p className="font-medium">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p><p>{paymentLabel(order)}</p></div>
+          <><div className="order-dialog-body">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2"><OrderContact order={order} customer={first(order.customer)} schedule={order} /><OrderPayment order={order} /></div>
+            <OrderSchedule key={`schedule-${order.id}`} order={order} value={order} busy={busy} onBusyChange={setBusy} onDirtyChange={setScheduleDirty} onSaved={refreshDetail} />
 
-            <div className="text-sm text-text-secondary">
-              <p className="text-text">{first(order.customer)?.name ?? "Cliente anónimo"}</p>
-              {first(order.customer)?.phone && <p>{first(order.customer)?.phone}</p>}
-            </div>
-
-            <div className="flex flex-col gap-3 border-t border-border-decorative pt-3">
+            <section aria-label="Productos y preparación" className="order-products">
+              <div className="order-products-heading"><h3>Detalle de productos</h3><span>{order.order_items.length} {order.order_items.length === 1 ? "artículo" : "artículos"}</span></div>
               {order.order_items.map((item) => (
-                <div key={item.id} className="flex flex-col gap-1 text-sm">
-                  <div className="flex items-center justify-between gap-2">
+                <article key={item.id} className="order-product-card">
+                  <div className="order-product-heading"><span className="order-product-icon"><Flower2 aria-hidden /></span>
                     <span className="min-w-0 flex-1 break-words text-text">
                       {item.quantity} × {item.product_name_snapshot}
                     </span>
-                    <span className="tabular-nums text-text-secondary">{formatMoney(item.line_total)}</span>
+                    <span className="tabular-nums text-text-secondary">{formatMoney(item.line_total)} Bs.</span>
                   </div>
 
                   {item.personalization && item.personalization.length > 0 && (
@@ -500,6 +517,7 @@ function OrderDetailModal({
                     </p>
                   )}
 
+                  <OrderComposition snapshot={item.recipe_snapshot} quantity={item.quantity} />
                   <DedicationPreview entries={item.dedications}/>
                           {item.message && (
                     <p className="text-xs text-text-secondary">
@@ -512,14 +530,14 @@ function OrderDetailModal({
                       <span className="font-medium text-text">Nota:</span> {item.note}
                     </p>
                   )}
-                </div>
+                </article>
               ))}
-            </div>
+            </section>
 
-            <div className="flex flex-col gap-1 border-t border-border-decorative pt-3 text-sm">
+            <div className="order-totals">
               <div className="flex justify-between">
                 <span className="text-text-secondary">Subtotal</span>
-                <span className="tabular-nums">{formatMoney(order.subtotal)}</span>
+                <span className="tabular-nums">{formatMoney(order.subtotal)} Bs.</span>
               </div>
               {order.discount_total > 0 && (
                 <div className="flex justify-between">
@@ -529,14 +547,14 @@ function OrderDetailModal({
               )}
               <div className="flex justify-between font-semibold text-text">
                 <span>Total</span>
-                <span className="tabular-nums">{formatMoney(order.total)}</span>
+                <span className="tabular-nums">{formatMoney(order.total)} Bs.</span>
               </div>
             </div>
 
             {(order.customer_message || order.internal_note) && (
               <div className="flex flex-col gap-1 border-t border-border-decorative pt-3 text-sm">
                 {order.customer_message && (
-                  <p className="text-text-secondary">
+                  <p className="whitespace-pre-line break-words text-text-secondary">
                     <span className="font-medium text-text">Mensaje del cliente:</span> {order.customer_message}
                   </p>
                 )}
@@ -553,10 +571,17 @@ function OrderDetailModal({
               <p className="text-sm text-text-secondary">Motivo: {order.cancellation_reason}</p>
             )}
 
-            {(order.status === "finalizado" || (order.status === "cancelado" && order.payments.some(payment => payment.status === "confirmado"))) && <OrderReturns key={order.id} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} cancelled={order.status === "cancelado"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
+            {(order.status === "finalizado" || (order.status === "cancelado" && order.payments.some(payment => payment.status === "confirmado"))) && <OrderReturns key={`returns-${order.id}`} orderId={order.id} total={order.total} physical={order.order_type === "fisica"} cancelled={order.status === "cancelado"} canCreate={role === "administrador"} onChanged={onChanged} onBusyChange={setBusy} />}
+            <details className="order-progress-extra"><summary>Ver progreso del pedido</summary><OrderProgress order={order} /></details>
+            <OrderHistory orderId={order.id} version={`${order.status}:${order.schedule_revision}:${order.payments.map(p => p.status).join(",")}`} />
+            <details className="rounded-2xl border border-border-decorative p-4"><summary className="min-h-11 cursor-pointer font-semibold">Recibos y otras acciones</summary><div className="mt-3 flex flex-wrap gap-2">
+              {order.receipt_token ? <><Button asChild variant="outline"><Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer">Ver / descargar recibo</Link></Button>{whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null) && <Button variant="outline" disabled={busy} onClick={() => { const url = new URL(`/api/orders/receipt/${order.receipt_token}`, window.location.origin).href; const link = whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null, `Floristería Anabelle · Recibo del pedido #${order.order_number}: ${url}`); if (link) window.open(link, "_blank", "noopener,noreferrer"); setActionSuccess("Mensaje con recibo preparado para WhatsApp. Debes enviarlo manualmente."); }}>Preparar recibo por WhatsApp</Button>}</> : <p className="text-sm text-text-secondary">El recibo de pago está disponible únicamente después de la confirmación.</p>}
+              {order.status === "cancelado" && <Button variant="outline" disabled={busy} onClick={() => setPendingAction("request-deletion")}>Solicitar eliminación</Button>}
+            </div></details>
+            {actionSuccess && <p role="status" className="text-sm text-leaf">{actionSuccess}</p>}
             {actionError && <p role="alert" className="text-sm text-danger">{actionError}</p>}
 
-            <fieldset disabled={busy} className="contents">{pendingAction === "confirm-payment" && pendingPayment ? (
+          </div><fieldset disabled={busy} className="order-dialog-actions">{pendingAction === "confirm-payment" && pendingPayment ? (
               <div className="flex flex-col gap-3 rounded-2xl border border-brand/20 bg-brand-soft p-4">
                 <h3 className="font-semibold">¿Verificaste el pago en el banco?</h3>
                 <p className="text-sm">Confirma únicamente si recibiste {formatMoney(pendingPayment.amount)} para el pedido #{order.order_number}. El aviso del cliente y el QR indicado no prueban el pago. Esta acción confirma el pedido y procesa su reserva de inventario.</p>
@@ -598,28 +623,7 @@ function OrderDetailModal({
                 </div>
               </div>
             ) : (
-              <ModalFooter className="flex-wrap">
-                {order.receipt_token && (
-                  <Button asChild variant="outline">
-                    <Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer">
-                      Ver / descargar recibo
-                    </Link>
-                  </Button>
-                )}
-                {order.receipt_token && whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null) ? <Button variant="outline" onClick={() => {
-                  const phone = first(order.customer)?.whatsapp || first(order.customer)?.phone || null;
-                  const url = new URL(`/api/orders/receipt/${order.receipt_token}`, window.location.origin).href;
-                  const link = whatsappLink(phone, `Floristería Anabelle · Pago confirmado del pedido #${order.order_number}. Tu recibo: ${url}`);
-                  if (link) window.open(link, "_blank", "noopener,noreferrer");
-                }}>Enviar recibo por WhatsApp</Button> : null}
-
-                {order.status === "cancelado" && (
-                  <Button variant="outline" onClick={() => setPendingAction("request-deletion")}>
-                    Solicitar eliminación
-                  </Button>
-                )}
-
-                {pendingPayment?.qr_label ? <p className="max-w-full break-words text-sm">QR indicado: {pendingPayment.qr_label} ({pendingPayment.qr_slot}). Información auxiliar; verifica la transferencia.</p> : null}
+              <ModalFooter className="order-action-bar">
                 {order.order_type === "online" && order.status === "pendiente_pago" && pendingPayment && (
                   <>
                     <Button
@@ -641,6 +645,7 @@ function OrderDetailModal({
                 {(order.status === "pendiente_pago" || order.status === "confirmado" || order.status === "en_preparacion" || order.status === "listo") && (
                   <Button
                     variant="destructive"
+                    className="order-cancel-button"
                     disabled={order.status !== "pendiente_pago" && !canCancelPaid}
                     title={
                       order.status !== "pendiente_pago" && !canCancelPaid
@@ -654,13 +659,13 @@ function OrderDetailModal({
                 )}
 
                 {next && (
-                  <Button loading={busy} onClick={() => void runAction(`/api/admin/orders/${order.id}/status`, { new_status: next.value })}>
-                    {next.label}
+                  <Button loading={busy} onClick={() => { if (next.value !== "finalizado" || window.confirm("¿Confirmas que se realizó la entrega o el recojo del pedido?")) void runAction(`/api/admin/orders/${order.id}/status`, { new_status: next.value }); }}>
+                    {next.value === "finalizado" ? orderDelivery(order.customer_message).pickup ? "Finalizar recojo" : "Finalizar entrega o recojo" : next.label}
                   </Button>
                 )}
+                {!next && !["pendiente_pago", "confirmado", "en_preparacion", "listo"].includes(order.status) && <><span className="order-closed-label">Pedido {order.status === "finalizado" ? "finalizado" : order.status}</span><Button variant="outline" onClick={onClose}>Cerrar detalle</Button></>}
               </ModalFooter>
-            )}</fieldset>
-          </div>
+            )}</fieldset></>
         ) : null}
       </ModalContent>
     </Modal>

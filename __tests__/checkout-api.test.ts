@@ -47,7 +47,7 @@ describe("Integración HTTP del checkout con RPC existentes", () => {
     mocks.allowed.mockResolvedValue(false); expect((await track(request({ order_number: 1, customer_phone: "70000000" }))).status).toBe(429); expect(mocks.rpc).not.toHaveBeenCalled(); expect(mocks.adminFactory).not.toHaveBeenCalled();
   });
   it("consulta el resumen protegido por número y teléfono", async () => {
-    const order = { order_number: 1, status: "confirmado", payment_status: "confirmado" }; mocks.adminRpc.mockResolvedValue({ data: order, error: null });
+    const order = { id, order_number: 1, status: "confirmado", payment_status: "confirmado" }; mocks.adminRpc.mockResolvedValue({ data: order, error: null });
     const response = await track(request({ order_number: 1, customer_phone: "70000000" })); expect(await response.json()).toEqual({ success: true, order });
     expect(mocks.adminRpc).toHaveBeenCalledWith("track_order_details", { p_order_number: 1, p_order_id: null, p_customer_phone: "70000000" });
     expect(mocks.rpc).not.toHaveBeenCalled();

@@ -105,11 +105,12 @@ describe("Public brand, contact and location sections", () => {
     expect(html).not.toContain("maps/dir");
   });
 
-  it("keeps the configured address and external destination before explicitly loading the map", () => {
+  it("automatically embeds the configured location while preserving its address and external destination", () => {
     const html = renderToStaticMarkup(createElement(LocationSection, { location, hours: "08:00 – 20:00", week, loading: false, unavailable: false }));
     expect(html.match(/id="ubicacion"/g)).toHaveLength(1);
-    expect(html).not.toContain("<iframe");
-    expect(html).toContain("Mostrar mapa de Google");
+    expect(html).toContain("<iframe");
+    expect(html).toContain('loading="lazy"');
+    expect(html).not.toContain("Mostrar mapa");
     expect(html).toContain("Abrir en Google Maps");
     expect(html).toContain("Entrada configurada de prueba");
     expect(html).toContain("Dirección configurada de prueba &amp; referencia");

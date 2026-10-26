@@ -31,6 +31,7 @@ type ProductComponent = {
 
 type ProductComponentManagementProps = {
   productId: string;
+  onDirtyChange?: (dirty: boolean) => void;
 };
 
 const selectClassName =
@@ -38,6 +39,7 @@ const selectClassName =
 
 export default function ProductComponentManagement({
   productId,
+  onDirtyChange,
 }: ProductComponentManagementProps) {
   const [products, setProducts] = useState<Product[]>([]);
   const [components, setComponents] = useState<ProductComponent[]>([]);
@@ -54,6 +56,8 @@ export default function ProductComponentManagement({
     useState<string | null>(null);
   const [error, setError] = useState("");
   const [message, setMessage] = useState("");
+  const dirty = componentProductId !== "" || quantity !== "1" || editingComponentId !== null || saving || savingComponentId !== null;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   const loadProducts = useCallback(async () => {
     const response = await fetch("/api/admin/products");
@@ -292,14 +296,13 @@ export default function ProductComponentManagement({
   );
 
   return (
-    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4">
+    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4 [&_button]:min-h-11">
       <div>
         <h4 className="font-medium text-text">
           Componentes del producto
         </h4>
         <p className="text-text-secondary">
-          Permite definir qué productos forman parte de este
-          producto compuesto.
+          Productos incluidos en este producto compuesto y su cantidad. Forman parte de la receta; no son los regalos opcionales de Complementos recomendados.
         </p>
       </div>
 

@@ -3,8 +3,9 @@ import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import ProductManagement from "@/components/admin/products/product-management";
 
 export default async function AdminProductsPage() {
+  let profile;
   try {
-    await requireEmployeeOrAdmin();
+    profile = await requireEmployeeOrAdmin();
   } catch {
     redirect("/");
   }
@@ -18,7 +19,7 @@ export default async function AdminProductsPage() {
         </p>
       </div>
 
-      <ProductManagement />
+      <ProductManagement canManageRecommendations={profile.role === "administrador"} />
     </div>
   );
 }

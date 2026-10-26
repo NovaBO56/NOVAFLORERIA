@@ -11,8 +11,8 @@ const storageOrigin = new URL(visualPreview ? "https://visual-preview.invalid" :
 const localLab = process.env.NOVA_LOCAL_LAB === "true";
 if (localLab) {
   const localHosts = new Set(["127.0.0.1", "localhost", ...Object.values(networkInterfaces()).flat().filter(value => value !== undefined).map(value => value.address)]);
-  if (storageOrigin.protocol !== "http:" || storageOrigin.port !== "62621" || !localHosts.has(storageOrigin.hostname)) {
-    throw new Error("NOVA_LOCAL_LAB requires this computer's local Supabase on port 62621.");
+  if (storageOrigin.protocol !== "http:" || !["62621", "50621"].includes(storageOrigin.port) || !localHosts.has(storageOrigin.hostname)) {
+    throw new Error("NOVA_LOCAL_LAB requires this computer's local Supabase on port 62621 or isolated catalog demo on 50621.");
   }
 }
 const nextConfig: NextConfig = {

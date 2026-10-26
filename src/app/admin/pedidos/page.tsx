@@ -3,7 +3,7 @@ import { OrdersPanel } from "@/components/admin/orders/orders-panel";
 import { getCurrentUserProfile, requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 
 type PageProps = {
-  searchParams: Promise<{ estado?: string; pago?: string }>;
+  searchParams: Promise<{ estado?: string; pago?: string; buscar?: string }>;
 };
 
 export default async function AdminOrdersPage({ searchParams }: PageProps) {
@@ -14,17 +14,19 @@ export default async function AdminOrdersPage({ searchParams }: PageProps) {
   }
 
   const profile = await getCurrentUserProfile();
-  const { estado, pago } = await searchParams;
+  const { estado, pago, buscar } = await searchParams;
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
+    <div className="mx-auto flex w-full max-w-[1600px] flex-col gap-6">
       <div>
-        <h1>Pedidos</h1>
+        <h1>Gestión de Pedidos</h1>
         <p className="text-text-secondary">
           Confirma pagos, avanza el estado de preparación y gestiona cancelaciones.
         </p>
       </div>
       <OrdersPanel
+        key={buscar ?? "orders"}
+        initialSearch={buscar}
         role={profile?.role ?? "empleado"}
         initialStatus={estado}
         initialPendingPaymentOnly={pago === "pendiente"}

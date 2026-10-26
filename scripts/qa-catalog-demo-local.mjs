@@ -1,0 +1,88 @@
+/** Sequential real SQL/LOCAL Auth checks; all commercial operations ROLLBACK. */
+import fs from'node:fs';import path from'node:path';import{execFileSync}from'node:child_process';
+import{createClient}from'@supabase/supabase-js';import{productByKey,categories,materials,demoId}from'./catalog-demo-data.mjs';
+const root=path.join(process.env.LOCALAPPDATA,'NOVA-Floreria','catalogo-demo'),cfg=JSON.parse(fs.readFileSync(path.join(root,'status.private.json')));
+if(cfg.API_URL!=='http://127.0.0.1:50621'||fs.existsSync(path.join(root,'supabase/.temp/project-ref')))throw Error('Only unlinked LOCAL DEMO');
+const db='supabase_db_NOVA-LOCAL-CATALOGO-DEMO';const q=v=>`'${String(v).replaceAll("'","''")}'`,j=v=>q(JSON.stringify(v))+'::jsonb';
+const sql=s=>execFileSync('docker',['exec','-i',db,'psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-Atq'],{input:s,encoding:'utf8',stdio:['pipe','pipe','pipe'],maxBuffer:16*1024*1024});
+const actor=sql("select id from profiles where is_active and role='administrador' order by id limit 1;").trim();
+const p=productByKey('ramos:0'),extra=productByKey('peluches:0'),rose=materials.find(m=>m.key==='roja');
+const block=`BEGIN;
+CREATE FUNCTION pg_temp.assert(ok boolean,label text) RETURNS void LANGUAGE plpgsql AS $$BEGIN IF ok IS DISTINCT FROM true THEN RAISE EXCEPTION 'FAIL %',label;END IF;RAISE NOTICE 'PASS %',label;END;$$;
+SELECT set_config('request.jwt.claim.sub',${q(actor)},true);
+SELECT set_config('request.jwt.claims',${j({sub:actor,role:'authenticated'})}::text,true);
+DO $$ DECLARE item uuid; o uuid; pay uuid; stock numeric; newer numeric; oldest numeric; revision integer; details jsonb; failed boolean; amount numeric; cart_size integer; cart jsonb;
+BEGIN
+ PERFORM pg_temp.assert((SELECT count(*)=100 FROM products),'exactly 100 products');
+ PERFORM pg_temp.assert((SELECT count(*)=25 FROM products WHERE category_id=${q(categories[0].id)}),'25 eligible bouquets');
+ FOR item IN SELECT id FROM products WHERE category_id=${q(categories[0].id)} LOOP
+  PERFORM pg_temp.assert(public.resolve_product_recommendation_ids(item) @> ARRAY[${q(extra.id)},${q(productByKey('chocolates:1').id)},${q(productByKey('globos:0').id)}]::uuid[],'global inheritance for bouquet');
+ END LOOP;
+ PERFORM pg_temp.assert(cardinality(resolve_product_recommendation_ids(${q(extra.id)}))=0,'excluded complement category');
+ PERFORM save_product_recommendation_preferences(${q(p.id)},'off',NULL,0,${q(actor)});
+ PERFORM pg_temp.assert(cardinality(resolve_product_recommendation_ids(${q(p.id)}))=0,'individual off exception');
+ PERFORM save_product_recommendation_preferences(${q(p.id)},'global',NULL,1,${q(actor)});
+ SELECT s.revision INTO revision FROM product_recommendation_settings s WHERE key='global';
+ PERFORM save_global_product_recommendations(true,'all',(SELECT product_ids FROM product_recommendation_settings),'{}','{}','{}',revision,${q(actor)});
+ PERFORM pg_temp.assert(NOT(${q(extra.id)}::uuid=ANY(resolve_product_recommendation_ids(${q(extra.id)}))),'principal excluded from its own extras');
+ UPDATE products SET is_sold_out=true WHERE id=${q(extra.id)};
+ PERFORM pg_temp.assert(NOT(SELECT is_available FROM get_product_availability(${j([{product_id:extra.id}])},false)),'sold-out complement unavailable without removing config');
+ UPDATE products SET is_sold_out=false WHERE id=${q(extra.id)};
+ SELECT current_stock INTO stock FROM inventory_items WHERE id=${q(rose.id)};
+ SELECT remaining_quantity INTO oldest FROM inventory_lots WHERE inventory_item_id=${q(rose.id)} ORDER BY received_at,id LIMIT 1;
+ SELECT remaining_quantity INTO newer FROM inventory_lots WHERE inventory_item_id=${q(rose.id)} ORDER BY received_at DESC,id DESC LIMIT 1;
+ o:=create_order('Cliente demostrativo sin extras','70000111',NULL,${j([{product_id:p.id,quantity:1}])},NULL,'catalog-demo-no-extras',NULL);
+ PERFORM pg_temp.assert((SELECT customer_id IS NULL AND status='pendiente_pago' FROM orders WHERE id=o),'no customer before confirmation');
+ PERFORM pg_temp.assert((SELECT current_stock=stock FROM inventory_items WHERE id=${q(rose.id)}),'reservation does not consume stock');
+ details:=track_order_details('70000111',NULL,o);
+ PERFORM pg_temp.assert(details->>'receipt_token' IS NULL,'no receipt before payment');
+ SELECT id INTO pay FROM create_payment(o,'70000111');
+ PERFORM pg_temp.assert((SELECT customer_id IS NULL FROM orders WHERE id=o),'report does not materialize customer');
+ PERFORM pg_temp.assert((SELECT current_stock=stock FROM inventory_items WHERE id=${q(rose.id)}),'report does not consume stock');
+ PERFORM confirm_payment(pay);
+ PERFORM pg_temp.assert((SELECT status='confirmado' AND customer_id IS NOT NULL FROM orders WHERE id=o),'manual confirmation succeeds');
+ PERFORM pg_temp.assert((SELECT current_stock=stock-4 FROM inventory_items WHERE id=${q(rose.id)}),'confirmed recipe consumes exact roses');
+ PERFORM pg_temp.assert((SELECT remaining_quantity=oldest-4 FROM inventory_lots WHERE inventory_item_id=${q(rose.id)} ORDER BY received_at,id LIMIT 1),'FIFO old lot consumed');
+ PERFORM pg_temp.assert((SELECT remaining_quantity=newer FROM inventory_lots WHERE inventory_item_id=${q(rose.id)} ORDER BY received_at DESC,id DESC LIMIT 1),'FIFO newer lot unchanged');
+ details:=track_order_details('70000111',NULL,o);
+ PERFORM pg_temp.assert(details->>'receipt_token' IS NOT NULL,'confirmed receipt available');
+ o:=create_order('Cliente demostrativo con extras','70000112',NULL,${j([p,extra,productByKey('chocolates:1'),productByKey('globos:0')].map(p=>({product_id:p.id,quantity:1})))},NULL,'catalog-demo-with-extras',NULL);
+ PERFORM pg_temp.assert((SELECT subtotal=${p.price+extra.price+productByKey('chocolates:1').price+productByKey('globos:0').price} FROM orders WHERE id=o),'several extras use stored prices');
+ SELECT id INTO pay FROM create_payment(o,'70000112');PERFORM reject_payment(pay,'Prueba local transaccional');
+ PERFORM pg_temp.assert((SELECT status='rechazado' FROM payments WHERE id=pay),'administrative rejection');
+ o:=create_order('Cliente demostrativo promoción','70000113',NULL,${j([{product_id:productByKey('ramos:2').id,quantity:1}])},NULL,'catalog-demo-percentage',${q(demoId('promotion:0'))});
+ PERFORM pg_temp.assert((SELECT total=162 AND discount_total=18 FROM orders WHERE id=o),'percentage promotion uses stored price');
+ o:=create_order('Cliente demostrativo combo','70000114',NULL,${j(['ramos:0','chocolates:1'].map(k=>({product_id:productByKey(k).id,quantity:1})))},NULL,'catalog-demo-combo',${q(demoId('promotion:2'))});
+ PERFORM pg_temp.assert((SELECT total=135 AND discount_total=15 FROM orders WHERE id=o),'combo uses participant stored subtotal');
+ failed:=false;BEGIN PERFORM create_order('Cliente promoción vencida','70000115',NULL,${j([{product_id:productByKey('chocolates:2').id,quantity:1}])},NULL,'catalog-demo-expired',${q(demoId('promotion:8'))});EXCEPTION WHEN raise_exception THEN failed:=true;END;
+ PERFORM pg_temp.assert(failed,'expired promotion rejected');
+ o:=create_order('Cliente demostrativo descuento fijo','70000116',NULL,${j([{product_id:productByKey('arreglos:1').id,quantity:1}])},NULL,'catalog-demo-fixed',${q(demoId('promotion:1'))});
+ PERFORM pg_temp.assert((SELECT total=260 AND discount_total=20 FROM orders WHERE id=o),'fixed discount and minimum purchase');
+ FOREACH cart_size IN ARRAY ARRAY[5,10,20,30] LOOP
+  SELECT jsonb_agg(jsonb_build_object('product_id',id,'quantity',1)) INTO cart FROM (SELECT id FROM products WHERE is_active ORDER BY catalog_order LIMIT cart_size) x;
+  o:=create_order('Cliente demostrativo carrito','70000117',NULL,cart,NULL,'catalog-demo-cart-'||cart_size,NULL);
+  PERFORM pg_temp.assert((SELECT count(*)=cart_size FROM order_items WHERE order_id=o),'cart line count '||cart_size);
+  PERFORM pg_temp.assert((SELECT total=subtotal AND total>0 FROM orders WHERE id=o),'positive stored cart prices '||cart_size);
+  PERFORM cancel_order(o,'Fin de prueba transaccional de carrito');
+ END LOOP;
+ SELECT current_stock INTO stock FROM inventory_items WHERE id=${q(rose.id)};
+ INSERT INTO inventory_waste(inventory_item_id,quantity,reason,created_by)VALUES(${q(rose.id)},2,'Merma demostrativa con rollback',${q(actor)});
+ PERFORM pg_temp.assert((SELECT current_stock=stock-2 FROM inventory_items WHERE id=${q(rose.id)}),'waste uses real stock engine');
+ INSERT INTO inventory_entries(inventory_item_id,quantity,unit_cost,created_by,notes)VALUES(${q(rose.id)},5,4,${q(actor)},'Reposición demostrativa con rollback');
+ PERFORM pg_temp.assert((SELECT current_stock=stock+3 FROM inventory_items WHERE id=${q(rose.id)}),'replenishment uses entries and lots');
+ FOR item IN SELECT id FROM products LOOP PERFORM assert_product_recipe(item);END LOOP;
+ PERFORM pg_temp.assert(NOT EXISTS(SELECT 1 FROM inventory_items i WHERE i.current_stock<>(SELECT coalesce(sum(l.remaining_quantity),0) FROM inventory_lots l WHERE l.inventory_item_id=i.id)),'stock reconciles to lots');
+END;$$;
+ROLLBACK;`;
+try{execFileSync('docker',['exec','-i',db,'psql','-U','postgres','-d','postgres','-v','ON_ERROR_STOP=1','-q'],{input:block,stdio:['pipe','pipe','pipe'],maxBuffer:16*1024*1024});console.log('PASS SQL 25 bouquets/global/exceptions/sold-out/no-extras/multiple-extras/payment/manual-confirmation/rejection/FIFO/receipt/promotions/combo/expired/lot reconciliation; ROLLBACK.');}catch(e){fs.writeFileSync(path.join(root,'qa-error.private.log'),String(e.stderr));throw Error('LOCAL SQL QA failed; private diagnostic saved.');}
+const anon=createClient(cfg.API_URL,cfg.ANON_KEY,{auth:{persistSession:false}});
+const catalog=await anon.from('products').select('id',{count:'exact',head:true}).eq('is_active',true);if(catalog.error||catalog.count!==99)throw Error('Public catalog RLS/count');
+const denied=await anon.rpc('resolve_product_recommendation_ids',{p_product:p.id});if(!denied.error)throw Error('Private RPC accessible to anon');
+for(const role of['admin','employee']){
+ const credentials=JSON.parse(fs.readFileSync(path.join(process.env.LOCALAPPDATA,'NOVA-Floreria/inventory-refunds-final-replay',`${role}.credentials.private.json`)));
+ if(!credentials.email.endsWith('@example.invalid'))throw Error('Only synthetic local credentials');
+ const c=createClient(cfg.API_URL,cfg.ANON_KEY,{auth:{persistSession:false}}),login=await c.auth.signInWithPassword(credentials);if(login.error)throw Error(`LOCAL ${role} login failed; no credentials logged`);
+ const forbidden=await c.rpc('save_global_product_recommendations',{p_enabled:false,p_scope:'all',p_products:[],p_categories:[],p_excluded_categories:[],p_excluded_products:[],p_revision:1,p_actor:login.data.user.id});if(!forbidden.error)throw Error('Authenticated client has server-only RPC EXECUTE');
+ console.log(`PASS real LOCAL Auth ${role}; direct private RPC blocked (server route required).`);
+}
+console.log('PASS public RLS exposes 99 active products, anon cannot call private recommendation RPC.');

@@ -11,14 +11,15 @@ export function ComplementConfirmation({product,onClose,onCart}:{product:PublicP
   const [state,setState]=useState<{id:string;products:PublicProduct[];failed:boolean}|null>(null);
   const [detail,setDetail]=useState<PublicProduct|null>(null);
   const [notice,setNotice]=useState("");
+  const excludedIds=cart.items.map(line=>line.id.split(":")[0]).slice(0,50).sort().join(",");
   useEffect(()=>{
     if(!product)return;
     let active=true;
-    void fetch(`/api/products/${product.id}/recommendations`,{cache:"no-store"}).then(r=>r.json()).then(r=>{
+    void fetch(`/api/products/${product.id}/recommendations?exclude=${encodeURIComponent(excludedIds)}`,{cache:"no-store"}).then(r=>r.json()).then(r=>{
       if(active)setState({id:product.id,products:r.success?r.products:[],failed:!r.success});
     }).catch(()=>{if(active)setState({id:product.id,products:[],failed:true});});
     return()=>{active=false;};
-  },[product]);
+  },[product,excludedIds]);
   const suggestions=state && state.id===product?.id ? state.products.filter(p=>!cart.items.some(line=>line.id.split(":")[0]===p.id)) : [];
   const photo=product?pickImage(product):null;
   function close(){setDetail(null);setNotice("");onClose();}

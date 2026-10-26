@@ -51,7 +51,11 @@ export async function POST(request: Request) {
       );
     }
 
-    return NextResponse.json({ success: true, order });
+    // Read only the schedule of the order already authenticated by number/phone.
+    const { data: schedule, error: scheduleError } = await createAdminClient()
+      .from("orders").select("scheduled_for, schedule_status").eq("id", order.id).maybeSingle();
+    if (scheduleError || !schedule) return NextResponse.json({ success: false, message: "No se pudo consultar el horario. Intenta nuevamente." }, { status: 503 });
+    return NextResponse.json({ success: true, order: { ...order, scheduled_for: schedule.scheduled_for, schedule_status: schedule.schedule_status } }, { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Error inesperado consultando el pedido:", error);
     return NextResponse.json({ success: false, message: "No se pudo consultar el pedido." }, { status: 500 });

@@ -16,6 +16,7 @@ import { Card } from "@/components/ui/card";
 
 type ProductImageManagementProps = {
   productId: string;
+  onDirtyChange?: (dirty: boolean) => void;
   productName: string;
 };
 
@@ -32,6 +33,7 @@ type UploadedImage = {
 
 export default function ProductImageManagement({
   productId,
+  onDirtyChange,
   productName,
 }: ProductImageManagementProps) {
   const inputRef = useRef<HTMLInputElement>(null);
@@ -47,6 +49,8 @@ export default function ProductImageManagement({
     null,
   );
   const [altText, setAltText] = useState("");
+  const dirty = editingAltTextId !== null || uploading || reordering || savingImageId !== null;
+  useEffect(() => { onDirtyChange?.(dirty); }, [dirty, onDirtyChange]);
 
   const loadImages = useCallback(async () => {
     setLoadingImages(true);
@@ -315,12 +319,12 @@ export default function ProductImageManagement({
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4">
+    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4 [&_button]:min-h-11 [&_button]:min-w-11">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <h4 className="font-medium text-text">Imágenes del producto</h4>
           <p className="text-text-secondary">
-            La primera imagen es la principal. Máximo 10 imágenes.
+            La primera imagen es la principal. Máximo 10 imágenes. Usa JPG, PNG o WebP de hasta 5 MB por imagen.
           </p>
         </div>
 
@@ -346,7 +350,7 @@ export default function ProductImageManagement({
         className="hidden"
       />
 
-      {message && <p className="text-sm text-text">{message}</p>}
+      {message && <p role="status" className="text-sm text-text">{message}</p>}
 
       {loadingImages ? (
         <p className="text-text-secondary">Cargando imágenes...</p>

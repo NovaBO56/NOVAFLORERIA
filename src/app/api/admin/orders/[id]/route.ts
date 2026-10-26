@@ -8,9 +8,10 @@ const ORDER_SELECT = `
   id, order_number, customer_id, order_type, status, subtotal, discount_total, total,
   customer_message, internal_note, reserved_until, cancelled_at, cancellation_reason, inventory_review_required,
   created_at, updated_at, guest_name, guest_phone, guest_whatsapp, receipt_token,
-  payments(id, method, status, confirmed_at, qr_slot, qr_label),
+  scheduled_for, schedule_status, schedule_revision, schedule_updated_by, schedule_updated_at,
+  payments(id, order_id, method, amount, reference, status, created_at, confirmed_at, rejected_at, rejection_reason, qr_slot, qr_label),
   customer:customers (id, name, phone, whatsapp),
-  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note)
+  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note, recipe_snapshot)
 `;
 
 type RouteContext = { params: Promise<{ id: string }> };

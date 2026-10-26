@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createProductSchema, listProductsQuerySchema } from "@/validations/products";
+import { productAvailability } from "@/lib/public/product-availability.server";
 
 const productSelect =
   "id, name, description, price, category_id, occasion, season_id, is_featured, is_available, is_sold_out, catalog_order, is_active, created_at, updated_at";
@@ -27,7 +28,7 @@ export async function GET(request: Request) {
 
     const supabase = await createClient();
 
-    let query = supabase.from("products").select(productSelect, { count: "exact" });
+    let query = supabase.from("products").select(`${productSelect},images:product_images(id,public_url,alt_text,sort_order)`, { count: "exact" });
 
     if (search) query = query.ilike("name", `%${search}%`);
     if (category_id) query = query.eq("category_id", category_id);
@@ -66,7 +67,9 @@ export async function GET(request: Request) {
     }
 
     const total = count ?? 0;
-    const responseBody: Record<string, unknown> = { success: true, products: data, total };
+    const availability = await productAvailability((data ?? []).map(product => ({ product_id: product.id })));
+    const products = (data ?? []).map((product, index) => ({ ...product, available_quantity: availability[index].available_quantity, calculated_available: availability[index].is_available, calculated_sold_out: availability[index].is_sold_out }));
+    const responseBody: Record<string, unknown> = { success: true, products, total };
 
     if (limit !== undefined) {
       const currentPage = page ?? 1;
