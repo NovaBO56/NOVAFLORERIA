@@ -13,7 +13,7 @@ export function AdminBrand() {
 
 export function AdminSidebar({ sections }: { sections: AdminNavSection[] }) {
   return (
-    <aside className="sticky top-16 hidden h-[calc(100dvh-4rem)] flex-col border-r border-border-decorative bg-surface lg:flex">
+    <aside className="admin-sidebar hidden flex-col border-r border-border-decorative bg-surface lg:flex">
 
       <AdminNavList sections={sections} />
     </aside>

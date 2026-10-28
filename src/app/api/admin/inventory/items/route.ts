@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { requireEmployeeOrAdmin } from "@/lib/auth/permissions";
 import { createClient } from "@/lib/supabase/server";
 import { createInventoryItemSchema } from "@/validations/inventory";
+import { inventoryPhotos, type InventoryImageCandidate, type InventoryPhoto } from "@/lib/admin/inventory-images";
 
 const ITEM_SELECT =
   "id, name, sku, item_type, unit, current_stock, minimum_stock, is_dedication_card, is_active, created_at, updated_at";
@@ -35,7 +36,22 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json({ success: true, items: (data ?? []).map(withStockStatus) });
+    const photos: Record<string, InventoryPhoto> = {};
+    const visualItems = (data ?? []).filter(item => item.item_type === "componente" || item.item_type === "producto");
+    // Optional media is bounded and batched; a lookup failure must never hide stock.
+    for (let offset = 0; offset < visualItems.length; offset += 100) {
+      const batch = visualItems.slice(offset, offset + 100);
+      try {
+        const lookup = await supabase.from("product_inventory_requirements")
+          .select("inventory_item_id,product:products(id,name,images:product_images(public_url,alt_text,sort_order),requirements:product_inventory_requirements(inventory_item_id,quantity),components:product_components!product_components_parent_product_id_fkey(id))", { count: "exact" })
+          .in("inventory_item_id", batch.map(item => item.id))
+          .limit(201);
+        if (!lookup.error && lookup.count !== null && lookup.count <= 200 && lookup.data?.length === lookup.count) {
+          Object.assign(photos, inventoryPhotos(batch, lookup.data as unknown as InventoryImageCandidate[]));
+        }
+      } catch { /* Keep the complete inventory response without optional photographs. */ }
+    }
+    return NextResponse.json({ success: true, items: (data ?? []).map(item => ({ ...withStockStatus(item), ...photos[item.id] })) });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Acceso no autorizado.";
     return NextResponse.json({ success: false, message }, { status: 403 });

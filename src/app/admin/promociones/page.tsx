@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/ui/page-header";
 import { redirect } from "next/navigation";
 import {
   canUseAdminFunctions,
@@ -17,15 +18,8 @@ export default async function AdminPromotionsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1>Gestión de promociones</h1>
-        <p className="text-text-secondary">
-          {isAdmin
-            ? "Crea y administra las promociones, descuentos y beneficios para tus clientes."
-            : "Consulta las promociones disponibles. Solo un administrador puede crearlas o modificarlas."}
-        </p>
-      </div>
+    <div className="mx-auto flex max-w-7xl flex-col gap-6">
+      <PageHeader eyebrow="Catálogo" title="Promociones" description={isAdmin ? "Crea descuentos y combos, define sus productos y revisa su vigencia." : "Consulta los descuentos y combos disponibles. Su edición está reservada al administrador."} />
 
       <PromotionManagement isAdmin={isAdmin} />
     </div>

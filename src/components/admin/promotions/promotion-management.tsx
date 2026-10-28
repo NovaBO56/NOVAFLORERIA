@@ -3,6 +3,11 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { FormEvent } from "react";
 import { X } from "lucide-react";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
+import { primaryProductImage, type ProductImageSource } from "@/lib/product-images";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -28,7 +33,7 @@ type DiscountType = "porcentaje" | "monto_fijo";
 type PromotionItem = {
   product_id: string;
   quantity: number;
-  product: { id: string; name: string; price: number } | null;
+  product: { id: string; name: string; price: number; images?: ProductImageSource[] } | null;
 };
 
 type Promotion = {
@@ -53,10 +58,12 @@ type CatalogProduct = {
   name: string;
   price: number;
   is_sold_out?: boolean;
+  images?: ProductImageSource[];
 };
 
 type SelectedProduct = {
   productId: string;
+  imageUrl: string | null;
   name: string;
   price: number;
   quantity: string;
@@ -220,28 +227,6 @@ function getStatus(promotion: Promotion, now: number) {
   return { label: "Vigente", variant: "brand" as const };
 }
 
-function describeItems(promotion: Promotion) {
-  const items = promotion.items ?? [];
-
-  if (items.length === 0) return null;
-
-  const names = items.map((item) => {
-    const name = item.product?.name ?? "Producto";
-
-    return promotion.promotion_type === "combo"
-      ? `${Number(item.quantity)}× ${name}`
-      : name;
-  });
-
-  const visible = names.slice(0, 4).join(
-    promotion.promotion_type === "combo" ? " + " : ", ",
-  );
-
-  return names.length > 4
-    ? `${visible} y ${names.length - 4} más`
-    : visible;
-}
-
 /* ============================================================
    COMPONENTE
    ============================================================ */
@@ -397,6 +382,7 @@ export default function PromotionManagement({
             ...current,
             {
               productId: product.id,
+              imageUrl: primaryProductImage(product.images)?.public_url ?? null,
               name: product.name,
               price: Number(product.price),
               quantity: "1",
@@ -446,6 +432,7 @@ export default function PromotionManagement({
     setSelected(
       (promotion.items ?? []).map((item) => ({
         productId: item.product_id,
+        imageUrl: primaryProductImage(item.product?.images)?.public_url ?? null,
         name: item.product?.name ?? "Producto",
         price: Number(item.product?.price ?? 0),
         quantity: String(Number(item.quantity)),
@@ -798,7 +785,7 @@ export default function PromotionManagement({
   return (
     <div className="flex flex-col gap-6">
       {isAdmin && (
-        <div ref={formRef} className="scroll-mt-4">
+        <div ref={formRef} className="scroll-mt-24">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -817,8 +804,10 @@ export default function PromotionManagement({
                 noValidate
                 className="flex flex-col gap-6"
               >
+                <fieldset className="admin-form-section space-y-4">
+                  <legend className="px-1 text-sm font-semibold text-text">1. Datos y beneficio</legend>
                 <div className="grid gap-5 md:grid-cols-2">
-                  <Field label="Nombre comercial" hint="Así aparecerá la oferta en la tienda.">
+                  <Field required label="Nombre comercial" hint="Así aparecerá la oferta en la tienda.">
                     <Input
                       ref={nameRef}
                       value={form.name}
@@ -944,12 +933,13 @@ export default function PromotionManagement({
                   </div>
                 )}
 
+                </fieldset>
                 {/* ------------------ Productos ------------------ */}
 
-                <Card className="border border-border-decorative shadow-none">
+                <Card className="border border-border-decorative bg-bg-admin shadow-none">
                   <CardHeader>
                     <CardTitle className="text-base">
-                      Productos de la promoción
+                      2. Productos de la promoción
                     </CardTitle>
 
                     <p className="text-sm text-text-secondary">
@@ -957,7 +947,7 @@ export default function PromotionManagement({
                         ? "Elige los productos y cuántas unidades de cada uno forman el combo."
                         : "Elige los productos a los que se aplicará esta promoción."}
                     </p>
-                    <p className="text-sm text-text-secondary">Las asociaciones son por producto. Seleccionar varios productos no crea una regla automática de categoría ni una oferta global para futuros productos. Solo se aplica una promoción por pedido.</p>
+                    <details className="text-xs leading-5 text-text-secondary"><summary className="cursor-pointer font-medium text-brand">Cómo se aplica la selección</summary><p className="mt-2">Las asociaciones son por producto. Seleccionar varios productos no crea una regla automática de categoría ni una oferta global para futuros productos. Solo se aplica una promoción por pedido.</p></details>
                     {isCombo && <p className="text-sm text-text-secondary">La compra guiada de la tienda admite cantidades enteras de 1 a 99. Las cantidades fraccionarias requieren elegir participantes y cumplir las condiciones en el carrito.</p>}
                   </CardHeader>
 
@@ -967,8 +957,9 @@ export default function PromotionManagement({
                         {selected.map((item) => (
                           <li
                             key={item.productId}
-                            className="flex flex-wrap items-center gap-3 rounded-lg border border-brand bg-brand/5 p-3"
+                            className="flex flex-wrap items-center gap-3 rounded-lg border border-brand/20 bg-brand-soft p-3"
                           >
+                            <ProductThumbnail src={item.imageUrl} alt={item.name} size="sm" preview />
                             <div className="min-w-0 flex-1">
                               <p className="truncate font-medium text-text">
                                 {item.name}
@@ -1048,9 +1039,7 @@ export default function PromotionManagement({
                     </Field>
 
                     {catalogError ? (
-                      <p role="alert" className="text-sm text-danger">
-                        {catalogError}
-                      </p>
+                      <Notice tone="error">{friendlyErrorMessage(catalogError, "No pudimos cargar los productos. Intenta otra vez.")}</Notice>
                     ) : catalogLoading ? (
                       <p className="text-sm text-text-secondary">
                         Cargando productos...
@@ -1078,6 +1067,7 @@ export default function PromotionManagement({
                                   className="size-5 shrink-0 accent-brand"
                                 />
 
+                                <ProductThumbnail src={primaryProductImage(product.images)?.public_url} alt={product.name} size="sm" />
                                 <span className="min-w-0 flex-1">
                                   <span className="block truncate font-medium text-text">
                                     {product.name}
@@ -1103,7 +1093,9 @@ export default function PromotionManagement({
                   </CardContent>
                 </Card>
 
-                <div className="grid gap-5 md:grid-cols-3">
+                <fieldset className="admin-form-section">
+                  <legend className="px-1 text-sm font-semibold text-text">3. Vigencia y condiciones</legend>
+                <div className="grid min-w-0 gap-5 md:grid-cols-3">
                   <Field label="Inicio" optional>
                     <Input
                       type="datetime-local"
@@ -1142,21 +1134,18 @@ export default function PromotionManagement({
                   </Field>
                 </div>
 
-                {form.name.trim() && <aside aria-label="Vista previa de la promoción" className="rounded-2xl border border-brand/20 bg-brand/5 p-5"><p className="text-xs font-bold uppercase tracking-wide text-text-secondary">Vista previa en la tienda</p><h3 className="mt-2 break-words text-xl font-semibold text-brand">{form.name}</h3>{form.description && <p className="mt-2 break-words text-sm">{form.description}</p>}<p className="mt-3 font-semibold">{isCombo ? `Combo a ${formatMoney(Number(form.combo_price) || 0)}` : form.discount_type === "porcentaje" ? `${form.discount_value || "0"}% de descuento` : `${formatMoney(Number(form.discount_value) || 0)} de descuento`}</p><ul className="mt-3 space-y-1 text-sm">{selected.map(item => <li key={item.productId} className="break-words">{isCombo ? `${item.quantity} × ` : ""}{item.name}</li>)}</ul>{Number(form.minimum_purchase) > 0 && <p className="mt-3 text-sm">Compra mínima: {formatMoney(Number(form.minimum_purchase))}</p>}<p className="mt-3 text-xs">Vista informativa. Se publicará según su vigencia, estado y productos configurados. Una promoción por pedido.</p></aside>}
+                </fieldset>
+                {form.name.trim() && <aside aria-label="Vista previa de la promoción" className="rounded-2xl border border-brand/20 bg-brand/5 p-5"><p className="text-xs font-bold uppercase tracking-wide text-text-secondary">Vista previa en la tienda</p><h3 className="mt-2 break-words text-xl font-semibold text-brand">{form.name}</h3>{form.description && <p className="mt-2 break-words text-sm">{form.description}</p>}<p className="mt-3 font-semibold">{isCombo ? `Combo a ${formatMoney(Number(form.combo_price) || 0)}` : form.discount_type === "porcentaje" ? `${form.discount_value || "0"}% de descuento` : `${formatMoney(Number(form.discount_value) || 0)} de descuento`}</p><ul className="mt-3 space-y-1 text-sm">{selected.map(item => <li key={item.productId} className="flex items-center gap-2 break-words"><ProductThumbnail src={item.imageUrl} alt={item.name} size="sm" />{isCombo ? `${item.quantity} × ` : ""}{item.name}</li>)}</ul>{Number(form.minimum_purchase) > 0 && <p className="mt-3 text-sm">Compra mínima: {formatMoney(Number(form.minimum_purchase))}</p>}<p className="mt-3 text-xs">Vista informativa. Se publicará según su vigencia, estado y productos configurados. Una promoción por pedido.</p></aside>}
 
                 {error && (
-                  <p role="alert" className="text-sm text-danger">
-                    {error}
-                  </p>
+                  <Notice tone="error" title="Revisa la promoción">{friendlyErrorMessage(error, "No pudimos guardar la promoción. Tu selección se conserva para reintentar.")}</Notice>
                 )}
 
                 {success && (
-                  <p role="status" className="text-sm text-leaf">
-                    {success}
-                  </p>
+                  <Notice tone="success">{success}</Notice>
                 )}
 
-                <div className="flex flex-wrap gap-3">
+                <div className="admin-form-actions">
                   <Button
                     type="submit"
                     loading={saving}
@@ -1185,49 +1174,35 @@ export default function PromotionManagement({
       {/* ------------------------ Lista ------------------------ */}
 
       <Card className="gap-0 p-0">
-        <div className="border-b border-border-decorative p-4">
-          <h2 className="text-xl font-semibold text-text">Promociones</h2>
+        <div className="border-b border-border-decorative p-5">
+          <h2 className="text-base font-semibold text-text">Promociones registradas</h2>
 
-          <p className="text-text-secondary">
+          <p className="mt-1 text-sm text-text-secondary">
             {isAdmin
               ? "Administra las promociones existentes y su estado."
               : "Promociones registradas en el sistema."}
           </p>
         </div>
 
-        {notice && (
-          <p
-            role={notice.kind === "error" ? "alert" : "status"}
-            className={`px-4 pt-4 text-sm ${
-              notice.kind === "error" ? "text-danger" : "text-leaf"
-            }`}
-          >
-            {notice.text}
-          </p>
-        )}
+        {notice && <Notice tone={notice.kind === "error" ? "error" : "success"} className="mx-4 mt-4">{notice.kind === "error" ? friendlyErrorMessage(notice.text, "No pudimos actualizar la promoción. Intenta nuevamente.") : notice.text}</Notice>}
 
         {listLoading ? (
           <p className="p-6 text-center text-text-secondary">
             Cargando promociones...
           </p>
         ) : listError ? (
-          <p role="alert" className="p-6 text-center text-danger">
-            {listError}
-          </p>
+          <Notice tone="error" className="m-4">{friendlyErrorMessage(listError, "No pudimos cargar las promociones. Intenta nuevamente.")}</Notice>
         ) : promotions.length === 0 ? (
-          <p className="p-6 text-center text-text-secondary">
-            No hay promociones registradas.
-          </p>
+          <EmptyState title="No hay promociones registradas" description={isAdmin ? "Completa el formulario para crear la primera promoción." : "Las promociones registradas aparecerán aquí."} />
         ) : (
           <div className="divide-y divide-border-decorative">
             {promotions.map((promotion) => {
               const status = getStatus(promotion, now);
-              const itemsText = describeItems(promotion);
 
               return (
                 <div
                   key={promotion.id}
-                  className="flex flex-col gap-4 p-5 xl:flex-row xl:items-center xl:justify-between"
+                  className="flex min-w-0 flex-col gap-4 p-5 transition-colors hover:bg-bg-admin xl:flex-row xl:items-center xl:justify-between"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-3">
@@ -1248,7 +1223,7 @@ export default function PromotionManagement({
                       </p>
                     )}
 
-                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+                    <div className="mt-3 flex flex-wrap gap-x-6 gap-y-2 rounded-lg bg-bg-admin p-3 text-sm">
                       <span>
                         <strong className="text-text">
                           {promotion.promotion_type === "combo"
@@ -1277,21 +1252,10 @@ export default function PromotionManagement({
                       )}
                     </div>
 
-                    <p className="mt-2 text-sm">
-                      <strong className="text-text">
-                        {promotion.promotion_type === "combo"
-                          ? "Incluye:"
-                          : "Aplica a:"}
-                      </strong>{" "}
-                      {itemsText ? (
-                        <span className="text-text-secondary">{itemsText}</span>
-                      ) : (
-                        <span className="text-danger">
-                          Sin productos: no se podrá aplicar hasta que agregues
-                          al menos uno.
-                        </span>
-                      )}
-                    </p>
+                    <div className="mt-3">
+                      <p className="text-sm font-semibold">{promotion.promotion_type === "combo" ? "Incluye" : "Aplica a"}</p>
+                      {(promotion.items?.length ?? 0) > 0 ? <ul aria-label="Productos de la promoción" className="mt-2 flex flex-wrap gap-2">{promotion.items?.map(item => <li key={item.product_id} className="flex max-w-full items-center gap-2 rounded-xl border border-border-decorative bg-surface p-2"><ProductThumbnail src={primaryProductImage(item.product?.images)?.public_url} alt={item.product?.name || "Producto"} size="sm" preview /><span className="min-w-0 break-words text-sm">{promotion.promotion_type === "combo" ? String(Number(item.quantity)) + " × " : ""}{item.product?.name || "Producto no disponible"}</span></li>)}</ul> : <Notice tone="warning" className="mt-2">Añade al menos un producto para que esta promoción pueda aplicarse.</Notice>}
+                    </div>
                   </div>
 
                   {isAdmin && (

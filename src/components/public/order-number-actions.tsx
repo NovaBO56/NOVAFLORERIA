@@ -2,6 +2,7 @@
 import { useRef, useState } from "react";
 import { Check, Copy, Download } from "lucide-react";
 import { downloadOrderGuide } from "@/lib/public/order-journey";
+import { ShoppingNotice } from "./shopping-notice";
 import type { PublicOrder } from "@/lib/public/types";
 
 export function OrderNumberActions({ order }: { order: PublicOrder }) {
@@ -24,6 +25,6 @@ export function OrderNumberActions({ order }: { order: PublicOrder }) {
     <p className="customer-muted text-sm">Guarda tu número de pedido para consultar su estado cuando quieras. Necesitarás también el celular de tu compra.</p>
     <button type="button" disabled={busy} aria-busy={busy} className="customer-secondary" onClick={() => void copy()}>{copied ? <Check size={18} aria-hidden/> : <Copy size={18} aria-hidden/>}{busy ? "Copiando…" : copied ? "Número copiado" : "Copiar número"}</button>
     <button type="button" className="customer-secondary" onClick={() => { try { downloadOrderGuide(order); setFeedback("Archivo preparado con tu número e instrucciones de seguimiento."); } catch { setFeedback("No pudimos preparar el archivo. Conserva el número que aparece arriba."); } }}><Download size={18} aria-hidden/>Guardar mi número de pedido</button>
-    {feedback && <p role="status" className="customer-note text-sm">{feedback}</p>}
+    {feedback && <ShoppingNotice tone={feedback.startsWith("No pudimos") ? "warning" : "success"} onDismiss={() => setFeedback("")}>{feedback}</ShoppingNotice>}
   </section>;
 }

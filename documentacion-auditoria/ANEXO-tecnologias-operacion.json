@@ -1,0 +1,679 @@
+{
+  "scope": "Lectura estática; los patrones no prueban seguridad ni equivalen a ejecución. No se ejecutó ningún script. Las referencias de dependencias se limitaron a src TS/JS: uso CSS/config/tests se explica en 02.",
+  "dependencies": {
+    "lockfileVersion": 3,
+    "nextEngines": {
+      "node": ">=20.9.0"
+    },
+    "rows": [
+      {
+        "name": "@react-pdf/renderer",
+        "group": "dependencies",
+        "declared": "^4.9.0",
+        "resolved": "4.9.0",
+        "sourceReferenceCount": 17,
+        "examples": [
+          "src/app/api/admin/orders/[id]/receipt/route.tsx:2",
+          "src/app/api/admin/reports/cancellations/route.tsx:2",
+          "src/app/api/admin/reports/cash/route.tsx:2"
+        ]
+      },
+      {
+        "name": "@supabase/ssr",
+        "group": "dependencies",
+        "declared": "^0.12.7",
+        "resolved": "0.12.7",
+        "sourceReferenceCount": 3,
+        "examples": [
+          "src/lib/supabase/client.ts:1",
+          "src/lib/supabase/proxy.ts:1",
+          "src/lib/supabase/server.ts:1"
+        ]
+      },
+      {
+        "name": "@supabase/supabase-js",
+        "group": "dependencies",
+        "declared": "^2.116.0",
+        "resolved": "2.116.0",
+        "sourceReferenceCount": 2,
+        "examples": [
+          "src/lib/rate-limit.ts:3",
+          "src/lib/supabase/admin.ts:1"
+        ]
+      },
+      {
+        "name": "class-variance-authority",
+        "group": "dependencies",
+        "declared": "^0.7.1",
+        "resolved": "0.7.1",
+        "sourceReferenceCount": 2,
+        "examples": [
+          "src/components/ui/badge.tsx:2",
+          "src/components/ui/button.tsx:2"
+        ]
+      },
+      {
+        "name": "cn",
+        "group": "dependencies",
+        "declared": "^0.2.6",
+        "resolved": "0.2.6",
+        "sourceReferenceCount": 15,
+        "examples": [
+          "src/components/admin/layout/admin-header.tsx:5",
+          "src/components/admin/layout/admin-nav-list.tsx:22",
+          "src/components/public/shopping-notice.tsx:1"
+        ]
+      },
+      {
+        "name": "lucide-react",
+        "group": "dependencies",
+        "declared": "^1.42.0",
+        "resolved": "1.42.0",
+        "sourceReferenceCount": 62,
+        "examples": [
+          "src/app/admin/caja/page.tsx:2",
+          "src/app/admin/prueba-ui/page.tsx:3",
+          "src/app/admin/ventas/page.tsx:2"
+        ]
+      },
+      {
+        "name": "next",
+        "group": "dependencies",
+        "declared": "16.3.8",
+        "resolved": "16.3.8",
+        "sourceReferenceCount": 137,
+        "examples": [
+          "src/app/admin/caja/page.tsx:1",
+          "src/app/admin/categorias/page.tsx:2",
+          "src/app/admin/inventario/page.tsx:2"
+        ]
+      },
+      {
+        "name": "radix-ui",
+        "group": "dependencies",
+        "declared": "^1.6.7",
+        "resolved": "1.6.7",
+        "sourceReferenceCount": 5,
+        "examples": [
+          "src/components/admin/layout/admin-mobile-nav.tsx:5",
+          "src/components/admin/products/product-list.tsx:3",
+          "src/components/ui/button.tsx:5"
+        ]
+      },
+      {
+        "name": "react",
+        "group": "dependencies",
+        "declared": "^19.2.8",
+        "resolved": "19.2.8",
+        "sourceReferenceCount": 86,
+        "examples": [
+          "src/app/admin/prueba-ui/page.tsx:4",
+          "src/app/login/page.tsx:4",
+          "src/app/prueba-cliente/page.tsx:5"
+        ]
+      },
+      {
+        "name": "react-dom",
+        "group": "dependencies",
+        "declared": "^19.2.8",
+        "resolved": "19.2.8",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "sharp",
+        "group": "dependencies",
+        "declared": "0.35.5",
+        "resolved": "0.35.5",
+        "sourceReferenceCount": 4,
+        "examples": [
+          "src/app/api/admin/payment-qr/route.ts:7",
+          "src/app/api/admin/products/[id]/images/route.ts:2",
+          "src/lib/product-image-file.ts:1"
+        ]
+      },
+      {
+        "name": "tw-animate-css",
+        "group": "dependencies",
+        "declared": "^1.4.0",
+        "resolved": "1.4.0",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "zod",
+        "group": "dependencies",
+        "declared": "^4.5.4",
+        "resolved": "4.5.4",
+        "sourceReferenceCount": 48,
+        "examples": [
+          "src/app/api/admin/product-recommendations/preview/route.ts:2",
+          "src/app/api/admin/products/[id]/publication/route.ts:2",
+          "src/app/api/admin/products/[id]/recommendations/route.ts:2"
+        ]
+      },
+      {
+        "name": "@tailwindcss/postcss",
+        "group": "devDependencies",
+        "declared": "^4",
+        "resolved": "4.3.3",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "@types/node",
+        "group": "devDependencies",
+        "declared": "^20",
+        "resolved": "20.19.43",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "@types/react",
+        "group": "devDependencies",
+        "declared": "^19",
+        "resolved": "19.2.18",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "@types/react-dom",
+        "group": "devDependencies",
+        "declared": "^19",
+        "resolved": "19.2.7",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "eslint",
+        "group": "devDependencies",
+        "declared": "^9",
+        "resolved": "9.39.5",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "eslint-config-next",
+        "group": "devDependencies",
+        "declared": "16.3.8",
+        "resolved": "16.3.8",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "shadcn",
+        "group": "devDependencies",
+        "declared": "4.21.0",
+        "resolved": "4.21.0",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "tailwindcss",
+        "group": "devDependencies",
+        "declared": "^4",
+        "resolved": "4.3.3",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "typescript",
+        "group": "devDependencies",
+        "declared": "^5",
+        "resolved": "5.9.3",
+        "sourceReferenceCount": 0,
+        "examples": []
+      },
+      {
+        "name": "vitest",
+        "group": "devDependencies",
+        "declared": "^2.1.9",
+        "resolved": "2.1.9",
+        "sourceReferenceCount": 0,
+        "examples": []
+      }
+    ]
+  },
+  "environmentNamesOnly": {
+    "envs": {
+      "NEXT_PUBLIC_SUPABASE_URL": [
+        "next.config.ts:7",
+        "src/app/api/storefront-media/route.ts:7",
+        "src/components/public/safe-image.tsx:9",
+        "src/config/env.ts:9",
+        "src/lib/supabase/admin.ts:5",
+        "src/lib/supabase/client.ts:6",
+        "src/lib/supabase/proxy.ts:10",
+        "src/lib/supabase/server.ts:9",
+        "scripts/start-catalog-demo-local.ps1:10",
+        "scripts/start-lab50-local.ps1:26"
+      ],
+      "NOVA_LOCAL_LAB": [
+        "next.config.ts:11",
+        "src/lib/visual-preview/config.ts:7",
+        "scripts/start-catalog-demo-local.ps1:16",
+        "scripts/start-lab50-local.ps1:32"
+      ],
+      "NOVA_VISUAL_PREVIEW": [
+        "src/app/layout.tsx:34",
+        "src/lib/supabase/admin.ts:4",
+        "src/lib/supabase/server.ts:5",
+        "src/lib/visual-preview/config.ts:2",
+        "src/lib/visual-preview/config.ts:4"
+      ],
+      "NEXT_PUBLIC_NOVA_VISUAL_PREVIEW": [
+        "src/components/public/checkout-form.tsx:25",
+        "src/components/public/home/cart.tsx:116",
+        "src/components/public/home/home-page.tsx:206",
+        "src/components/public/home/product-detail.tsx:124",
+        "src/lib/supabase/client.ts:4",
+        "src/lib/visual-preview/config.ts:2",
+        "src/lib/visual-preview/config.ts:4"
+      ],
+      "NEXT_PUBLIC_SUPABASE_ANON_KEY": [
+        "src/config/env.ts:10",
+        "src/lib/supabase/client.ts:7",
+        "src/lib/supabase/proxy.ts:11",
+        "src/lib/supabase/server.ts:10",
+        "scripts/start-catalog-demo-local.ps1:11",
+        "scripts/start-lab50-local.ps1:27"
+      ],
+      "SUPABASE_SECRET_KEY": [
+        "src/lib/supabase/admin.ts:6",
+        "scripts/start-catalog-demo-local.ps1:12",
+        "scripts/start-lab50-local.ps1:29"
+      ],
+      "VERCEL_ENV": [
+        "src/lib/visual-preview/config.ts:5"
+      ],
+      "VERCEL_GIT_COMMIT_REF": [
+        "src/lib/visual-preview/config.ts:5"
+      ],
+      "NODE_ENV": [
+        "src/proxy.ts:22"
+      ],
+      "LOCALAPPDATA": [
+        "scripts/prepare-catalog-demo-local.mjs:10",
+        "scripts/prepare-catalog-demo-payment-local.mjs:3",
+        "scripts/prepare-catalog-demo-photos-local.mjs:5",
+        "scripts/prepare-lab50-local.mjs:16",
+        "scripts/prepare-visual-preview-local.mjs:10",
+        "scripts/qa-availability-replay-local.mjs:11",
+        "scripts/qa-catalog-demo-local.mjs:4",
+        "scripts/qa-catalog-demo-local.mjs:82",
+        "scripts/qa-commerce30-local.mjs:9",
+        "scripts/qa-final-checkout-local.mjs:10",
+        "scripts/qa-florist-dedications-local.mjs:10",
+        "scripts/qa-inventory-refunds-additional-local.mjs:8",
+        "scripts/qa-inventory-refunds-local.mjs:10",
+        "scripts/qa-lab100-local.mjs:8",
+        "scripts/qa-order-schedule-rls-local.mjs:9",
+        "scripts/qa-order-schedule-rls-local.mjs:10",
+        "scripts/qa-product-availability-http-local.mjs:7",
+        "scripts/qa-product-availability-local.mjs:7",
+        "scripts/qa-promotion-shopping-local.mjs:10",
+        "scripts/qa-recommendations-local.mjs:7",
+        "scripts/qa-release-readiness-local.mjs:9",
+        "scripts/qa-shared-roses-local.mjs:8",
+        "scripts/start-catalog-demo-local.ps1:4",
+        "scripts/start-lab50-local.ps1:8"
+      ],
+      "NOVA_QA_ROUND": [
+        "scripts/qa-commerce30-local.mjs:16"
+      ],
+      "BACKUP_OUTPUT_DIR": [
+        "scripts/qa-manual-backup-local.mjs:18",
+        "scripts/qa-manual-backup-local.mjs:21",
+        "scripts/qa-manual-backup-local.mjs:23",
+        "scripts/qa-manual-backup-local.mjs:24",
+        "scripts/qa-manual-backup-local.mjs:31",
+        "supabase/backup/manual-backup.mjs:44"
+      ],
+      "DOCKER_HOST": [
+        "scripts/qa-order-schedule-rls-local.mjs:19",
+        "supabase/backup/pg-tools.mjs:21",
+        "supabase/backup/pg-tools.mjs:21"
+      ],
+      "SUPABASE_SERVICE_ROLE_KEY": [
+        "scripts/start-catalog-demo-local.ps1:13",
+        "scripts/start-lab50-local.ps1:28"
+      ],
+      "NEXT_PUBLIC_SITE_URL": [
+        "scripts/start-catalog-demo-local.ps1:14",
+        "scripts/start-lab50-local.ps1:30"
+      ],
+      "NEXT_PUBLIC_APP_URL": [
+        "scripts/start-catalog-demo-local.ps1:15",
+        "scripts/start-lab50-local.ps1:31"
+      ],
+      "PGHOSTADDR": [
+        "supabase/backup/backup-core.mjs:15"
+      ],
+      "PGSERVICE": [
+        "supabase/backup/backup-core.mjs:15"
+      ],
+      "PGSERVICEFILE": [
+        "supabase/backup/backup-core.mjs:15"
+      ],
+      "BACKUP_MODE": [
+        "supabase/backup/backup-core.mjs:16",
+        "supabase/backup/backup-core.mjs:20",
+        "supabase/backup/local-backup.mjs:5",
+        "supabase/backup/manual-backup.mjs:37",
+        "supabase/backup/manual-backup.mjs:59",
+        "supabase/backup/manual-backup.mjs:59",
+        "supabase/backup/pg-tools.mjs:19",
+        "supabase/backup/restore-local.mjs:10"
+      ],
+      "PGHOST": [
+        "supabase/backup/backup-core.mjs:17",
+        "supabase/backup/backup-core.mjs:21",
+        "supabase/backup/backup-core.mjs:22",
+        "supabase/backup/pg-tools.mjs:19",
+        "supabase/backup/restore-local.mjs:10"
+      ],
+      "BACKUP_PROJECT_REF": [
+        "supabase/backup/backup-core.mjs:20"
+      ],
+      "PGUSER": [
+        "supabase/backup/backup-core.mjs:22"
+      ],
+      "PGSSLMODE": [
+        "supabase/backup/backup-core.mjs:23"
+      ],
+      "PGPORT": [
+        "supabase/backup/backup-core.mjs:24"
+      ],
+      "PGDATABASE": [
+        "supabase/backup/manual-backup.mjs:39",
+        "supabase/backup/pg-tools.mjs:36",
+        "supabase/backup/restore-local.mjs:40"
+      ],
+      "BACKUP_LOCAL_CONTAINER": [
+        "supabase/backup/manual-backup.mjs:39",
+        "supabase/backup/pg-tools.mjs:18",
+        "supabase/backup/pg-tools.mjs:20",
+        "supabase/backup/pg-tools.mjs:26",
+        "supabase/backup/restore-local.mjs:43"
+      ],
+      "BACKUP_ENCRYPTION_KEY": [
+        "supabase/backup/manual-backup.mjs:41",
+        "supabase/backup/restore-local.mjs:34"
+      ],
+      "BACKUP_DIAGNOSTIC_FILE": [
+        "supabase/backup/pg-tools.mjs:9",
+        "supabase/backup/pg-tools.mjs:9"
+      ],
+      "DOCKER_CONTEXT": [
+        "supabase/backup/pg-tools.mjs:22",
+        "supabase/backup/pg-tools.mjs:22"
+      ],
+      "BACKUP_LOCAL_PGUSER": [
+        "supabase/backup/pg-tools.mjs:24"
+      ],
+      "PGOPTIONS": [
+        "supabase/backup/pg-tools.mjs:36",
+        "supabase/backup/pg-tools.mjs:36"
+      ],
+      "RESTORE_DISPOSABLE_LOCAL": [
+        "supabase/backup/restore-local.mjs:10"
+      ],
+      "BACKUP_RESTORE_ADMIN_PASSWORD": [
+        "supabase/backup/restore-local.mjs:43"
+      ],
+      "PGPASSWORD": [
+        "supabase/backup/restore-local.mjs:43"
+      ]
+    }
+  },
+  "scripts": [
+    {
+      "file": "scripts/catalog-demo-data.mjs",
+      "lines": 64,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/catalog-demo-photos.mjs",
+      "lines": 12,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/lab50-catalog.mjs",
+      "lines": 121,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/prepare-brand-assets.mjs",
+      "lines": 18,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/prepare-catalog-demo-local.mjs",
+      "lines": 87,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/prepare-catalog-demo-payment-local.mjs",
+      "lines": 16,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/prepare-catalog-demo-photos-local.mjs",
+      "lines": 36,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/prepare-lab50-local.mjs",
+      "lines": 379,
+      "sqlWrites": false,
+      "apiWrites": true,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/prepare-visual-preview-local.mjs",
+      "lines": 74,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-availability-replay-local.mjs",
+      "lines": 40,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-backup-schema-local.mjs",
+      "lines": 32,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-catalog-demo-local.mjs",
+      "lines": 89,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-commerce30-local.mjs",
+      "lines": 209,
+      "sqlWrites": true,
+      "apiWrites": true,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-final-checkout-local.mjs",
+      "lines": 91,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-florist-dedications-local.mjs",
+      "lines": 163,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-global-recommendations-sql-local.mjs",
+      "lines": 31,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/qa-inventory-refunds-additional-local.mjs",
+      "lines": 90,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-inventory-refunds-local.mjs",
+      "lines": 111,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": true,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-lab100-local.mjs",
+      "lines": 125,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": true,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-manual-backup-local.mjs",
+      "lines": 50,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-order-schedule-rls-local.mjs",
+      "lines": 59,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/qa-product-availability-http-local.mjs",
+      "lines": 61,
+      "sqlWrites": false,
+      "apiWrites": true,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-product-availability-local.mjs",
+      "lines": 85,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-promotion-shopping-local.mjs",
+      "lines": 145,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-recommendations-local.mjs",
+      "lines": 133,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-release-readiness-local.mjs",
+      "lines": 80,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-round-three-local.mjs",
+      "lines": 105,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-shared-roses-local.mjs",
+      "lines": 166,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/qa-two-qr-local.mjs",
+      "lines": 105,
+      "sqlWrites": true,
+      "apiWrites": false,
+      "authAdmin": true,
+      "fileWrites": true
+    },
+    {
+      "file": "scripts/start-catalog-demo-local.ps1",
+      "lines": 19,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    },
+    {
+      "file": "scripts/start-lab50-local.ps1",
+      "lines": 39,
+      "sqlWrites": false,
+      "apiWrites": false,
+      "authAdmin": false,
+      "fileWrites": false
+    }
+  ]
+}

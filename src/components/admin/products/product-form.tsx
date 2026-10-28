@@ -3,6 +3,8 @@
 
 import { useEffect, useState } from "react";
 import { Check, Plus, X } from "lucide-react";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 
 import { Button } from "@/components/ui/button";
 import { Field, Input, Textarea } from "@/components/ui/field";
@@ -206,25 +208,11 @@ export default function ProductForm({
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-5 [&_button]:min-h-11">
-      <div>
-        <h3 className="text-lg font-semibold text-text">
-          {isEditing ? "Editar producto" : "Nuevo producto"}
-        </h3>
+      {error && <Notice tone="error" title="Revisa el producto">{friendlyErrorMessage(error, "No pudimos guardar el producto. Revisa los datos e intenta nuevamente.")}</Notice>}
 
-        <p className="mt-1 text-sm text-text-secondary">
-          {isEditing
-            ? "Actualiza la información del producto."
-            : "Vamos a crear tu producto. Primero registra sus datos. Después podrás añadir fotografías, configurar los materiales y publicarlo."}
-        </p>
-      </div>
-
-      {error && (
-        <div role="alert" className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">
-          {error}
-        </div>
-      )}
-
-      <div className="grid gap-4 md:grid-cols-2">
+      <section className="admin-form-section space-y-4" aria-labelledby="product-basic-title">
+        <div><h3 id="product-basic-title" className="text-base font-semibold">Información del producto</h3><p className="mt-1 text-sm text-text-secondary">Estos datos aparecerán en el catálogo de la tienda.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Nombre" required>
           <Input
             value={form.name}
@@ -233,7 +221,6 @@ export default function ProductForm({
             disabled={saving}
           />
         </Field>
-
         <Field label="Precio" required hint="Precio de venta en bolivianos (Bs).">
           <Input
             type="number"
@@ -245,7 +232,21 @@ export default function ProductForm({
             disabled={saving}
           />
         </Field>
+        </div>
+      <Field label="Descripción">
+        <Textarea
+          value={form.description}
+          onChange={(event) => updateForm("description", event.target.value)}
+          placeholder="Descripción del producto..."
+          rows={4}
+          disabled={saving}
+        />
+      </Field>
+      </section>
 
+      <section className="admin-form-section space-y-4" aria-labelledby="product-catalog-title">
+        <div><h3 id="product-catalog-title" className="text-base font-semibold">Organización del catálogo</h3><p className="mt-1 text-sm text-text-secondary">Clasifica el producto para que sea fácil de encontrar.</p></div>
+        <div className="grid gap-4 sm:grid-cols-2">
         <Field label="Categoría">
           <select
             value={form.categoryId}
@@ -264,7 +265,6 @@ export default function ProductForm({
               ))}
           </select>
         </Field>
-
         <Field label="Temporada">
           <select
             value={form.seasonId}
@@ -283,7 +283,6 @@ export default function ProductForm({
               ))}
           </select>
         </Field>
-
         <Field label="Ocasión" optional>
           <Input
             value={form.occasion}
@@ -292,7 +291,6 @@ export default function ProductForm({
             disabled={saving}
           />
         </Field>
-
         <Field label="Orden del catálogo">
           <Input
             type="number"
@@ -305,18 +303,11 @@ export default function ProductForm({
             disabled={saving}
           />
         </Field>
-      </div>
+        </div>
+      </section>
 
-      <Field label="Descripción">
-        <Textarea
-          value={form.description}
-          onChange={(event) => updateForm("description", event.target.value)}
-          placeholder="Descripción del producto..."
-          rows={4}
-          disabled={saving}
-        />
-      </Field>
-
+      <section className="admin-form-section space-y-4" aria-labelledby="product-sale-title">
+        <div><h3 id="product-sale-title" className="text-base font-semibold">Publicación y venta</h3><p className="mt-1 text-sm text-text-secondary">{isEditing ? "Controla la visibilidad, la venta y los destacados del producto." : "El producto nuevo se guarda como borrador. Después añade sus fotos, receta y disponibilidad."}</p></div>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <label className="flex items-center gap-2 rounded-xl border border-border-decorative bg-surface px-3 py-3 text-sm text-text">
           <input
@@ -368,9 +359,11 @@ export default function ProductForm({
           Publicado (Activo)
         </label>
       </div>
-      <p className="text-sm text-text-secondary">La receta de materiales debe ser válida según el servidor. Configúrala en «Receta y materiales»; usa «Productos incluidos» cuando corresponda y consulta «Revisar y publicar» antes de habilitar la venta. Los productos nuevos se guardan sin publicar.</p>
 
-      <div className="sticky -bottom-4 flex flex-wrap justify-end gap-2 border-t border-border-decorative bg-surface py-3">
+        <p className="text-sm leading-6 text-text-secondary">Configura «Receta y materiales» y, si corresponde, «Productos incluidos». En «Revisar y publicar» podrás comprobar los requisitos antes de habilitar la venta.</p>
+      </section>
+
+      <div className="admin-form-actions sticky -bottom-5 flex flex-wrap justify-end gap-2 border-t border-border-decorative bg-surface py-4">
         {(
           <Button
             type="button"

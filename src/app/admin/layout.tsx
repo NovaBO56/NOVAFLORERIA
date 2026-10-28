@@ -1,3 +1,4 @@
+import "./admin.css";
 import { redirect } from "next/navigation";
 import { PageMotion } from "@/components/admin/layout/page-motion";
 import { AccountDisabled } from "@/components/admin/layout/account-disabled";
@@ -46,7 +47,7 @@ export default async function AdminLayout({
       </a>
 
       <AdminHeader name={profile.full_name} role={profile.role} sections={sections} />
-      <div className="lg:grid lg:grid-cols-[15rem_minmax(0,1fr)]">
+      <div className="admin-shell">
       <AdminSidebar sections={sections} />
 
       <div className="flex min-h-[calc(100dvh-4rem)] min-w-0 flex-col bg-bg-admin">
@@ -55,7 +56,7 @@ export default async function AdminLayout({
         <SessionGuard />
 
         {/* Es un <div> y no <main>: las páginas existentes ya traen su propio <main>. */}
-        <div id="contenido" className="flex-1 px-4 py-6 md:px-6 lg:px-8">
+        <div id="contenido" className="admin-content flex-1">
           <PageMotion>{children}</PageMotion>
         </div>
       </div>

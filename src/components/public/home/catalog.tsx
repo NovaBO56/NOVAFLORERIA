@@ -1,12 +1,12 @@
 "use client";
 
-import { SafeImage as Image } from "@/components/public/safe-image";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { useStorefrontMedia } from "../storefront-media";
 import { useRef, useState, type ReactNode } from "react";
 import { Heart, ShoppingBag, SlidersHorizontal } from "lucide-react";
 import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 import { formatMoney, isPurchasable, pickImage } from "@/lib/public/format";
 import type { PublicCategory, PublicProduct } from "@/lib/public/types";
-import { ProductPlaceholder } from "../product-placeholder";
 
 export type CatalogState = {
   status: "loading" | "ready" | "error";
@@ -51,19 +51,7 @@ function ProductCard({
           className="absolute inset-0 block h-full w-full"
           aria-label={`Ver detalle de ${product.name}`}
         >
-          {image ? (
-            <Image
-              src={image.public_url}
-              alt={image.alt_text ?? product.name}
-              fill
-              sizes="(min-width: 1024px) 280px, (min-width: 768px) 33vw, 50vw"
-              className={`object-contain motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.02] ${
-                purchasable ? "" : "opacity-60"
-              }`}
-            />
-          ) : (
-            <ProductPlaceholder/>
-          )}
+          <ProductThumbnail src={image?.public_url} alt={image?.alt_text ?? product.name} fit="contain" voice="public" sizes="(min-width: 1024px) 280px, (min-width: 768px) 33vw, 50vw" className={`absolute inset-0 size-full rounded-none border-0 motion-safe:transition-transform motion-safe:duration-200 motion-safe:group-hover:scale-[1.02] ${purchasable ? "" : "opacity-60"}`}/>
         </button>
 
         <button
@@ -184,6 +172,7 @@ export function CatalogSection({
   onOpenDetail,
 }: CatalogSectionProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const media = useStorefrontMedia();
   const filterTrigger = useRef<HTMLButtonElement>(null);
   const filtered = Boolean(searchTerm) || favoritesOnly;
 
@@ -192,7 +181,7 @@ export function CatalogSection({
     <div className="flex items-center justify-between gap-3"><h3 className="font-bold text-[#392b38]">Categorías</h3><button type="button" onClick={() => choose(onClearFilters)} className="min-h-11 rounded-lg px-2 text-xs font-bold text-[#873c58] underline underline-offset-4">Limpiar</button></div>
     <div role="group" aria-label="Categorías" className="space-y-1">
       <button type="button" onClick={() => choose(() => { onSelectCategory(null); onShowAll(); })} aria-pressed={!selectedCategory && !promotionsOnly && !favoritesOnly} className={`${chipBase} w-full rounded-xl text-left ${!selectedCategory && !promotionsOnly && !favoritesOnly ? chipActive : chipIdle}`}>Todos los productos</button>
-      {categoriesLoading ? <p className="text-sm text-[#6b5965]" role="status">Cargando categorías…</p> : categories.map(category => <button key={category.id} type="button" onClick={() => choose(() => onSelectCategory(category.id))} aria-pressed={!promotionsOnly && selectedCategory === category.id} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedCategory === category.id ? chipActive : chipIdle}`}>{category.name}</button>)}
+      {categoriesLoading ? <p className="text-sm text-[#6b5965]" role="status">Cargando categorías…</p> : categories.map(category => <button key={category.id} type="button" onClick={() => choose(() => onSelectCategory(category.id))} aria-pressed={!promotionsOnly && selectedCategory === category.id} className={`${chipBase} w-full rounded-xl text-left [overflow-wrap:anywhere] ${!promotionsOnly && selectedCategory === category.id ? chipActive : chipIdle}`}><ProductThumbnail src={media.categories[category.id]} alt={category.name} kind="category" voice="public" size="sm" className="rounded-lg"/><span className="min-w-0 flex-1">{category.name}</span></button>)}
     </div>
     <div className="border-t border-[#eadde6] pt-5"><button type="button" onClick={() => choose(onSelectPromotions)} aria-pressed={promotionsOnly} className={`${chipBase} w-full rounded-xl text-left ${promotionsOnly ? chipActive : chipIdle}`}>Promociones</button></div>
   </div>;

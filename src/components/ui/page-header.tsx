@@ -15,6 +15,7 @@ export function PageHeader({
 }: PageHeaderProps) {
   return (
     <header
+      data-slot="page-header"
       className={[
         "flex flex-col gap-5",
         "border-b border-border-decorative",
@@ -26,6 +27,7 @@ export function PageHeader({
       <div className="min-w-0 flex-1">
         {eyebrow ? (
           <p
+            data-slot="page-eyebrow"
             className={[
               "mb-2",
               "text-xs leading-5",
@@ -40,6 +42,7 @@ export function PageHeader({
         ) : null}
 
         <h1
+          data-slot="page-title"
           className={[
             "text-3xl leading-tight",
             "font-semibold",
@@ -55,6 +58,7 @@ export function PageHeader({
 
         {description ? (
           <p
+            data-slot="page-description"
             className={[
               "mt-2",
               "max-w-2xl",
@@ -69,6 +73,7 @@ export function PageHeader({
 
       {actions ? (
         <div
+          data-slot="page-actions"
           className={[
             "flex min-w-0 max-w-full",
             "flex-wrap items-center",

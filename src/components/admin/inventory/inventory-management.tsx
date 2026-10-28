@@ -2,6 +2,9 @@
 "use client";
 
 import { FormEvent, useCallback, useEffect, useMemo, useState } from "react";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import {
   AlertTriangle,
   Boxes,
@@ -57,6 +60,8 @@ type MovementType =
 
 type InventoryItem = {
   id: string;
+  image_url?: string | null;
+  image_alt?: string | null;
   name: string;
   sku: string | null;
   is_dedication_card: boolean;
@@ -737,98 +742,29 @@ useEffect(() => {
   }
 
   return (
-    <div className="mx-auto flex max-w-[1400px] flex-col gap-6">
-      <details className="rounded-xl border border-border-decorative bg-surface p-4 text-sm text-text-secondary">
-        <summary className="cursor-pointer font-medium text-text">Guía de inventario: materiales, existencias y recetas</summary>
-        <p className="mt-3">1. Crear material → 2. Registrar entrada y lote → 3. Crear producto y receta.</p>
-        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div><dt className="font-semibold">Stock físico / reservado / libre</dt><dd>Físico: lo que tienes. Reservado: separado para pedidos pendientes. Libre: lo que queda para nuevas compras.</dd></div>
-          <div><dt className="font-semibold">Stock mínimo y reposición</dt><dd>El mínimo avisa cuándo reponer. Para añadir existencias registra una entrada con la cantidad recibida.</dd></div>
-          <div><dt className="font-semibold">Lote</dt><dd>Grupo recibido en una entrada. Al preparar pedidos se utiliza primero el lote más antiguo con existencias.</dd></div>
-          <div><dt className="font-semibold">Merma</dt><dd>Flores o materiales dañados que ya no pueden utilizarse. Regístralos para mantener el stock real.</dd></div>
-        </dl>
-      </details>
+    <div className="admin-page mx-auto flex w-full max-w-[1440px] flex-col gap-6">
       <PageHeader
         eyebrow="Operación"
-        title="Inventario"
-        description="Controla existencias, lotes, entradas, mermas, ajustes y movimientos."
-        actions={
-          <div className="flex flex-wrap gap-2">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={openEntry}
-            >
-              <PackagePlus className="size-4" />
-              Registrar entrada
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={openWaste}
-            >
-              <Trash2 className="size-4" />
-              Registrar merma
-            </Button>
-
-            <Button
-              type="button"
-              variant="outline"
-              onClick={openAdjustment}
-            >
-              <SlidersHorizontal className="size-4" />
-              Ajustar stock
-            </Button>
-
-            <Button
-              type="button"
-              onClick={openNewItem}
-            >
-              <Plus className="size-4" />
-              Nuevo ítem
-            </Button>
-          </div>
-        }
+        title="Inventario y materiales"
+        description="Revisa las existencias del taller, registra entradas y controla cada movimiento de materiales."
+        actions={<Button type="button" onClick={openNewItem}><Plus aria-hidden="true" className="size-4" />Nuevo material</Button>}
       />
 
-      {notice && (
-        <div className="flex items-center justify-between gap-4 rounded-xl border border-brand/20 bg-brand-soft px-4 py-3 text-sm text-text">
-          <span>{notice}</span>
+      {notice && <Notice tone="success" onDismiss={() => setNotice(null)}>{notice}</Notice>}
 
-          <button
-            type="button"
-            className="shrink-0 font-medium text-brand hover:underline"
-            onClick={() => setNotice(null)}
-          >
-            Cerrar
-          </button>
-        </div>
-      )}
-
-      {error && (
-        <div className="flex items-start justify-between gap-4 rounded-xl border border-danger/20 bg-danger/5 px-4 py-3 text-sm text-danger">
-          <span>{error}</span>
-
-          <button
-            type="button"
-            className="shrink-0 font-medium hover:underline"
-            onClick={() => setError(null)}
-          >
-            Cerrar
-          </button>
-        </div>
-      )}
+      {error && !itemModal && !entryModal && !wasteModal && !adjustmentModal && <Notice tone="error" title="No se completó la operación" onDismiss={() => setError(null)}>{friendlyErrorMessage(error, "No pudimos actualizar el inventario. Revisa los datos e intenta nuevamente.")}</Notice>}
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
-          label="Total de ítems"
+          label="Materiales registrados"
+          tone="neutral"
           value={String(stats.total)}
           icon={<Boxes />}
         />
 
         <StatCard
           label="Stock bajo"
+          tone="warning"
           value={String(stats.low)}
           description="Requieren reposición"
           icon={<AlertTriangle />}
@@ -836,6 +772,7 @@ useEffect(() => {
 
         <StatCard
           label="Agotados"
+          tone="danger"
           value={String(stats.out)}
           description="Sin existencias"
           icon={<XCircle />}
@@ -843,16 +780,27 @@ useEffect(() => {
 
         <StatCard
           label="Ítems activos"
+          tone="success"
           value={String(stats.active)}
           icon={<PackagePlus />}
         />
       </div>
 
-      <Card className="overflow-hidden p-0">
-        <div className="flex flex-col border-b border-border-decorative px-4 pt-2 sm:flex-row sm:items-end sm:gap-6">
+      <div className="admin-action-bar flex flex-col gap-4 rounded-xl border border-border-decorative bg-surface p-4 sm:flex-row sm:items-center sm:justify-between">
+        <div><p className="text-sm font-semibold">Movimientos de inventario</p><p className="mt-1 text-sm text-text-secondary">Elige la operación que necesitas registrar.</p></div>
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" variant="outline" className="border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300 hover:bg-emerald-100 hover:text-emerald-800" onClick={openEntry}><PackagePlus aria-hidden="true" className="size-4" />Registrar entrada</Button>
+          <Button type="button" variant="outline" className="border-rose-200 bg-rose-50 text-rose-700 hover:border-rose-300 hover:bg-rose-100 hover:text-rose-800" onClick={openWaste}><Trash2 aria-hidden="true" className="size-4" />Registrar merma</Button>
+          <Button type="button" variant="outline" onClick={openAdjustment}><SlidersHorizontal aria-hidden="true" className="size-4" />Ajustar stock</Button>
+        </div>
+      </div>
+
+      <Card className="gap-0 overflow-hidden p-0">
+        <div className="admin-tabs" aria-label="Vistas de inventario">
           <button
             type="button"
             onClick={() => setTab("items")}
+            aria-pressed={tab === "items"}
             className={`flex items-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors ${
               tab === "items"
                 ? "border-brand text-brand"
@@ -860,7 +808,8 @@ useEffect(() => {
             }`}
           >
             <Boxes className="size-4" />
-            Ítems
+            Materiales
+            <span className="rounded-full bg-bg-admin px-2 py-0.5 text-xs tabular-nums">{items.length}</span>
           </button>
 
           <button
@@ -869,6 +818,7 @@ useEffect(() => {
               setTab("movements");
               setMovementPage(0);
             }}
+            aria-pressed={tab === "movements"}
             className={`flex items-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors ${
               tab === "movements"
                 ? "border-brand text-brand"
@@ -882,6 +832,7 @@ useEffect(() => {
           <button
             type="button"
             onClick={() => setTab("lots")}
+            aria-pressed={tab === "lots"}
             className={`flex items-center gap-2 border-b-2 px-2 py-3 text-sm font-medium transition-colors ${
               tab === "lots"
                 ? "border-brand text-brand"
@@ -895,7 +846,7 @@ useEffect(() => {
 
         {tab === "items" && (
           <>
-            <div className="flex flex-col gap-3 border-b border-border-decorative bg-surface/60 p-4 lg:flex-row lg:items-center">
+            <div className="admin-filter-bar flex flex-col items-stretch gap-3 p-4 lg:flex-row lg:items-center">
               <div className="relative min-w-0 flex-1">
                 <Search className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-secondary" />
 
@@ -1038,7 +989,9 @@ useEffect(() => {
                     (item) => (
                       <TableRow key={item.id}>
                         <TableCell>
-                          <div className="min-w-[170px]">
+                          <div className="flex min-w-[170px] items-start gap-3">
+                            {(item.item_type === "componente" || item.item_type === "producto") && <ProductThumbnail src={item.image_url} alt={item.image_alt || item.name} size="sm" preview />}
+                            <div className="min-w-0">
                             <p className="font-medium">
                               {item.name}
                             </p>
@@ -1046,6 +999,7 @@ useEffect(() => {
                             <p className="text-xs text-text-secondary">
                               {item.unit}
                             </p>
+                            </div>
                           </div>
                         </TableCell>
 
@@ -1088,6 +1042,7 @@ useEffect(() => {
                             variant={statusVariant(
                               item.stock_status,
                             )}
+                            className={item.stock_status === "normal" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : item.stock_status === "bajo" ? "border-amber-200 bg-amber-50 text-amber-800" : "border-rose-200 bg-rose-50 text-rose-700"}
                           >
                             {
                               STATUS_LABELS[
@@ -1249,6 +1204,7 @@ useEffect(() => {
                               variant={movementVariant(
                                 movement.movement_type,
                               )}
+                              className={movement.movement_type === "entrada" || movement.movement_type === "devolucion" ? "border-emerald-200 bg-emerald-50 text-emerald-700" : movement.movement_type === "merma" ? "border-rose-200 bg-rose-50 text-rose-700" : movement.movement_type === "ajuste" ? "border-blue-200 bg-blue-50 text-blue-700" : "border-amber-200 bg-amber-50 text-amber-800"}
                             >
                               {
                                 MOVEMENT_LABELS[
@@ -1457,11 +1413,22 @@ useEffect(() => {
         )}
       </Card>
 
+      <details className="rounded-xl border border-border-decorative bg-surface p-4 text-sm text-text-secondary">
+        <summary className="cursor-pointer font-medium text-text">Guía de inventario: materiales, existencias y recetas</summary>
+        <p className="mt-3">1. Crear material → 2. Registrar entrada y lote → 3. Crear producto y receta.</p>
+        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+          <div><dt className="font-semibold">Stock físico / reservado / libre</dt><dd>Físico: lo que tienes. Reservado: separado para pedidos pendientes. Libre: lo que queda para nuevas compras.</dd></div>
+          <div><dt className="font-semibold">Stock mínimo y reposición</dt><dd>El mínimo avisa cuándo reponer. Para añadir existencias registra una entrada con la cantidad recibida.</dd></div>
+          <div><dt className="font-semibold">Lote</dt><dd>Grupo recibido en una entrada. Al preparar pedidos se utiliza primero el lote más antiguo con existencias.</dd></div>
+          <div><dt className="font-semibold">Merma</dt><dd>Flores o materiales dañados que ya no pueden utilizarse. Regístralos para mantener el stock real.</dd></div>
+        </dl>
+      </details>
+
       <Modal
         open={itemModal}
         onOpenChange={open => { setItemModal(open); if (!open) setReturnToEntry(false); }}
       >
-        <ModalContent className="md:max-w-xl">
+        <ModalContent voice="admin" className="md:max-w-xl">
           <ModalHeader>
             <ModalTitle>
               {editingItem
@@ -1613,6 +1580,7 @@ useEffect(() => {
               </label>
             )}
 
+            {error && <Notice tone="error" title="Revisa los datos" onDismiss={() => setError(null)}>{friendlyErrorMessage(error, "No pudimos registrar el cambio. Revisa los datos e intenta nuevamente.")}</Notice>}
             <ModalFooter>
               <ModalClose asChild>
                 <Button
@@ -1641,7 +1609,7 @@ useEffect(() => {
         open={entryModal}
         onOpenChange={setEntryModal}
       >
-        <ModalContent className="md:max-w-xl">
+        <ModalContent voice="admin" className="md:max-w-xl">
           <ModalHeader>
             <ModalTitle>
               Registrar entrada
@@ -1770,6 +1738,7 @@ useEffect(() => {
               />
             </Field>
 
+            {error && <Notice tone="error" title="Revisa los datos" onDismiss={() => setError(null)}>{friendlyErrorMessage(error, "No pudimos registrar el cambio. Revisa los datos e intenta nuevamente.")}</Notice>}
             <ModalFooter>
               <ModalClose asChild>
                 <Button
@@ -1796,7 +1765,7 @@ useEffect(() => {
         open={wasteModal}
         onOpenChange={setWasteModal}
       >
-        <ModalContent className="md:max-w-xl">
+        <ModalContent voice="admin" className="md:max-w-xl">
           <ModalHeader>
             <ModalTitle>
               Registrar merma
@@ -1934,6 +1903,7 @@ useEffect(() => {
               />
             </Field>
 
+            {error && <Notice tone="error" title="Revisa los datos" onDismiss={() => setError(null)}>{friendlyErrorMessage(error, "No pudimos registrar el cambio. Revisa los datos e intenta nuevamente.")}</Notice>}
             <ModalFooter>
               <ModalClose asChild>
                 <Button
@@ -1963,7 +1933,7 @@ useEffect(() => {
           setAdjustmentModal
         }
       >
-        <ModalContent className="md:max-w-xl">
+        <ModalContent voice="admin" className="md:max-w-xl">
           <ModalHeader>
             <ModalTitle>
               Ajustar stock
@@ -2054,6 +2024,7 @@ useEffect(() => {
               />
             </Field>
 
+            {error && <Notice tone="error" title="Revisa los datos" onDismiss={() => setError(null)}>{friendlyErrorMessage(error, "No pudimos registrar el cambio. Revisa los datos e intenta nuevamente.")}</Notice>}
             <ModalFooter>
               <ModalClose asChild>
                 <Button

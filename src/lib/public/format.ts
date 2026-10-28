@@ -5,6 +5,7 @@ import type {
   WeekDay,
 } from "./types";
 import { internationalBoliviaPhone } from "./phone";
+import { primaryProductImage } from "@/lib/product-images";
 
 /* ============================================================
    Funciones puras de formato y reglas de la tienda pública.
@@ -24,9 +25,7 @@ type WithImages = { images?: PublicImage[] | null };
 
 /** Imagen principal (sort_order = 0) o la primera disponible. */
 export function pickImage(product: WithImages): PublicImage | null {
-  const images = product.images ?? [];
-
-  return images.find((image) => image.sort_order === 0) ?? images[0] ?? null;
+  return primaryProductImage(product.images);
 }
 
 /** Se puede comprar solo si está disponible y no agotado. */

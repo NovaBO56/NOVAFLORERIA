@@ -11,7 +11,7 @@ const ORDER_SELECT = `
   scheduled_for, schedule_status, schedule_revision, schedule_updated_by, schedule_updated_at,
   payments(id, order_id, method, amount, reference, status, created_at, confirmed_at, rejected_at, rejection_reason, qr_slot, qr_label),
   customer:customers (id, name, phone, whatsapp),
-  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note, recipe_snapshot)
+  order_items (id, product_id, product_name_snapshot, unit_price_snapshot, quantity, line_total, personalization, message, dedications, note, recipe_snapshot, product:products(images:product_images(public_url, alt_text, sort_order)))
 `;
 
 type RouteContext = { params: Promise<{ id: string }> };

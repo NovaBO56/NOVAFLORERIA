@@ -8,6 +8,8 @@ import {
 } from "react";
 import { Pencil, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { Card } from "@/components/ui/card";
 import { Field, Input } from "@/components/ui/field";
 
@@ -35,7 +37,7 @@ type ProductComponentManagementProps = {
 };
 
 const selectClassName =
-  "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
+  "h-11 w-full rounded-xl border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function ProductComponentManagement({
   productId,
@@ -296,29 +298,29 @@ export default function ProductComponentManagement({
   );
 
   return (
-    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4 [&_button]:min-h-11">
+    <div className="flex flex-col gap-5 [&_button]:min-h-11">
       <div>
-        <h4 className="font-medium text-text">
+        <h3 className="text-base font-semibold text-text">
           Componentes del producto
-        </h4>
+        </h3>
         <p className="text-text-secondary">
           Productos incluidos en este producto compuesto y su cantidad. Forman parte de la receta; no son los regalos opcionales de Complementos recomendados.
         </p>
       </div>
 
       {error && (
-        <p className="text-sm text-danger">{error}</p>
+        <Notice tone="error">{friendlyErrorMessage(error, "No pudimos guardar los productos incluidos. Intenta nuevamente.")}</Notice>
       )}
 
       {message && (
-        <p className="text-sm text-leaf">{message}</p>
+        <Notice tone="success">{message}</Notice>
       )}
 
-      <div className="grid gap-3 md:grid-cols-[1fr_140px_auto] md:items-end">
+      <div className="admin-form-section grid gap-4 md:grid-cols-[minmax(0,1fr)_140px_auto] md:items-end">
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor={`component-product-${productId}`}
-            className="text-[13px] leading-[1.4] font-medium tracking-[0.02em] text-text uppercase"
+            className="text-sm font-medium text-text"
           >
             Producto componente
           </label>

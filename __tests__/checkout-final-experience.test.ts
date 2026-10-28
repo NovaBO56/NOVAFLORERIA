@@ -26,11 +26,11 @@ describe("Final checkout presentation (unit/markup, not browser validation)", ()
     const onSelect = vi.fn();
     const html = renderToStaticMarkup(createElement(PromotionChooser, { promotions: [offer, larger], selectedId: "", items: [line], now: Date.now(), onSelect }));
     expect(promotionChoices([offer, larger], [line], Date.now())[0].promotion.id).toBe("larger");
-    expect(html).toContain("Sugerencia · mayor ahorro"); expect(html).toContain("Puedes ahorrar Bs 20.00"); expect(html).toContain("No se aplica hasta que la elijas"); expect(html).toContain('type="button"'); expect(onSelect).not.toHaveBeenCalled();
+    expect(html).toContain('data-promotion-state="suggested"'); expect(html).toContain("Puedes ahorrar Bs 20.00"); expect(html).toContain("Tu total sigue sin descuento"); expect(html).toContain('type="button"'); expect(onSelect).not.toHaveBeenCalled();
   });
   it("preserves a selected smaller discount even when a better offer exists", () => {
     const html = render([offer, larger], offer.id);
-    expect(html).toContain("Ahorras Bs 10.00"); expect(html).not.toContain("Puedes ahorrar");
+    expect(html).toContain('data-promotion-state="selected"'); expect(html).toContain("Descuento estimado: −Bs 10.00"); expect(html).not.toContain("Puedes ahorrar");
     expect(cartPromotion(offer, [line])?.total).toBe(90);
     expect(cartPromotion(larger, [line])?.total).toBe(80);
   });
@@ -43,7 +43,7 @@ describe("Final checkout presentation (unit/markup, not browser validation)", ()
   it("retains unmet or unavailable selections rather than switching silently", () => {
     const html = render([{ ...offer, minimum_purchase: 150 }, larger], offer.id);
     expect(html).toContain("Faltan Bs 50.00"); expect(html).toContain("Compra mínima: Bs 150.00"); expect(html).toContain("no aplicada"); expect(html).not.toContain("Sugerencia");
-    expect(render([], offer.id)).toContain("La oferta ya no está disponible");
+    expect(render([], offer.id)).toContain('data-promotion-state="invalid"'); expect(render([], offer.id)).toContain("Continuar sin descuento");
   });
   it("does not suggest an expired, incompatible or incomplete combo", () => {
     const expired = { ...larger, ends_at: "2000-01-01" };

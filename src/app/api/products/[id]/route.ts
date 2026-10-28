@@ -13,7 +13,8 @@ const PRODUCT_DETAIL_SELECT = `
   components:product_components!product_components_parent_product_id_fkey(
     id, quantity,
     component_product:products!product_components_component_product_id_fkey(
-      id, name, price, is_available, is_sold_out
+      id, name, price, is_available, is_sold_out,
+      images:product_images(id, public_url, alt_text, sort_order)
     )
   ),
   customization_options(id, option_type, name, value, extra_price)

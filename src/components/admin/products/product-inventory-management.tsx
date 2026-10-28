@@ -12,6 +12,8 @@ import {
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { Field, Input } from "@/components/ui/field";
 
 type InventoryItem = {
@@ -315,11 +317,11 @@ export default function ProductInventoryManagement({
   }
 
   return (
-    <div className="flex flex-col gap-4 [&_button]:min-h-11">
+    <div className="flex flex-col gap-5 [&_button]:min-h-11">
       <div>
-        <h4 className="font-medium text-text">
+        <h3 className="text-base font-semibold text-text">
           Consumo de inventario
-        </h4>
+        </h3>
 
         <p className="mt-1 text-xs text-text-secondary">
           Receta de insumos: define qué cantidad de cada ítem se consume por una unidad vendida. No son complementos opcionales para el cliente.
@@ -327,22 +329,18 @@ export default function ProductInventoryManagement({
       </div>
 
       {error && (
-        <div className="rounded-lg border border-danger/20 bg-danger/5 px-3 py-2 text-sm text-danger">
-          {error}
-        </div>
+        <Notice tone="error">{friendlyErrorMessage(error, "No pudimos guardar la receta. Revisa los materiales e intenta nuevamente.")}</Notice>
       )}
 
       {message && (
-        <div className="rounded-lg border border-leaf/20 bg-leaf/5 px-3 py-2 text-sm text-leaf">
-          {message}
-        </div>
+        <Notice tone="success">{message}</Notice>
       )}
 
-      <div className="grid gap-3 md:grid-cols-[1fr_140px_auto] md:items-end">
+      <div className="admin-form-section grid gap-4 md:grid-cols-[minmax(0,1fr)_140px_auto] md:items-end">
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor={`inventory-item-${productId}`}
-            className="text-[13px] font-medium uppercase tracking-[0.02em] text-text"
+            className="text-sm font-medium text-text"
           >
             Ítem de inventario
           </label>

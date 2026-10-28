@@ -1,0 +1,1053 @@
+[
+  {
+    "id": "F-001",
+    "group": "A. Inicio",
+    "name": "Identidad y presentación",
+    "desc": "Marca Floristería Anabelle, banner floral, texto de presentación y llamadas al catálogo.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/layout.tsx",
+      "src/components/public/home/sections.tsx"
+    ],
+    "evidence": "metadata, HeroSection y ServiceStrip renderizados desde HomePage.",
+    "deps": "Next/Image; assets públicos",
+    "obs": "EJ previa: tienda y catálogo visibles. No hay afirmación verificada sobre antigüedad o tamaño real del negocio."
+  },
+  {
+    "id": "F-002",
+    "group": "A. Inicio",
+    "name": "Navegación pública",
+    "desc": "Menú, buscador, favoritos, carrito y enlaces ancla; barra móvil hacia compra y seguimiento.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/header.tsx",
+      "src/components/public/mobile-navigation.tsx"
+    ],
+    "evidence": "SiteHeader y MobileNavigation conectados a estado y rutas.",
+    "deps": "React; Next Link",
+    "obs": "RC y EJ previa."
+  },
+  {
+    "id": "F-003",
+    "group": "A. Inicio",
+    "name": "Información y contacto",
+    "desc": "Secciones Nosotros, ubicación, horarios y enlace de WhatsApp configurado.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/sections.tsx",
+      "src/components/public/location-card.tsx"
+    ],
+    "evidence": "AboutSection, LocationSection, ContactSection y SiteFooter.",
+    "deps": "APIs store-location, whatsapp-config, business-hours",
+    "obs": "El enlace abre el servicio externo; no demuestra envío de mensajes."
+  },
+  {
+    "id": "F-004",
+    "group": "A. Inicio",
+    "name": "Horarios y recepción de pedidos",
+    "desc": "Muestra apertura/cierre y opción administrativa de aceptar pedidos fuera de horario.",
+    "actor": "Visitante; administrador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/weekly-hours.tsx",
+      "src/app/api/business-hours/route.ts",
+      "src/components/admin/checkout-configuration.tsx"
+    ],
+    "evidence": "Horas por día y estado del negocio consumidos por catálogo/checkout.",
+    "deps": "Supabase; zona America/La_Paz",
+    "obs": "La regla final también debe aplicarse en servidor; véase DB y seguridad."
+  },
+  {
+    "id": "F-005",
+    "group": "A. Inicio",
+    "name": "Productos destacados dinámicos",
+    "desc": "La API filtra destacados; la portada solicita uno pero no lo utiliza para representar un bloque dinámico destacado.",
+    "actor": "Visitante",
+    "state": "Parcial",
+    "files": [
+      "src/components/public/home/home-page.tsx",
+      "src/components/public/home/sections.tsx"
+    ],
+    "evidence": "heroProduct se carga y guarda (223/229 y 257/274); HeroSection recibe status y usa presentación estática.",
+    "deps": "GET /api/products?is_featured=true",
+    "obs": "La fotografía del banner no acredita una sección de destacados conectada."
+  },
+  {
+    "id": "F-006",
+    "group": "B. Catálogo",
+    "name": "Listado paginado",
+    "desc": "Tarjetas con nombre, importe, ocasión, fotografía y disponibilidad; Ver más añade resultados únicos.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/catalog.tsx",
+      "src/components/public/home/home-page.tsx",
+      "src/app/api/products/route.ts"
+    ],
+    "evidence": "PAGE_SIZE=8, productsUrl y mergeUnique; paginación del endpoint.",
+    "deps": "Productos activos; categorías",
+    "obs": "EJ previa: 99 productos públicos en laboratorio; cifra variable, no requisito del negocio."
+  },
+  {
+    "id": "F-007",
+    "group": "B. Catálogo",
+    "name": "Búsqueda y categorías",
+    "desc": "Filtros de categoría y texto; miniatura de portada cuando existe y fallback.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/catalog.tsx",
+      "src/app/api/categories/route.ts"
+    ],
+    "evidence": "CatalogSection controla búsqueda/categoría y recibe imágenes.",
+    "deps": "GET /api/categories; GET /api/storefront-media",
+    "obs": "EJ previa: nueve categorías sin portada configurada; se probaron sus fallbacks."
+  },
+  {
+    "id": "F-008",
+    "group": "B. Catálogo",
+    "name": "Favoritos locales",
+    "desc": "Agrega o retira productos favoritos y filtra el catálogo por esa selección.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/home-page.tsx",
+      "src/lib/public/local-store.ts"
+    ],
+    "evidence": "favoritesStore, toggleFavorite y MAX_FAVORITES=100.",
+    "deps": "localStorage; navegador",
+    "obs": "No es una lista asociada a una cuenta ni sincronizada en servidor."
+  },
+  {
+    "id": "F-009",
+    "group": "B. Catálogo",
+    "name": "Detalle y fotografías",
+    "desc": "Vista rápida con galería, descripción, precio, cantidad y ampliación bajo demanda.",
+    "actor": "Visitante",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/product-detail.tsx",
+      "src/components/ui/product-thumbnail.tsx",
+      "src/components/ui/product-image-preview.tsx"
+    ],
+    "evidence": "ProductDetailSection, ProductThumbnail y preview diferido.",
+    "deps": "GET /api/products/[id]; Next Image; Modal",
+    "obs": "EJ previa: galería de dos fotos, ampliación y geometría de cuatro tamaños."
+  },
+  {
+    "id": "F-010",
+    "group": "B. Catálogo",
+    "name": "Opciones de personalización",
+    "desc": "Selección de opciones activas con precio y requisitos de inventario correspondientes.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/product-detail.tsx",
+      "src/validations/products.ts",
+      "src/app/api/products/[id]/route.ts"
+    ],
+    "evidence": "CustomizationOption y selección del detalle trasladada al carrito.",
+    "deps": "Opciones y recetas; validación de servidor",
+    "obs": "No toda opción está configurada en todos los productos; no inventar variantes de muestra."
+  },
+  {
+    "id": "F-011",
+    "group": "B. Catálogo",
+    "name": "Tarjetas y dedicatorias",
+    "desc": "Tarjetas calculadas por receta: mensaje/firma o tarjeta física en blanco.",
+    "actor": "Comprador; taller",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/dedication-card.tsx",
+      "src/lib/public/dedications.ts",
+      "src/lib/public/dedications.server.ts"
+    ],
+    "evidence": "DedicationEditor, resizeDedications y validación de composición.",
+    "deps": "Receta; cantidades; Zod",
+    "obs": "Incluye controles para no confundir notas del pedido con el texto de la tarjeta."
+  },
+  {
+    "id": "F-012",
+    "group": "B. Catálogo",
+    "name": "Complementos recomendados",
+    "desc": "Presenta productos adicionales con miniatura tras agregar un producto; selección voluntaria.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/complement-confirmation.tsx",
+      "src/app/api/products/[id]/recommendations/route.ts",
+      "src/lib/product-recommendations.server.ts"
+    ],
+    "evidence": "ComplementConfirmation y resolución de recomendaciones.",
+    "deps": "Configuración global o por producto; disponibilidad",
+    "obs": "EJ previa: se muestran chocolates/globo y fallbacks; no se agregan automáticamente."
+  },
+  {
+    "id": "F-013",
+    "group": "B. Catálogo",
+    "name": "Disponibilidad por receta",
+    "desc": "Evalúa existencias para producto y componentes, y actualiza disponibilidad visible.",
+    "actor": "Visitante; comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/lib/public/product-availability.server.ts",
+      "src/app/api/products/availability/route.ts",
+      "src/components/public/home/home-page.tsx"
+    ],
+    "evidence": "POST de consulta y actualización por lotes; polling visible de 30 s.",
+    "deps": "Recetas; stock; reservas; RPC",
+    "obs": "La vista orienta; la creación vuelve a validar de manera transaccional."
+  },
+  {
+    "id": "F-014",
+    "group": "B. Catálogo",
+    "name": "Promociones vigentes",
+    "desc": "Promociones de producto y combos, beneficio y condición; filtro Promociones integrado al catálogo.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/promotion-section.tsx",
+      "src/components/public/home/home-page.tsx",
+      "src/app/api/promotions/route.ts"
+    ],
+    "evidence": "PromotionSection embedded, promotionsOnly y hashes de promoción.",
+    "deps": "Vigencia; participantes; precios",
+    "obs": "EJ previa: siete vigentes de nueve activas en laboratorio; no es un conteo fijo."
+  },
+  {
+    "id": "F-015",
+    "group": "B. Catálogo",
+    "name": "Armado guiado de combo",
+    "desc": "Selecciona los participantes por pasos y puede cancelar antes de incorporarlos al carrito.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/home-page.tsx",
+      "src/components/public/combo-progress.tsx",
+      "src/lib/public/promotion-shopping.ts"
+    ],
+    "evidence": "buildCombo, canBuildCombo y addComboToCart.",
+    "deps": "Productos participantes; stock combinado",
+    "obs": "EJ previa: Dúo Romántico completo; quitar durante armado cancela sin añadir líneas."
+  },
+  {
+    "id": "F-016",
+    "group": "C. Acceso y clientes",
+    "name": "Inicio de sesión del equipo",
+    "desc": "Formulario de correo/contraseña con Supabase Auth y destino interno.",
+    "actor": "Administrador; empleado",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/login/page.tsx",
+      "src/lib/auth/login-destination.ts",
+      "src/lib/supabase/proxy.ts"
+    ],
+    "evidence": "auth.signInWithPassword; validación de perfil activo y cookies.",
+    "deps": "Supabase Auth; profiles",
+    "obs": "No es un inicio de sesión del cliente. Existe hallazgo de redirect en proxy: véase seguridad."
+  },
+  {
+    "id": "F-017",
+    "group": "C. Acceso y clientes",
+    "name": "Roles y sesión",
+    "desc": "Protección por administrador/empleado activo y cierre de sesión.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/lib/auth/permissions.ts",
+      "src/components/admin/layout/session-guard.tsx",
+      "src/components/admin/layout/use-sign-out.ts"
+    ],
+    "evidence": "requireAdmin, requireEmployeeOrAdmin y SessionGuard.",
+    "deps": "Auth; profiles; proxy; RLS",
+    "obs": "Ocultar un menú no sustituye el control del endpoint ni la política SQL."
+  },
+  {
+    "id": "F-018",
+    "group": "C. Acceso y clientes",
+    "name": "Usuarios del personal",
+    "desc": "Crear personal, listar, activar/desactivar y cambiar rol con restricciones.",
+    "actor": "Administrador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/users-panel.tsx",
+      "src/app/api/admin/users/create/route.ts",
+      "src/app/api/admin/users/[id]/role/route.ts",
+      "src/app/api/admin/users/[id]/status/route.ts"
+    ],
+    "evidence": "Usuarios con UI y endpoints; SQL impide retirar el último administrador activo.",
+    "deps": "Supabase Admin Auth; perfil",
+    "obs": "No se creó ni modificó ninguna cuenta durante esta auditoría."
+  },
+  {
+    "id": "F-019",
+    "group": "C. Acceso y clientes",
+    "name": "Foto del perfil del equipo",
+    "desc": "Consultar, cargar/reemplazar o quitar avatar propio del usuario autenticado.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/layout/profile-avatar.tsx",
+      "src/app/api/admin/profile/avatar/route.ts"
+    ],
+    "evidence": "GET/PUT/DELETE y almacenamiento privado de avatar.",
+    "deps": "Supabase Storage; Sharp; sesión",
+    "obs": "No equivale a un perfil de cliente ni a edición completa de credenciales."
+  },
+  {
+    "id": "F-020",
+    "group": "C. Acceso y clientes",
+    "name": "Registro de clientes y verificación OTP",
+    "desc": "No se encontraron páginas ni flujos públicos de alta, verificación por celular/correo o login OTP.",
+    "actor": "Cliente",
+    "state": "No encontrada",
+    "files": [
+      "src/app/login/page.tsx",
+      "src/lib/auth/permissions.ts"
+    ],
+    "evidence": "Búsqueda de rutas y llamadas Auth: sólo login del personal y creación administrativa.",
+    "deps": "Requeriría definición nueva",
+    "obs": "No se propone como requisito aprobado; el comprador usa nombre y teléfono."
+  },
+  {
+    "id": "F-021",
+    "group": "C. Acceso y clientes",
+    "name": "Recuperación de contraseña en la web",
+    "desc": "No se encontró formulario de recuperación, enlace mágico o resetPasswordForEmail en src.",
+    "actor": "Equipo; cliente",
+    "state": "No encontrada",
+    "files": [
+      "src/app/login/page.tsx"
+    ],
+    "evidence": "El login no tiene recorrido de recuperación.",
+    "deps": "Supabase puede ofrecer capacidades no conectadas en esta app",
+    "obs": "No confundir capacidades del proveedor con implementación propia."
+  },
+  {
+    "id": "F-022",
+    "group": "C. Acceso y clientes",
+    "name": "Perfil e historial de cuenta del cliente",
+    "desc": "No se encontró área pública de cuenta ni historial completo de compras autenticadas.",
+    "actor": "Cliente",
+    "state": "No encontrada",
+    "files": [
+      "src/components/public/tracking-page.tsx",
+      "src/lib/public/previous-purchase.ts"
+    ],
+    "evidence": "Recupera pedido de sesión/compra anterior y permite consulta individual.",
+    "deps": "sessionStorage; número y teléfono",
+    "obs": "La ficha y el historial administrativos de un cliente sí existen; son otra función."
+  },
+  {
+    "id": "F-023",
+    "group": "C. Acceso y clientes",
+    "name": "Clientes administrativos",
+    "desc": "Crear/editar registros, buscar y consultar detalle con actividad e historial.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/customers/customer-management.tsx",
+      "src/components/admin/customers/customer-detail.tsx",
+      "src/app/api/admin/customers/[id]/route.ts"
+    ],
+    "evidence": "UI de CRM y rutas GET/POST/PATCH según inventario API.",
+    "deps": "customers; pedidos relacionados",
+    "obs": "No es un portal de autoservicio del cliente. No se leyeron datos personales para documentarlo."
+  },
+  {
+    "id": "F-024",
+    "group": "D. Compra",
+    "name": "Carrito persistente",
+    "desc": "Agregar, incrementar/disminuir, retirar con confirmación y conservar selección entre visitas.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/home/cart.tsx",
+      "src/lib/public/cart-logic.ts"
+    ],
+    "evidence": "nova-cart-v1, sanitizeCart, addItem, changeItemQuantity y removeItem.",
+    "deps": "localStorage; disponibilidad",
+    "obs": "EJ previa: altas, cantidades, retiro y restauración del carrito vacío."
+  },
+  {
+    "id": "F-025",
+    "group": "D. Compra",
+    "name": "Promoción controlada en carrito/checkout",
+    "desc": "Estado seleccionado con beneficio/condiciones, quitar/cambiar e invalidación al perder condiciones.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/promotion-chooser.tsx",
+      "src/lib/public/promotion-selection.ts",
+      "src/lib/public/cart-promotions.ts"
+    ],
+    "evidence": "PromotionChooser y checkoutPromotionId; elección explícita sin descuento.",
+    "deps": "Promociones vigentes; sesión local",
+    "obs": "EJ previa: retirar chocolate invalida combo y muestra total Bs 240 sin descuento; importe sólo del escenario probado."
+  },
+  {
+    "id": "F-026",
+    "group": "D. Compra",
+    "name": "Checkout por pasos",
+    "desc": "Datos del comprador, entrega y revisión con miniaturas, tarjetas y totales estimados.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/checkout-form.tsx",
+      "src/components/public/checkout-page.tsx",
+      "src/lib/public/checkout.ts"
+    ],
+    "evidence": "step 0/1/2; checkoutDetailsSchema y orderPayload.",
+    "deps": "Carrito; Zod; horarios; promociones",
+    "obs": "EJ previa hasta revisión con datos sintéticos, sin crear pedido."
+  },
+  {
+    "id": "F-027",
+    "group": "D. Compra",
+    "name": "Entrega a domicilio",
+    "desc": "Permite elegir entrega si está habilitada y guardar dirección/referencia para coordinación.",
+    "actor": "Comprador; equipo",
+    "state": "Parcial",
+    "files": [
+      "src/components/public/checkout-form.tsx",
+      "src/lib/public/checkout.ts",
+      "src/lib/public/order-journey.ts"
+    ],
+    "evidence": "delivery/address/reference se serializan en customer_message; el costo de envío no se incluye.",
+    "deps": "Configuración delivery_enabled; coordinación humana",
+    "obs": "No hay cotización, ruteo, repartidores ni estado GPS. Recojo en tienda sí está implementado."
+  },
+  {
+    "id": "F-028",
+    "group": "D. Compra",
+    "name": "Destinatario independiente",
+    "desc": "No se encontraron nombre/teléfono de destinatario separados del comprador en el formulario y payload actuales.",
+    "actor": "Comprador",
+    "state": "No encontrada",
+    "files": [
+      "src/components/public/checkout-form.tsx",
+      "src/lib/public/checkout.ts"
+    ],
+    "evidence": "Campos customer_name/customer_phone/address/reference/notes; no recipient_* estructurado.",
+    "deps": "Requiere definición con el usuario",
+    "obs": "Notas libres no sustituyen un modelo de destinatario."
+  },
+  {
+    "id": "F-029",
+    "group": "D. Compra",
+    "name": "Creación del pedido",
+    "desc": "Valida payload, precios, personalizaciones, promoción, horarios de atención y stock mediante servidor/RPC.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/orders/route.ts",
+      "src/validations/orders.ts",
+      "src/lib/public/checkout.ts"
+    ],
+    "evidence": "POST /api/orders llama RPC del servidor; payload sin precio confiado al cliente.",
+    "deps": "Supabase PostgreSQL; RPC transaccional",
+    "obs": "RC y pruebas automatizadas/documentales; no se invocó la escritura en esta auditoría."
+  },
+  {
+    "id": "F-030",
+    "group": "D. Compra",
+    "name": "Prevención de duplicados y recuperación",
+    "desc": "Bloqueo de doble clic, clave idempotente y recuperación de envío incierto en la sesión.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/checkout-page.tsx",
+      "src/lib/public/client-id.ts",
+      "src/lib/public/checkout.ts"
+    ],
+    "evidence": "singleFlight, fingerprint, attemptKey y recoveryKey.",
+    "deps": "sessionStorage; idempotencia del backend",
+    "obs": "No es recuperación de contraseña ni un carrito de servidor."
+  },
+  {
+    "id": "F-031",
+    "group": "D. Compra",
+    "name": "Selección de QR y aviso de pago",
+    "desc": "Muestra QR configurado y registra que el cliente reporta el pago.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/checkout-payment.tsx",
+      "src/components/public/checkout-page.tsx",
+      "src/app/api/orders/[id]/payment/route.ts"
+    ],
+    "evidence": "qr_slot y POST de reporte; instrucciones separan pagar de avisar.",
+    "deps": "QR activo; teléfono del pedido; revisión humana",
+    "obs": "No ejecuta cobro bancario. Reportar no equivale a confirmar que ingresó dinero."
+  },
+  {
+    "id": "F-032",
+    "group": "D. Compra",
+    "name": "Cobro bancario automático",
+    "desc": "No se encontraron pasarela de tarjeta, débito automático ni validación bancaria por webhook.",
+    "actor": "Comprador",
+    "state": "No encontrada",
+    "files": [
+      "src/components/public/checkout-payment.tsx",
+      "src/app/api/orders/[id]/payment/route.ts"
+    ],
+    "evidence": "El sistema registra avisos QR y confirmación administrativa.",
+    "deps": "Servicio financiero externo no integrado",
+    "obs": "No describir el QR como pasarela que cobra automáticamente."
+  },
+  {
+    "id": "F-033",
+    "group": "D. Compra",
+    "name": "Enlace de WhatsApp contextual",
+    "desc": "Abre conversación con texto preparado para ayuda, pago o coordinación del pedido.",
+    "actor": "Comprador; equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/lib/public/format.ts",
+      "src/lib/public/payment-notice.ts",
+      "src/components/admin/orders/order-detail-sections.tsx"
+    ],
+    "evidence": "whatsappLink construye enlace wa.me; no hay API de envío automático.",
+    "deps": "WhatsApp externo; número configurado",
+    "obs": "Enviar el mensaje y transferir dinero son acciones humanas externas."
+  },
+  {
+    "id": "F-034",
+    "group": "D. Compra",
+    "name": "Seguimiento individual",
+    "desc": "Consulta por número o ID y celular, resumen, etapas, pago y horario, con actualización visible cada 45 s.",
+    "actor": "Cliente",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/tracking-page.tsx",
+      "src/components/public/use-order-updates.ts",
+      "src/app/api/orders/track/route.ts"
+    ],
+    "evidence": "trackOrderSchema, track_order_details y OrderSummary.",
+    "deps": "Credencial de consulta; rate limit; RPC",
+    "obs": "EJ previa: pedidos locales #16/#31; no usar números como datos reales de clientes en el manual."
+  },
+  {
+    "id": "F-035",
+    "group": "D. Compra",
+    "name": "Horario propuesto/confirmado",
+    "desc": "Personal registra fecha/hora y condición de coordinación; el cliente consulta ambos estados con hora de Bolivia.",
+    "actor": "Equipo; cliente",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/orders/order-detail-sections.tsx",
+      "src/app/api/admin/orders/[id]/schedule/route.ts",
+      "src/components/public/order-summary.tsx"
+    ],
+    "evidence": "Schedule, revision, client_confirmed; tarjetas Horario propuesto/confirmado.",
+    "deps": "Pedido online activo; revisión optimista; SQL",
+    "obs": "El cliente no confirma desde un botón público: personal marca coordinación con el cliente."
+  },
+  {
+    "id": "F-036",
+    "group": "D. Compra",
+    "name": "Guía y recibo",
+    "desc": "Copia número, descarga guía TXT y consulta recibo PDF cuando corresponde.",
+    "actor": "Cliente; equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/public/order-number-actions.tsx",
+      "src/lib/public/order-journey.ts",
+      "src/app/api/orders/receipt/[token]/route.tsx"
+    ],
+    "evidence": "downloadOrderGuide y PDF con token.",
+    "deps": "Blob navegador; @react-pdf/renderer; RPC de recibo",
+    "obs": "La guía declara que no es comprobante de pago ni factura; no hay facturación fiscal verificada."
+  },
+  {
+    "id": "F-037",
+    "group": "D. Compra",
+    "name": "Iniciar otra compra",
+    "desc": "Conserva referencia a compra anterior y reinicia sesión de compra cuando la operación lo permite.",
+    "actor": "Comprador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/lib/public/previous-purchase.ts",
+      "src/components/public/checkout-purchase-actions.tsx",
+      "src/components/public/checkout-page.tsx"
+    ],
+    "evidence": "beginAnotherPurchase y startAnotherPurchase.",
+    "deps": "sessionStorage; estado del pedido",
+    "obs": "Conservar una referencia previa no equivale a historial permanente completo."
+  },
+  {
+    "id": "F-038",
+    "group": "E. Administración",
+    "name": "Dashboard",
+    "desc": "Indicadores y gráficos de pedidos, ventas, inventario y actividad obtenidos del backend.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/dashboard-panel.tsx",
+      "src/components/admin/dashboard-charts.tsx",
+      "src/app/api/admin/dashboard/route.ts"
+    ],
+    "evidence": "Carga /api/admin/dashboard; componentes separados de demostración UI.",
+    "deps": "RPC/consultas dashboard; zona Bolivia",
+    "obs": "No confundir cifras dinámicas con las muestras de /admin/prueba-ui."
+  },
+  {
+    "id": "F-039",
+    "group": "E. Administración",
+    "name": "Productos y publicación",
+    "desc": "Alta/edición, búsqueda/filtros, categorías/temporadas, estado activo/disponible y revisión antes de publicar.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/products/product-management.tsx",
+      "src/components/admin/products/product-form.tsx",
+      "src/components/admin/products/product-publication.tsx"
+    ],
+    "evidence": "Pasos del editor y endpoints de producto/publication.",
+    "deps": "Categorías; temporadas; recetas",
+    "obs": "EJ previa: listado y editor de fotos; no se guardaron cambios en esta auditoría."
+  },
+  {
+    "id": "F-040",
+    "group": "E. Administración",
+    "name": "Fotos del producto",
+    "desc": "Cargar, ordenar, editar metadatos y eliminar fotografías con miniaturas y preview.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/products/product-image-management.tsx",
+      "src/app/api/admin/products/[id]/images/route.ts",
+      "src/app/api/admin/products/[id]/images/reorder/route.ts"
+    ],
+    "evidence": "UI y endpoints de imágenes con validación del archivo.",
+    "deps": "Storage; Sharp; producto",
+    "obs": "Subidas/eliminaciones no ejecutadas en esta auditoría."
+  },
+  {
+    "id": "F-041",
+    "group": "E. Administración",
+    "name": "Receta, componentes y opciones",
+    "desc": "Asocia materiales y cantidades, productos incluidos y requisitos de personalizaciones.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/products/product-inventory-management.tsx",
+      "src/components/admin/products/product-component-management.tsx",
+      "src/app/api/admin/products/[id]/customization-options/route.ts"
+    ],
+    "evidence": "Endpoints de inventory-requirements, components y customization-options.",
+    "deps": "Inventario; composición; reglas SQL",
+    "obs": "Receta comercial y stock se distinguen de las fotos del producto."
+  },
+  {
+    "id": "F-042",
+    "group": "E. Administración",
+    "name": "Categorías",
+    "desc": "Crear/editar/activar categorías y consultar su portada; enlace al cargador existente.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/products/category-management.tsx",
+      "src/app/api/admin/categories/route.ts",
+      "src/app/api/admin/categories/[id]/route.ts"
+    ],
+    "evidence": "Formularios y rutas conectados, imagen de storefront media.",
+    "deps": "Categorías; configuración de fotos",
+    "obs": "EJ previa: formulario y preview con fallback; sin guardar."
+  },
+  {
+    "id": "F-043",
+    "group": "E. Administración",
+    "name": "Temporadas",
+    "desc": "Gestiona temporadas comerciales y su asociación al catálogo.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/season-management.tsx",
+      "src/app/api/admin/seasons/route.ts"
+    ],
+    "evidence": "SeasonManagement y endpoints GET/POST/PATCH.",
+    "deps": "seasons; productos",
+    "obs": "RC; no afirma ventas estacionales analizadas."
+  },
+  {
+    "id": "F-044",
+    "group": "E. Administración",
+    "name": "Promociones",
+    "desc": "Crear/editar descuentos y combos, participantes con fotos, vigencia, mínimo y activación.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/promotions/promotion-management.tsx",
+      "src/app/api/admin/promotions/route.ts",
+      "src/app/api/admin/promotions/[id]/products/route.ts"
+    ],
+    "evidence": "Formulario y endpoints de promociones/participantes.",
+    "deps": "Productos; reglas de validación y SQL",
+    "obs": "EJ previa: lectura de tarjetas y selector; no se creó promoción."
+  },
+  {
+    "id": "F-045",
+    "group": "E. Administración",
+    "name": "Recomendaciones globales y específicas",
+    "desc": "Configura complementos por producto, prioridades y alternativa global, con vista resuelta.",
+    "actor": "Administrador; equipo según permiso",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/products/global-product-recommendations.tsx",
+      "src/components/admin/products/product-recommendations.tsx",
+      "src/app/api/admin/product-recommendations/preview/route.ts"
+    ],
+    "evidence": "Picker, guardado y preview; regla canManageRecommendations.",
+    "deps": "Productos; disponibilidad; roles",
+    "obs": "Separar permisos de configuración global de navegación del catálogo."
+  },
+  {
+    "id": "F-046",
+    "group": "E. Administración",
+    "name": "Lista y detalle de pedidos",
+    "desc": "Busca/filtra pedidos, revisa cliente, artículos, miniaturas, totales, pagos y modalidad.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/orders/orders-panel.tsx",
+      "src/app/api/admin/orders/route.ts",
+      "src/app/api/admin/orders/[id]/route.ts"
+    ],
+    "evidence": "Panel y modal con APIs y filtros URL.",
+    "deps": "Pedidos; clientes; pagos",
+    "obs": "EJ previa: búsqueda y detalle local, sin ejecutar botones comerciales."
+  },
+  {
+    "id": "F-047",
+    "group": "E. Administración",
+    "name": "Confirmación/rechazo de pago",
+    "desc": "Personal revisa aviso y confirma o rechaza; repercute en estado del pedido.",
+    "actor": "Equipo autorizado",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/admin/payments/[id]/confirm/route.ts",
+      "src/app/api/admin/payments/[id]/reject/route.ts",
+      "src/components/admin/orders/orders-panel.tsx"
+    ],
+    "evidence": "Endpoints y RPC de pago; validaciones y transacción SQL.",
+    "deps": "payments; orders; inventario",
+    "obs": "No registra una transferencia bancaria ejecutada por este software."
+  },
+  {
+    "id": "F-048",
+    "group": "E. Administración",
+    "name": "Preparación y cierre del pedido",
+    "desc": "Transiciones controladas hacia preparación, listo y finalizado; cancelación según reglas.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/admin/orders/[id]/status/route.ts",
+      "src/app/api/admin/orders/[id]/cancel/route.ts",
+      "src/components/admin/orders/orders-panel.tsx"
+    ],
+    "evidence": "UI de acciones y endpoints separados.",
+    "deps": "SQL de estados; historial; reservas",
+    "obs": "RC; revisar estados terminales y efectos según diagrama UML."
+  },
+  {
+    "id": "F-049",
+    "group": "E. Administración",
+    "name": "Historial y comunicación del pedido",
+    "desc": "Eventos reales de auditoría del pedido y textos de contacto/copiar.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/admin/orders/[id]/history/route.ts",
+      "src/components/admin/orders/order-detail-sections.tsx"
+    ],
+    "evidence": "OrderHistory lista hasta 100 eventos y no reconstruye etapas no registradas.",
+    "deps": "Audit log; permisos",
+    "obs": "No se enviaron mensajes ni se marcaron hitos durante esta auditoría."
+  },
+  {
+    "id": "F-050",
+    "group": "E. Administración",
+    "name": "Devolución y reintegro",
+    "desc": "Registra devolución física o reintegro monetario y conserva venta original con límites.",
+    "actor": "Personal autorizado",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/orders/order-returns.tsx",
+      "src/app/api/admin/orders/[id]/returns/route.ts"
+    ],
+    "evidence": "GET/POST y create_sale_return.",
+    "deps": "Venta; inventario/lotes; caja; SQL",
+    "obs": "Reintegro contable no transfiere dinero; diferencias físicas/online en DB y UML."
+  },
+  {
+    "id": "F-051",
+    "group": "E. Administración",
+    "name": "Solicitud de eliminación",
+    "desc": "Solicitar eliminación de pedido y revisión administrativa de solicitud.",
+    "actor": "Equipo; administrador revisor",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/admin/orders/[id]/deletion-request/route.ts",
+      "src/app/api/admin/deletion-requests/[id]/review/route.ts"
+    ],
+    "evidence": "Rutas y acciones del panel, revisión diferenciada.",
+    "deps": "Reglas de integridad; auditoría",
+    "obs": "No se ejecutaron eliminaciones; no asumir borrado libre de toda venta."
+  },
+  {
+    "id": "F-052",
+    "group": "E. Administración",
+    "name": "Venta presencial",
+    "desc": "Selecciona productos/cliente, cantidades, pago efectivo/QR o venta gratuita y caja.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/sales/sales-panel.tsx",
+      "src/app/api/admin/sales/route.ts"
+    ],
+    "evidence": "POST create_physical_sale y controles de sesión de caja.",
+    "deps": "Stock; promociones; caja; SQL",
+    "obs": "Venta gratuita consume stock sin inventar pago."
+  },
+  {
+    "id": "F-053",
+    "group": "E. Administración",
+    "name": "Sesiones y movimientos de caja",
+    "desc": "Consulta cajas, apertura/cierre y entradas/salidas con importes esperados.",
+    "actor": "Equipo autorizado",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/cash/cash-panel.tsx",
+      "src/app/api/admin/cash-sessions/route.ts",
+      "src/app/api/admin/cash-sessions/[id]/close/route.ts"
+    ],
+    "evidence": "Sesiones abiertas y endpoints de movimientos.",
+    "deps": "Caja; pagos físicos; perfiles",
+    "obs": "No es una cuenta bancaria ni sistema contable/fiscal certificado."
+  },
+  {
+    "id": "F-054",
+    "group": "E. Administración",
+    "name": "Inventario",
+    "desc": "Ítems, tipos, unidades, mínimos, estado activo y filtros; fotos sólo en mapeo vendible seguro.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/inventory/inventory-management.tsx",
+      "src/app/api/admin/inventory/items/route.ts",
+      "src/lib/admin/inventory-images.ts"
+    ],
+    "evidence": "Materiales, lotes FIFO e historial; lookup opcional de fotos.",
+    "deps": "inventory_items; productos/receta",
+    "obs": "EJ previa: lectura 53 ítems; tres fotos; ningún insumo puro recibe foto."
+  },
+  {
+    "id": "F-055",
+    "group": "E. Administración",
+    "name": "Entradas, mermas y ajustes",
+    "desc": "Registra ingreso, merma y ajuste de stock con validación de lotes y stock reservado.",
+    "actor": "Equipo autorizado",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/api/admin/inventory/entries/route.ts",
+      "src/app/api/admin/inventory/waste/route.ts",
+      "src/app/api/admin/inventory/adjustments/route.ts"
+    ],
+    "evidence": "Formularios y RPC de inventario.",
+    "deps": "Lotes; movimientos; reservas; auditoría",
+    "obs": "No se registraron movimientos reales para esta auditoría."
+  },
+  {
+    "id": "F-056",
+    "group": "E. Administración",
+    "name": "Reportes JSON/PDF",
+    "desc": "Ventas, caja, inventario, mermas, cancelaciones, clientes y productos vendidos con filtros.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/reports/reports-panel.tsx",
+      "src/lib/reports/sales-report-pdf.tsx",
+      "src/app/api/admin/reports/sales/route.tsx"
+    ],
+    "evidence": "Siete pestañas y siete endpoints de reportes; formato JSON o PDF.",
+    "deps": "PostgreSQL; @react-pdf/renderer",
+    "obs": "Reporte de ventas bruto y reintegros no equivalen a indicador neto único ni factura fiscal."
+  },
+  {
+    "id": "F-057",
+    "group": "E. Administración",
+    "name": "Configuración de atención y pago",
+    "desc": "WhatsApp, horarios, QR, recepción fuera de horario y habilitación de entrega.",
+    "actor": "Administrador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/admin/configuracion/page.tsx",
+      "src/components/admin/checkout-configuration.tsx",
+      "src/components/admin/system-settings.tsx"
+    ],
+    "evidence": "requireAdmin y componentes específicos con APIs protegidas.",
+    "deps": "system_settings; business_hours; payment QR",
+    "obs": "Guardar configuración modifica datos; no se ejecutó en esta auditoría."
+  },
+  {
+    "id": "F-058",
+    "group": "E. Administración",
+    "name": "Ubicación y medios de tienda",
+    "desc": "Dirección, referencias, coordenadas/mapa; fotografía Nosotros y portadas de categoría.",
+    "actor": "Administrador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/store-location.tsx",
+      "src/components/admin/storefront-media-configuration.tsx",
+      "src/app/api/admin/storefront-media/route.ts"
+    ],
+    "evidence": "Preview de mapa y carga validada de imágenes.",
+    "deps": "Storage; Google Maps; configuración",
+    "obs": "El selector de logo fue retirado de UI; API aún reconoce kind logo. No interpretarlo como opción actualmente visible."
+  },
+  {
+    "id": "F-059",
+    "group": "E. Administración",
+    "name": "Notificaciones del equipo",
+    "desc": "Bandeja compartida con tipo, icono, fecha y acción de leído.",
+    "actor": "Equipo",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/notifications.tsx",
+      "src/lib/notification-presentation.ts",
+      "src/app/api/admin/notifications/[id]/read/route.ts"
+    ],
+    "evidence": "Consulta periódica y endpoint explícito de lectura.",
+    "deps": "notifications; Auth",
+    "obs": "EJ previa: cuatro eventos, sin marcar como leídos; no son push del SO ni correo/SMS."
+  },
+  {
+    "id": "F-060",
+    "group": "E. Administración",
+    "name": "Auditoría administrativa",
+    "desc": "Consulta y filtros de actividad administrativa con presentación de acciones.",
+    "actor": "Administrador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/admin/audit-entries.tsx",
+      "src/app/api/admin/audit-log/route.ts"
+    ],
+    "evidence": "requireAdmin, listado y formato de eventos.",
+    "deps": "vista audit_trail sobre audit_logs; triggers y funciones SQL",
+    "obs": "La existencia de registros no certifica por sí sola retención, integridad legal o monitoreo externo."
+  },
+  {
+    "id": "F-061",
+    "group": "F. Transversal",
+    "name": "Mensajes accesibles",
+    "desc": "Información/éxito/advertencia/error, iconos, roles y filtros de lenguaje técnico.",
+    "actor": "Todos",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/components/ui/notice.tsx",
+      "src/lib/notice-presentation.ts",
+      "src/components/public/shopping-notice.tsx"
+    ],
+    "evidence": "Notice y friendlyErrorMessage con movimiento reducido.",
+    "deps": "Lucide; CSS; semántica ARIA",
+    "obs": "RC y EJ previa; no se realizó auditoría WCAG formal completa."
+  },
+  {
+    "id": "F-062",
+    "group": "F. Transversal",
+    "name": "Entornos visuales separados",
+    "desc": "Tienda floral en rosa/crema y panel operativo SaaS violeta/gris con componentes compartidos.",
+    "actor": "Todos",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/app/globals.css",
+      "src/app/admin/admin.css",
+      "src/app/admin/layout.tsx"
+    ],
+    "evidence": "theme-admin está acotado; CustomerShell y componentes ui.",
+    "deps": "Tailwind; Next fonts",
+    "obs": "Geometría previa: 48 observaciones en 12 vistas por cuatro tamaños."
+  },
+  {
+    "id": "F-063",
+    "group": "F. Transversal",
+    "name": "Demostración de cliente",
+    "desc": "Página de muestra con catálogo y carrito propios; botón Continuar compra sin flujo comercial conectado.",
+    "actor": "Desarrollador",
+    "state": "Solo interfaz / demostración",
+    "files": [
+      "src/app/prueba-cliente/page.tsx",
+      "src/proxy.ts"
+    ],
+    "evidence": "UI de prototipo; no sustituye HomePage/checkout; proxy bloquea demos en producción.",
+    "deps": "Modo desarrollo; GET catálogo",
+    "obs": "No catalogar esta pantalla como tienda operativa."
+  },
+  {
+    "id": "F-064",
+    "group": "F. Transversal",
+    "name": "Demostración de componentes admin",
+    "desc": "Tablas, botones, modal y gráficos con datos de ejemplo para inspección de diseño.",
+    "actor": "Desarrollador",
+    "state": "Solo interfaz / demostración",
+    "files": [
+      "src/app/admin/prueba-ui/page.tsx",
+      "src/proxy.ts"
+    ],
+    "evidence": "exampleOrders/exampleProducts; botones sólo abren modal de muestra.",
+    "deps": "Entorno desarrollo; layout admin",
+    "obs": "No se usan sus cifras como métricas del negocio."
+  },
+  {
+    "id": "F-065",
+    "group": "F. Transversal",
+    "name": "Modo visual sintético",
+    "desc": "Modo de vista previa bajo banderas; muestra datos sintéticos y deshabilita creación/pago.",
+    "actor": "Desarrollador",
+    "state": "Implementada (RC)",
+    "files": [
+      "src/lib/visual-preview/config.ts",
+      "src/lib/visual-preview/catalog.ts",
+      "src/app/api/visual-preview/route.ts"
+    ],
+    "evidence": "Variables NOVA_VISUAL_PREVIEW y validación del modo.",
+    "deps": "Config de entorno; datos sintéticos",
+    "obs": "No confundir una vista sintética con operación conectada a PostgreSQL."
+  },
+  {
+    "id": "F-066",
+    "group": "F. Transversal",
+    "name": "Elementos 3D/realidad aumentada",
+    "desc": "No se encontraron escena 3D, WebGL, motor Three/Spline ni personalizador de realidad aumentada.",
+    "actor": "Visitante",
+    "state": "No encontrada",
+    "files": [
+      "package.json",
+      "src/components/public/home/product-detail.tsx"
+    ],
+    "evidence": "Dependencias e implementación revisadas; galería convencional y animación CSS.",
+    "deps": "Sin motor 3D identificado",
+    "obs": "No se añade como objetivo ni se promete su implementación."
+  },
+  {
+    "id": "F-067",
+    "group": "F. Transversal",
+    "name": "Respaldo manual cifrado",
+    "desc": "Script manual de respaldo PostgreSQL y procedimiento de restauración de laboratorio.",
+    "actor": "Responsable técnico",
+    "state": "Implementada (RC)",
+    "files": [
+      "supabase/backup/manual-backup.mjs",
+      "supabase/backup/README.md"
+    ],
+    "evidence": "npm run backup:manual; documentación advierte que Storage no está incluido.",
+    "deps": "CLI PostgreSQL; variables privadas; cifrado",
+    "obs": "No ejecutado. No hay respaldo automático verificado; no se documentan valores privados."
+  }
+]
+
+

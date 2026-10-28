@@ -3,13 +3,15 @@
 import { useEffect, useState } from "react";
 import { ArrowDown, ArrowUp, Gift, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { ProductPhoto } from "./product-recommendation-photo";
 import { ProductRecommendationPicker } from "./product-recommendation-picker";
 import { ResolvedRecommendationPreview } from "./resolved-recommendation-preview";
 import { recommendationImage, recommendationStatus, canAddRecommendation, moveRecommendation, recommendationPreview, type RecommendationChoice, type RecommendationAvailability } from "./recommendation-options";
 
 function ProductInfo({ product, catalogPending = false, availabilityPending = false }: { product?: RecommendationChoice; catalogPending?: boolean; availabilityPending?: boolean }) {
-  return <><ProductPhoto id={product?.id} imageUrl={recommendationImage(product)} /><div className="min-w-0 flex-1">
+  return <><ProductPhoto id={product?.id} imageUrl={recommendationImage(product)} alt={product?.name ?? "Complemento"} /><div className="min-w-0 flex-1">
     <p className="break-words text-sm font-medium">{product?.name ?? (catalogPending ? "Cargando producto…" : "Referencia no resuelta")}</p>
     {product && <p className="text-sm font-semibold tabular-nums">Bs {Number(product.price).toFixed(2)}</p>}
     <p className="text-xs text-text-secondary">{product ? availabilityPending && product.is_active ? "Disponibilidad pendiente de comprobar" : recommendationStatus(product) : catalogPending ? "Consultando catálogo…" : "No pudimos encontrar este producto. Se conserva sin cambios."}</p>
@@ -24,6 +26,7 @@ export function ProductRecommendations({ productId, onCountChange, onDirtyChange
   const [ready, setReady] = useState(false);
   const [catalogReady, setCatalogReady] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("error");
   const [loadAttempt, setLoadAttempt] = useState(0);
   const [availability, setAvailability] = useState<RecommendationAvailability>({});
   const [availabilityError, setAvailabilityError] = useState("");
@@ -59,19 +62,19 @@ export function ProductRecommendations({ productId, onCountChange, onDirtyChange
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error();
       if (active) { setSelected(result.product_ids); setSaved(result.product_ids); setChoices(result.products ?? []); setCatalogReady(true); setMode(result.mode); setSavedMode(result.mode); setRevision(result.revision); setReady(true); }
-    }).catch(() => { if (active) setMessage("No pudimos cargar la configuración. Intenta nuevamente."); });
+    }).catch(() => { if (active) { setMessageTone("error"); setMessage("No pudimos cargar la configuración. Intenta nuevamente."); } });
     return () => { active = false; };
   }, [productId, loadAttempt, ready]);
   useEffect(() => { if (ready) onCountChange?.(selected.length); }, [ready, selected.length, onCountChange]);
   async function save() {
-    setBusy(true); setMessage("");
+    setBusy(true); setMessage(""); setMessageTone("error");
     try {
       const response = await fetch(`/api/admin/products/${productId}/recommendations`, {
         method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ mode, revision, ...(mode === "custom" ? { product_ids: selected } : {}) }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) { setMessage(result.message ?? "No se pudo guardar."); return; }
-      setSaved([...selected]); setSavedMode(mode); setRevision(result.revision); setMessage("Cambios guardados correctamente.");
+      setSaved([...selected]); setSavedMode(mode); setRevision(result.revision); setMessageTone("success"); setMessage("Cambios guardados correctamente.");
     } catch { setMessage("No se pudo guardar. Tu selección se conserva para reintentar."); }
     finally { setBusy(false); }
   }
@@ -116,13 +119,13 @@ export function ProductRecommendations({ productId, onCountChange, onDirtyChange
       <p className="mt-1 text-xs text-text-secondary">El cliente añade el producto principal, pulsa «Elegir» para ver el detalle del complemento y decide si lo agrega al carrito. Puede seguir comprando sin añadir ninguno.</p>
       <p className="mt-2 text-xs text-text-secondary">Precios actuales, sin descuentos adicionales. Los complementos que ya estén en el carrito no se vuelven a ofrecer. Esta vista previa no añade productos.</p>
       <h5 className="mt-3 text-sm font-semibold">¿Quieres complementar tu regalo?</h5>
-      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">{available.map(p => <article key={p.id} className="min-w-0 rounded-xl border border-border-decorative bg-surface p-3"><ProductPhoto id={p.id} preview imageUrl={recommendationImage(p)} /><p className="break-words text-sm font-semibold">{p.name}</p><p className="mt-1 text-sm tabular-nums">Bs {Number(p.price).toFixed(2)}</p><span className="mt-2 block text-sm font-bold text-brand">Elegir</span></article>)}</div>
+      <div className="mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4">{available.map(p => <article key={p.id} className="min-w-0 rounded-xl border border-border-decorative bg-surface p-3"><ProductPhoto id={p.id} preview imageUrl={recommendationImage(p)} alt={p.name} /><p className="break-words text-sm font-semibold">{p.name}</p><p className="mt-1 text-sm tabular-nums">Bs {Number(p.price).toFixed(2)}</p><span className="mt-2 block text-sm font-bold text-brand">Elegir</span></article>)}</div>
       {!available.length && <p className="mt-3 text-sm">{!catalogReady || selected.some(id => !availability[id]) ? "Disponibilidad pendiente de comprobar. La vista previa se actualizará al obtenerla." : "No hay complementos disponibles para mostrar."}</p>}
     </section>}
     </div>
     <div className="sticky -bottom-4 z-10 space-y-2 border-t border-border-decorative bg-surface py-3">
-      {message && <p role="status" className="text-sm">{message}</p>}
-      {availabilityError && <div className="space-y-2"><p role="status" className="text-sm text-danger">{availabilityError}</p><Button variant="outline" onClick={() => setAvailabilityAttempt(value => value + 1)}>Reintentar disponibilidad</Button></div>}
+      {message && <Notice tone={messageTone}>{messageTone === "error" ? friendlyErrorMessage(message, "No pudimos guardar los complementos. Tu selección se conserva.") : message}</Notice>}
+      {availabilityError && <div className="space-y-2"><Notice tone="warning">{friendlyErrorMessage(availabilityError, "No pudimos comprobar la disponibilidad. Intenta nuevamente.")}</Notice><Button variant="outline" onClick={() => setAvailabilityAttempt(value => value + 1)}>Reintentar disponibilidad</Button></div>}
       {(!ready || !catalogReady) && message && <Button variant="outline" onClick={() => { setMessage(""); setLoadAttempt(value => value + 1); }}>Reintentar carga</Button>}
       <div className="flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-text-secondary">{dirty ? "Cambios sin guardar" : "Configuración guardada"}</p><Button disabled={!ready || !catalogReady || !dirty} loading={busy} onClick={() => void save()}>Guardar complementos</Button></div>
     </div>

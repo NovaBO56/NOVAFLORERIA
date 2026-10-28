@@ -1,4 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
+import { loginDestination } from "@/lib/auth/login-destination";
 import { NextResponse, type NextRequest } from "next/server";
 
 export async function updateSession(request: NextRequest) {
@@ -70,7 +71,7 @@ export async function updateSession(request: NextRequest) {
     if (pathname.startsWith("/admin")) {
       loginUrl.searchParams.set(
         "redirect",
-        `${pathname}${request.nextUrl.search}`,
+        loginDestination(`${pathname}${request.nextUrl.search}`),
       );
     }
 
@@ -80,8 +81,7 @@ export async function updateSession(request: NextRequest) {
   if (isAuthenticated && isLoginPage) {
     const redirect = request.nextUrl.searchParams.get("redirect");
 
-    const destination =
-      redirect && redirect.startsWith("/") ? redirect : "/admin";
+    const destination = loginDestination(redirect);
 
     return NextResponse.redirect(new URL(destination, request.url));
   }

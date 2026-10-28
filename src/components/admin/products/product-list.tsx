@@ -1,10 +1,13 @@
 "use client";
 
 import { DropdownMenu } from "radix-ui";
-import Image from "next/image";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { primaryProductImage } from "@/lib/product-images";
 import { ChevronLeft, ChevronRight, MoreHorizontal, PackageCheck, Pencil, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { Product } from "./product-form";
 
 type CatalogEntry = { id: string; name: string; is_active: boolean };
@@ -23,7 +26,7 @@ function nameOf(entries: CatalogEntry[], id: string | null, fallback: string) {
 }
 function ProductStatus({ product }: { product: Product }) {
   return <div className="flex flex-wrap gap-1.5">
-    <Badge variant={product.is_active ? "brand" : "outline"}>{product.is_active ? "Publicado" : "Sin publicar"}</Badge>
+    <Badge variant="outline" className={product.is_active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "bg-bg-admin text-text-secondary"}>{product.is_active ? "Publicado" : "Sin publicar"}</Badge>
     <span className="self-center text-xs text-text-secondary">{!product.is_available ? "Venta pausada" : product.is_sold_out || product.calculated_sold_out ? "Sin existencias / agotado" : product.calculated_available ? `Disponible · ${product.available_quantity}` : product.is_active ? "No disponible para venta" : "Venta pendiente de habilitar"}</span>
   </div>;
 }
@@ -45,15 +48,17 @@ function ProductActions({ product, onEdit, onToggle }: Pick<ProductListProps, "o
   </DropdownMenu.Root>;
 }
 function Thumbnail({ product }: { product: Product }) {
-  const photo = [...(product.images ?? [])].sort((a,b) => a.sort_order-b.sort_order)[0];
-  return photo?.public_url ? <Image src={photo.public_url} alt={photo.alt_text ?? ""} width={56} height={56} className="size-14 shrink-0 rounded-xl object-cover" /> : <div className="flex size-14 shrink-0 items-center justify-center rounded-xl bg-brand-soft"><PackageCheck aria-hidden="true" className="size-5 text-brand" /></div>;
+  const photo = primaryProductImage(product.images);
+  return <ProductThumbnail src={photo?.public_url} alt={photo?.alt_text || product.name} size="md" preview />;
 }
 export default function ProductList({ products, categories, seasons, total, page, totalPages, loading, onPageChange, onEdit, onToggle, hasFilters, onClearFilters, onCreate }: ProductListProps) {
   if (loading && products.length === 0) return <div role="status" className="p-6"><span className="sr-only">Cargando productos…</span><div className="h-64 animate-pulse rounded-xl bg-bg-admin" /></div>;
-  if (!loading && products.length === 0) return <div className="flex flex-col items-center px-6 py-14 text-center">
-    <PackageCheck aria-hidden="true" className="mb-3 size-9 text-brand" /><h3 className="font-semibold">{hasFilters ? "No encontramos productos con esos filtros." : "Todavía no tienes productos."}</h3>
-    <Button className="mt-4 min-h-11" variant="outline" onClick={hasFilters ? onClearFilters : onCreate}>{hasFilters ? "Limpiar filtros" : "+ Crear primer producto"}</Button>
-  </div>;
+  if (!loading && products.length === 0) return <EmptyState
+    icon={<PackageCheck aria-hidden="true" />}
+    title={hasFilters ? "Sin productos para estos filtros" : "Todavía no tienes productos"}
+    description={hasFilters ? "Prueba con otro nombre, categoría o estado." : "Crea el primer producto y configura sus fotos, receta y publicación."}
+    action={<Button variant="outline" onClick={hasFilters ? onClearFilters : onCreate}>{hasFilters ? "Limpiar filtros" : "Crear primer producto"}</Button>}
+  />;
   return <>
     <ul aria-label="Productos" className="divide-y divide-border-decorative lg:hidden">
       {products.map(product => <li key={product.id} className="space-y-3 p-4">
@@ -62,20 +67,20 @@ export default function ProductList({ products, categories, seasons, total, page
         <div className="flex flex-wrap items-center justify-between gap-3"><ProductStatus product={product} /><ProductActions product={product} onEdit={onEdit} onToggle={onToggle} /></div>
       </li>)}
     </ul>
-    <div className="product-admin-table hidden overflow-x-auto lg:block" role="region" aria-label="Productos y acciones" tabIndex={0}>
-      <table className="w-full border-collapse text-sm">
-        <thead><tr className="border-b border-border-decorative bg-bg-admin text-left text-xs text-text-secondary">{["Producto", "Categoría", "Temporada", "Precio", "Estado y disponibilidad", "Acciones"].map(label => <th key={label} className="px-4 py-3 font-semibold">{label}</th>)}</tr></thead>
-        <tbody>{products.map(product => <tr key={product.id} className="border-b border-border-decorative">
-          <td className="px-4 py-3"><div className="flex items-start gap-3"><Thumbnail product={product} /><div className="min-w-0"><p className="max-w-64 break-words font-medium">{product.name}{product.is_featured && <Star aria-label="Producto destacado" className="ml-1 inline size-4 text-brand" />}</p>{product.occasion && <p className="mt-1 text-xs text-text-secondary">{product.occasion}</p>}</div></div></td>
-          <td className="px-4 py-3 text-text-secondary">{nameOf(categories, product.category_id, "Sin categoría")}</td>
-          <td className="px-4 py-3 text-text-secondary">{nameOf(seasons, product.season_id, "Sin temporada")}</td>
-          <td className="whitespace-nowrap px-4 py-3 font-medium tabular-nums">Bs {Number(product.price).toFixed(2)}</td>
-          <td className="px-4 py-3"><ProductStatus product={product} /></td>
-          <td className="px-4 py-3"><ProductActions product={product} onEdit={onEdit} onToggle={onToggle} /></td>
-        </tr>)}</tbody>
-      </table>
+    <div className="product-admin-table hidden lg:block" role="region" aria-label="Productos y acciones" tabIndex={0}>
+      <Table className="min-w-[860px]">
+        <TableHeader><TableRow className="bg-bg-admin text-left">{["Producto", "Categoría", "Temporada", "Precio", "Estado y disponibilidad", "Acciones"].map(label => <TableHead key={label} numeric={label === "Precio"} className="px-4 py-3 font-semibold">{label}</TableHead>)}</TableRow></TableHeader>
+        <TableBody>{products.map(product => <TableRow key={product.id} className="border-b border-border-decorative">
+          <TableCell className="px-4 py-3"><div className="flex items-start gap-3"><Thumbnail product={product} /><div className="min-w-0"><p className="max-w-64 break-words font-medium">{product.name}{product.is_featured && <Star aria-label="Producto destacado" className="ml-1 inline size-4 text-brand" />}</p>{product.occasion && <p className="mt-1 text-xs text-text-secondary">{product.occasion}</p>}</div></div></TableCell>
+          <TableCell className="px-4 py-3 text-text-secondary">{nameOf(categories, product.category_id, "Sin categoría")}</TableCell>
+          <TableCell className="px-4 py-3 text-text-secondary">{nameOf(seasons, product.season_id, "Sin temporada")}</TableCell>
+          <TableCell numeric className="whitespace-nowrap px-4 py-3 font-semibold tabular-nums">Bs {Number(product.price).toFixed(2)}</TableCell>
+          <TableCell className="px-4 py-3"><ProductStatus product={product} /></TableCell>
+          <TableCell className="px-4 py-3"><ProductActions product={product} onEdit={onEdit} onToggle={onToggle} /></TableCell>
+        </TableRow>)}</TableBody>
+      </Table>
     </div>
-    <div className="flex flex-col gap-3 border-t border-border-decorative px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+    <div className="flex flex-col gap-3 border-t border-border-decorative bg-bg-admin/60 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-sm text-text-secondary">{total === 0 ? "0 productos" : `Mostrando ${(page - 1) * 20 + 1}–${Math.min(page * 20, total)} de ${total} productos`}</p>
       <div className="flex flex-wrap items-center justify-between gap-2">
         <Button className="min-h-11" variant="outline" size="sm" disabled={page <= 1 || loading} onClick={() => onPageChange(Math.max(1, page - 1))}><ChevronLeft aria-hidden="true" />Anterior</Button>

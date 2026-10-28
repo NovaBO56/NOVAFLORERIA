@@ -3,7 +3,7 @@
 import { DedicationEditor, DedicationPreview } from "../dedication-card";
 import { dedicationsSchema, type Dedication } from "@/lib/public/dedications";
 import { useEffect, useMemo, useState } from "react";
-import { SafeImage as Image } from "@/components/public/safe-image";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import Link from "next/link";
 import { ArrowRight, MessageCircle, ShoppingBag, X } from "lucide-react";
 import {
@@ -88,12 +88,14 @@ export function addToCart(product: PublicProduct, quantity = 1, options: Customi
 function changeQuantity(id: string, delta: number) {
   let next: CartItem[] = [];
   cartStore.update((items) => { next = changeItemQuantity(items, id, delta); return next; });
+  if (!next.length) selectPromotion("");
   return next;
 }
 
 function removeFromCart(id: string) {
   let next: CartItem[] = [];
   cartStore.update((items) => { next = removeItem(items, id); return next; });
+  if (!next.length) selectPromotion("");
   return next;
 }
 
@@ -224,16 +226,17 @@ export function CartDrawer({
   const discount = promotion ? cartPromotion(promotion, cart.items, now) : null;
   const [editingDedication, setEditingDedication] = useState<string | null>(null);
   const [removing, setRemoving] = useState<string | null>(null);
-  const [feedback, setFeedback] = useState("");
+  const [feedback, setFeedback] = useState<{ message: string; tone: "success" | "warning" } | null>(null);
 
   function notifyChange(next: CartItem[], message: string) {
     const lostDiscount = discount && promotion && !cartPromotion(promotion, next, now);
-    setFeedback(`${message} ${lostDiscount ? "El descuento se retiró porque la compra ya no cumple sus condiciones." : "Actualizamos el total y revisamos la promoción."}`);
+    if (lostDiscount) selectPromotion("");
+    setFeedback({ message: `${message}${lostDiscount ? " Quitamos la promoción porque esta compra ya no cumple sus condiciones. Puedes elegir otra o continuar sin descuento." : ""}`, tone: lostDiscount ? "warning" : "success" });
   }
 
 
   function close() {
-    setFeedback(""); setRemoving(null);
+    setFeedback(null); setRemoving(null);
     onClose();
   }
 
@@ -293,7 +296,7 @@ export function CartDrawer({
         </div>
 
         <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-6 py-6">
-          {feedback && <div className="mb-4"><ShoppingNotice tone="success" onDismiss={() => setFeedback("")}>{feedback}</ShoppingNotice></div>}
+          {feedback && <div className="mb-4"><ShoppingNotice tone={feedback.tone} onDismiss={() => setFeedback(null)}>{feedback.message}</ShoppingNotice></div>}
           {cart.items.length === 0 ? (
             <div className="flex h-full flex-col items-center justify-center text-center">
               <div className="flex size-16 items-center justify-center rounded-full bg-[#f3e3e5] text-[#873c58]">
@@ -328,23 +331,7 @@ export function CartDrawer({
                 className="nova-enter border-b border-[#eee7f0] py-5 first:pt-0"
               >
                 <div className="flex gap-4">
-                  <div className="relative flex size-[76px] shrink-0 items-center justify-center overflow-hidden rounded-xl bg-[#f5eeea]">
-                    {item.image ? (
-                      <Image
-                        src={item.image}
-                        alt={item.name}
-                        fill
-                        sizes="76px"
-                        className={`object-cover ${item.available ? "" : "opacity-50"}`}
-                      />
-                    ) : (
-                      <span
-                        className={`px-2 text-center text-[10px] leading-4 text-[#6b5965]`}
-                      >
-                        Sin imagen
-                      </span>
-                    )}
-                  </div>
+                  <ProductThumbnail src={item.image} alt={item.name} size="lg" sizes="76px" voice="public" className={`size-[76px] ${item.available ? "" : "opacity-50"}`} />
 
                   <div className="min-w-0 flex-1">
                     <p className="break-words text-sm font-black text-[#392b38]">

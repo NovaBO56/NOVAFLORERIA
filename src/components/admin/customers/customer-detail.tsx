@@ -1,8 +1,11 @@
 "use client";
 
-import { Mail, Pencil, Phone, X } from "lucide-react";
+import { CalendarDays, Mail, MessageCircle, Pencil, Phone, ShoppingBag, UserRound, Wallet, X } from "lucide-react";
 
-import { Badge } from "@/components/ui/badge";
+import { Badge, ORDER_STATUS, type OrderStatus } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { StatCard } from "@/components/ui/stat-card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
@@ -44,196 +47,147 @@ export default function CustomerDetail({
   );
 
   return (
-    <Modal open onOpenChange={open => { if (!open) onClose(); }}><ModalContent showCloseButton={false} className="gap-0 p-0 md:max-w-3xl">
-      <>
-        <div className="flex items-start justify-between border-b p-6">
-          <div className="min-w-0">
-            <div className="flex flex-wrap items-center gap-3">
-              <ModalTitle className="min-w-0 break-words text-lg font-semibold">
-                {data.customer.name}
-              </ModalTitle>
-
-              <Badge
-                variant={
-                  data.customer.is_active
-                    ? "brand"
-                    : "outline"
-                }
-              >
-                {data.customer.is_active
-                  ? "Activo"
-                  : "Inactivo"}
-              </Badge>
+    <Modal open onOpenChange={open => { if (!open) onClose(); }}>
+      <ModalContent showCloseButton={false} className="gap-0 p-0 md:max-w-3xl">
+        <div
+          className="flex items-start justify-between gap-3 border-b border-border-decorative bg-slate-50 p-5 sm:p-6"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div
+              className="flex size-11 shrink-0 items-center justify-center rounded-xl border border-violet-200 bg-brand-soft text-brand"
+            >
+              <UserRound aria-hidden="true" className="size-5" />
             </div>
-
-            <ModalDescription className="mt-1 text-sm text-muted-foreground">
-              Cliente registrado el{" "}
-              {formatDate(data.customer.created_at)}
-            </ModalDescription>
+            <div className="min-w-0">
+              <div className="flex flex-wrap items-center gap-2">
+                <ModalTitle className="break-words text-lg font-semibold">
+                  {data.customer.name}
+                </ModalTitle>
+                <Badge
+                  variant="outline"
+                  className={data.customer.is_active ? "border-emerald-200 bg-emerald-50 text-emerald-700" : "bg-slate-100"}
+                >
+                  {data.customer.is_active ? "Activo" : "Inactivo"}
+                </Badge>
+              </div>
+              <ModalDescription className="mt-1 text-xs">
+                Cliente registrado el {formatDate(data.customer.created_at)}
+              </ModalDescription>
+            </div>
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Cerrar cliente"
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon-sm" aria-label="Cerrar cliente" onClick={onClose}>
+            <X aria-hidden="true" />
           </Button>
         </div>
 
-        <div className="grid gap-5 border-b p-6 sm:grid-cols-2">
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Teléfono
-            </p>
+        <div className="space-y-6 p-5 sm:p-6">
+          <section
+            aria-label="Datos de contacto"
+            className="grid gap-4 rounded-xl border border-border-decorative p-4 sm:grid-cols-2"
+          >
+            {
+              [{ label: "Teléfono", value: data.customer.phone, Icon: Phone }, { label: "WhatsApp", value: data.customer.whatsapp, Icon: MessageCircle }, { label: "Correo", value: data.customer.email, Icon: Mail }, { label: "Cumpleaños", value: data.customer.birthday, Icon: CalendarDays }].map(({ label, value, Icon }) => <div key={label} className="min-w-0">
+                <p className="flex items-center gap-2 text-xs font-medium text-text-secondary">
+                  <Icon aria-hidden="true" className="size-3.5 shrink-0" />{label}
+                </p>
+                <p className="mt-1.5 break-words text-sm font-medium">
+                  {value || "No registrado"}
+                </p>
+              </div>)
+            }
+          </section>
 
-            <p className="mt-1 flex items-center gap-2 font-medium">
-              <Phone className="h-4 w-4 text-muted-foreground" />
-              {data.customer.phone || "—"}
-            </p>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <StatCard
+              label="Pedidos asociados"
+              value={String(data.orders.length)}
+              description="Historial de este cliente"
+              icon={<ShoppingBag />}
+            />
+            <StatCard
+              label="Total comprado"
+              value={formatMoney(total)}
+              description="Suma de los pedidos del historial"
+              icon={<Wallet />}
+              tone="brand"
+            />
           </div>
 
-          <div>
-            <p className="text-xs text-muted-foreground">
-              WhatsApp
-            </p>
-
-            <p className="mt-1 font-medium">
-              {data.customer.whatsapp || "—"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Correo
-            </p>
-
-            <p className="mt-1 flex items-center gap-2 break-all font-medium">
-              <Mail className="h-4 w-4 text-muted-foreground" />
-              {data.customer.email || "—"}
-            </p>
-          </div>
-
-          <div>
-            <p className="text-xs text-muted-foreground">
-              Cumpleaños
-            </p>
-
-            <p className="mt-1 font-medium">
-              {data.customer.birthday || "—"}
-            </p>
-          </div>
+          <section aria-label="Historial de pedidos">
+            <div className="mb-3">
+              <h3 className="text-base font-semibold">
+                Historial de pedidos
+              </h3>
+              <p className="mt-1 text-sm text-text-secondary">
+                Pedidos asociados a este cliente.
+              </p>
+            </div>
+            <div className="overflow-hidden rounded-xl border border-border-decorative">
+              {
+                data.orders.length === 0 ? <EmptyState
+                  icon={<ShoppingBag />}
+                  title="Todavía no tiene pedidos"
+                  description="Los pedidos asociados a este cliente aparecerán aquí."
+                /> : <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>
+                        Pedido
+                      </TableHead>
+                      <TableHead>
+                        Tipo
+                      </TableHead>
+                      <TableHead>
+                        Estado
+                      </TableHead>
+                      <TableHead>
+                        Fecha
+                      </TableHead>
+                      <TableHead numeric>
+                        Total
+                      </TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {
+                      data.orders.map(order => <TableRow key={order.id}>
+                        <TableCell className="font-semibold text-brand">
+                          {order.order_number}
+                        </TableCell>
+                        <TableCell>
+                          {order.order_type}
+                        </TableCell>
+                        <TableCell>
+                          {
+                            order.status in ORDER_STATUS ? <Badge status={order.status as OrderStatus} /> : <Badge variant="outline">
+                              {order.status}
+                            </Badge>
+                          }
+                        </TableCell>
+                        <TableCell className="whitespace-nowrap text-text-secondary">
+                          {formatDate(order.created_at)}
+                        </TableCell>
+                        <TableCell numeric className="font-semibold">
+                          {formatMoney(order.total)}
+                        </TableCell>
+                      </TableRow>)
+                    }
+                  </TableBody>
+                </Table>
+              }
+            </div>
+          </section>
         </div>
 
-        <div className="grid gap-4 p-6 sm:grid-cols-2">
-          <>
-            <p className="text-sm text-muted-foreground">
-              Pedidos
-            </p>
-
-            <p className="mt-1 text-2xl font-semibold">
-              {data.orders.length}
-            </p>
-          </>
-
-          <>
-            <p className="text-sm text-muted-foreground">
-              Total comprado
-            </p>
-
-            <p className="mt-1 text-2xl font-semibold">
-              {formatMoney(total)}
-            </p>
-          </>
-        </div>
-
-        <div className="px-6 pb-6">
-          <h3 className="font-semibold">
-            Historial de pedidos
-          </h3>
-
-          <p className="mt-1 text-sm text-muted-foreground">
-            Pedidos asociados a este cliente.
-          </p>
-
-          <div className="mt-4 overflow-x-auto rounded-lg border">
-            {data.orders.length === 0 ? (
-              <div className="p-8 text-center text-sm text-muted-foreground">
-                Este cliente todavía no tiene pedidos.
-              </div>
-            ) : (
-              <table className="w-full text-sm">
-                <thead className="border-b bg-muted/30">
-                  <tr className="text-left text-muted-foreground">
-                    <th className="px-4 py-3">
-                      Pedido
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Tipo
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Estado
-                    </th>
-
-                    <th className="px-4 py-3">
-                      Fecha
-                    </th>
-
-                    <th className="px-4 py-3 text-right">
-                      Total
-                    </th>
-                  </tr>
-                </thead>
-
-                <tbody>
-                  {data.orders.map((order) => (
-                    <tr
-                      key={order.id}
-                      className="border-b last:border-0"
-                    >
-                      <td className="px-4 py-3 font-medium">
-                        {order.order_number}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {order.order_type}
-                      </td>
-
-                      <td className="px-4 py-3">
-                        <Badge variant="outline">
-                          {order.status}
-                        </Badge>
-                      </td>
-
-                      <td className="px-4 py-3">
-                        {formatDate(order.created_at)}
-                      </td>
-
-                      <td className="px-4 py-3 text-right font-medium">
-                        {formatMoney(order.total)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </div>
-
-        <div className="flex justify-end gap-2 border-t p-4">
+        <div className="admin-form-actions sticky bottom-0 border-t border-border-decorative bg-slate-50 p-4">
           <Button variant="outline" onClick={onClose}>
             Cerrar
           </Button>
-
           <Button onClick={() => onEdit(data.customer)}>
-            <Pencil className="mr-2 h-4 w-4" />
-            Editar cliente
+            <Pencil aria-hidden="true" />Editar cliente
           </Button>
         </div>
-      </>
-    </ModalContent></Modal>
+      </ModalContent>
+    </Modal>
   );
 }

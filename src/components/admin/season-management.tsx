@@ -1,6 +1,9 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SectionCard } from "@/components/ui/section-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -259,11 +262,11 @@ export default function SeasonManagement() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle>{editingSeason ? "Editar temporada" : "Nueva temporada"}</CardTitle>
-          <p className="text-text-secondary">
+          <p className="text-sm leading-6 text-text-secondary">
             {editingSeason
               ? "Modifica los datos de la temporada seleccionada."
               : "Crea una temporada para organizar campañas y ocasiones especiales."}
@@ -272,7 +275,7 @@ export default function SeasonManagement() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Field label="Nombre">
+            <Field label="Nombre" required>
               <Input
                 value={form.name}
                 onChange={(event) => handleInputChange("name", event.target.value)}
@@ -313,10 +316,10 @@ export default function SeasonManagement() {
               </Field>
             </div>
 
-            {error && <p className="text-sm text-danger">{error}</p>}
-            {success && <p className="text-sm text-leaf">{success}</p>}
+            {error && <p role="alert" className="admin-notice" data-tone="danger">{error}</p>}
+            {success && <p role="status" className="admin-notice" data-tone="success">{success}</p>}
 
-            <div className="flex gap-3">
+            <div className="admin-form-actions">
               <Button type="submit" loading={saving} loadingText="Guardando…">
                 {editingSeason ? "Guardar cambios" : "Crear temporada"}
               </Button>
@@ -331,54 +334,17 @@ export default function SeasonManagement() {
         </CardContent>
       </Card>
 
-      <Card className="gap-0 p-0">
-        <div className="border-b border-border-decorative p-4">
-          <h2 className="text-xl font-semibold text-text">Temporadas</h2>
-          <p className="text-text-secondary">Administra las temporadas existentes y su estado.</p>
-        </div>
-
-        {loading ? (
-          <p className="p-6 text-center text-text-secondary">Cargando temporadas...</p>
-        ) : seasons.length === 0 ? (
-          <p className="p-6 text-center text-text-secondary">No hay temporadas registradas.</p>
-        ) : (
-          <div className="divide-y divide-border-decorative">
-            {seasons.map((season) => (
-              <div
-                key={season.id}
-                className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex items-center gap-3">
-                    <h3 className="font-medium text-text">{season.name}</h3>
-                    <Badge variant={season.is_active ? "brand" : "outline"}>
-                      {season.is_active ? "Activa" : "Inactiva"}
-                    </Badge>
-                  </div>
-
-                  {season.description && (
-                    <p className="mt-1 text-text-secondary">{season.description}</p>
-                  )}
-
-                  <p className="mt-2 text-[13px] text-text-secondary">
-                    {formatDate(season.starts_at)} → {formatDate(season.ends_at)}
-                  </p>
-                </div>
-
-                <div className="flex shrink-0 gap-2">
-                  <Button size="sm" variant="outline" onClick={() => startEditing(season)}>
-                    Editar
-                  </Button>
-
-                  <Button size="sm" variant="outline" onClick={() => void toggleSeason(season)}>
-                    {season.is_active ? "Desactivar" : "Activar"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+      <SectionCard title="Temporadas" description="Consulta sus datos y administra su disponibilidad." action={<Badge variant="outline">{seasons.length} registradas</Badge>} className="min-w-0">
+        {loading ? <p role="status" className="py-10 text-center text-sm text-text-secondary">Cargando temporadas…</p> : seasons.length === 0 ? <EmptyState title="No hay temporadas registradas" description="Completa el formulario para crear la primera temporada." /> : <Table>
+          <TableHeader><TableRow><TableHead>Temporada</TableHead><TableHead>Vigencia</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader>
+          <TableBody>{seasons.map(season => <TableRow key={season.id}>
+            <TableCell><p className="font-semibold">{season.name}</p>{season.description && <p className="mt-1 max-w-sm whitespace-normal text-xs leading-5 text-text-secondary">{season.description}</p>}</TableCell>
+            <TableCell className="text-xs text-text-secondary"><span className="block">Desde {formatDate(season.starts_at)}</span><span className="mt-1 block">Hasta {formatDate(season.ends_at)}</span></TableCell>
+            <TableCell><Badge variant={season.is_active ? "brand" : "outline"}>{season.is_active ? "Activa" : "Inactiva"}</Badge></TableCell>
+            <TableCell><div className="flex flex-wrap justify-end gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(season)}>Editar</Button><Button size="sm" variant="ghost" onClick={() => void toggleSeason(season)}>{season.is_active ? "Desactivar" : "Activar"}</Button></div></TableCell>
+          </TableRow>)}</TableBody>
+        </Table>}
+      </SectionCard>
     </div>
   );
 }

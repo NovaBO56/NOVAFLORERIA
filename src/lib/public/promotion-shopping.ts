@@ -15,19 +15,19 @@ export function canBuildCombo(promotion: PublicPromotion) {
 }
 
 export function promotionProgress(promotion: PublicPromotion, items: CartItem[], now = Date.now()) {
-  if (!promotionIsCurrent(promotion, now)) return "Esta oferta ya no está vigente. El descuento no se aplica.";
-  if (!promotion.products?.length) return "Esta oferta aún no tiene productos participantes configurados.";
-  if (items.some(item => !item.available)) return "Revisa los productos no disponibles antes de aplicar la oferta.";
+  if (!promotionIsCurrent(promotion, now)) return "Esta promoción ya no está disponible. Puedes elegir otra o continuar sin descuento.";
+  if (!promotion.products?.length) return "Por ahora esta promoción no está disponible. Puedes elegir otra o continuar sin descuento.";
+  if (items.some(item => !item.available)) return "Ajusta los productos no disponibles para consultar tu descuento.";
   const missing = promotion.promotion_type === "combo" ? promotion.products.flatMap(line => {
     const quantity = items.filter(item => item.id.split(":")[0] === line.product_id).reduce((sum, item) => sum + item.quantity, 0);
     return quantity < line.quantity ? [`${line.quantity - quantity} × ${line.product?.name ?? "producto participante"}`] : [];
   }) : [];
   if (missing.length) return `Completa el combo: ${missing.join(", ")}. El beneficio aún no se aplica.`;
   const matches = items.some(item => promotion.products!.some(line => line.product_id === item.id.split(":")[0]));
-  if (!matches) return "Agrega un producto participante para utilizar esta oferta.";
+  if (!matches) return "Esta promoción no incluye los productos de tu carrito. Añade un producto participante o continúa sin descuento.";
   const subtotal = items.reduce((sum, item) => sum + Math.round(item.price * 100) * item.quantity, 0) / 100;
   if (subtotal < Number(promotion.minimum_purchase ?? 0)) return `Faltan ${formatMoney(Number(promotion.minimum_purchase) - subtotal)} para la compra mínima. El beneficio aún no se aplica.`;
-  return cartPromotion(promotion, items, now) ? null : "El carrito ya no cumple las condiciones de esta oferta. El descuento no se aplica.";
+  return cartPromotion(promotion, items, now) ? null : "Esta promoción ya no aplica a los productos seleccionados. Puedes elegir otra o continuar sin descuento.";
 }
 
 export function promotionPricePreview(promotion: PublicPromotion) {

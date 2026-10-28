@@ -1,9 +1,10 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { X } from "lucide-react";
+import { Save, UserRound, X } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Field, Input } from "@/components/ui/field";
 import { Modal, ModalContent, ModalTitle, ModalDescription } from "@/components/ui/modal";
 
 import type { Customer } from "./customer-management";
@@ -72,7 +73,7 @@ export default function CustomerForm({
       if (!response.ok || !data.success) {
         throw new Error(
           data.message ||
-            "No se pudo guardar el cliente.",
+          "No se pudo guardar el cliente.",
         );
       }
 
@@ -90,154 +91,101 @@ export default function CustomerForm({
   }
 
   return (
-    <Modal open onOpenChange={open => { if (!open && !saving) onClose(); }}><ModalContent dismissible={!saving} showCloseButton={false} className="gap-0 p-0 md:max-w-2xl">
-      <>
-        <div className="flex items-center justify-between border-b p-6">
-          <div>
-            <ModalTitle className="text-lg font-semibold">
-              {editing
-                ? "Editar cliente"
-                : "Nuevo cliente"}
-            </ModalTitle>
-
-            <ModalDescription className="mt-1 text-sm text-muted-foreground">
-              {editing
-                ? "Actualiza los datos del cliente."
-                : "Registra un nuevo cliente."}
-            </ModalDescription>
+    <Modal open onOpenChange={open => { if (!open && !saving) onClose(); }}>
+      <ModalContent dismissible={!saving} showCloseButton={false} className="gap-0 p-0 md:max-w-2xl">
+        <div
+          className="flex items-start justify-between gap-3 border-b border-border-decorative bg-slate-50 p-5 sm:p-6"
+        >
+          <div className="flex min-w-0 items-center gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-brand-soft text-brand">
+              <UserRound aria-hidden="true" className="size-5" />
+            </div>
+            <div>
+              <ModalTitle className="text-lg font-semibold">
+                {editing ? "Editar cliente" : "Nuevo cliente"}
+              </ModalTitle>
+              <ModalDescription className="mt-1 text-sm">
+                {
+                  editing ? "Actualiza los datos de contacto del cliente." : "Registra sus datos para identificarlo en futuras compras."
+                }
+              </ModalDescription>
+            </div>
           </div>
-
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            aria-label="Cerrar cliente"
-            disabled={saving}
-            onClick={onClose}
-          >
-            <X className="h-4 w-4" />
+          <Button variant="ghost" size="icon-sm" aria-label="Cerrar cliente" disabled={saving} onClick={onClose}>
+            <X aria-hidden="true" />
           </Button>
         </div>
-
-        <form onSubmit={submit}><fieldset disabled={saving}>
-          <div className="grid gap-5 p-6 sm:grid-cols-2">
-            <label className="space-y-2">
-              <span className="text-sm font-medium">
-                Nombre *
-              </span>
-
-              <input
-                required
-                value={name}
-                onChange={(event) =>
-                  setName(event.target.value)
-                }
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">
-                Teléfono
-              </span>
-
-              <input
-                value={phone}
-                onChange={(event) =>
-                  setPhone(event.target.value)
-                }
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">
-                WhatsApp
-              </span>
-
-              <input
-                value={whatsapp}
-                onChange={(event) =>
-                  setWhatsapp(event.target.value)
-                }
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">
-                Correo
-              </span>
-
-              <input
-                type="email"
-                value={email}
-                onChange={(event) =>
-                  setEmail(event.target.value)
-                }
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="space-y-2">
-              <span className="text-sm font-medium">
-                Cumpleaños
-              </span>
-
-              <input
-                type="date"
-                value={birthday}
-                onChange={(event) =>
-                  setBirthday(event.target.value)
-                }
-                className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm outline-none focus:border-brand focus:ring-2 focus:ring-brand/20"
-              />
-            </label>
-
-            <label className="flex items-center gap-3 pt-7">
-              <input
-                type="checkbox"
-                checked={isActive}
-                onChange={(event) =>
-                  setIsActive(event.target.checked)
-                }
-                className="h-4 w-4"
-              />
-
-              <span className="text-sm font-medium">
-                Cliente activo
-              </span>
-            </label>
-          </div>
-
-          {error && (
-            <div role="alert" className="mx-6 mb-4 rounded-md border border-red-200 bg-red-50 p-3 text-sm text-red-700">
-              {error}
+        <form onSubmit={submit}>
+          <fieldset disabled={saving}>
+            <div className="space-y-5 p-5 sm:p-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Field label="Nombre" required className="sm:col-span-2">
+                  <Input
+                    required
+                    value={name}
+                    onChange={event => setName(event.target.value)}
+                    placeholder="Nombre completo"
+                    autoComplete="name"
+                  />
+                </Field>
+                <Field label="Teléfono" optional>
+                  <Input
+                    value={phone}
+                    onChange={event => setPhone(event.target.value)}
+                    inputMode="tel"
+                    autoComplete="tel"
+                  />
+                </Field>
+                <Field label="WhatsApp" optional>
+                  <Input value={whatsapp} onChange={event => setWhatsapp(event.target.value)} inputMode="tel" />
+                </Field>
+                <Field label="Correo" optional>
+                  <Input
+                    value={email}
+                    onChange={event => setEmail(event.target.value)}
+                    inputMode="email"
+                    autoComplete="email"
+                  />
+                </Field>
+                <Field label="Cumpleaños" optional>
+                  <Input type="date" value={birthday} onChange={event => setBirthday(event.target.value)} />
+                </Field>
+              </div>
+              <label
+                className="flex cursor-pointer items-start gap-3 rounded-xl border border-border-decorative bg-slate-50 p-4"
+              >
+                <input
+                  type="checkbox"
+                  checked={isActive}
+                  onChange={event => setIsActive(event.target.checked)}
+                  className="mt-0.5 size-4 accent-violet-600"
+                />
+                <span>
+                  <span className="block text-sm font-medium">
+                    Cliente activo
+                  </span>
+                  <span className="mt-1 block text-xs leading-5 text-text-secondary">
+                    Estado del cliente dentro del directorio.
+                  </span>
+                </span>
+              </label>
+              {
+                error && <div role="alert" className="admin-notice text-sm" data-tone="danger">
+                  {error}
+                </div>
+              }
             </div>
-          )}
-
-          <div className="flex justify-end gap-2 border-t p-4">
-            <Button
-              type="button"
-              variant="outline"
-              disabled={saving}
-              onClick={onClose}
-            >
-              Cancelar
-            </Button>
-
-            <Button
-              type="submit"
-              disabled={saving || !name.trim()}
-            >
-              {saving
-                ? "Guardando..."
-                : editing
-                  ? "Guardar cambios"
-                  : "Crear cliente"}
-            </Button>
-          </div>
-        </fieldset></form>
-      </>
-    </ModalContent></Modal>
+            <div className="admin-form-actions sticky bottom-0 border-t border-border-decorative bg-slate-50 p-4">
+              <Button type="button" variant="outline" disabled={saving} onClick={onClose}>
+                Cancelar
+              </Button>
+              <Button type="submit" loading={saving} loadingText="Guardando…" disabled={!name.trim()}>
+                <Save aria-hidden="true" />{editing ? "Guardar cambios" : "Crear cliente"}
+              </Button>
+            </div>
+          </fieldset>
+        </form>
+      </ModalContent>
+    </Modal>
   );
 }

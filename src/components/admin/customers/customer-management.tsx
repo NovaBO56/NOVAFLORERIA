@@ -1,12 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Plus, Users } from "lucide-react";
+import { LoaderCircle, Plus, UserCheck, Users } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatCard } from "@/components/ui/stat-card";
+import { Modal, ModalContent, ModalDescription, ModalTitle } from "@/components/ui/modal";
 
 import CustomerList from "./customer-list";
 import CustomerDetail from "./customer-detail";
@@ -92,12 +93,12 @@ export default function CustomerManagement() {
   }
 
   useEffect(() => {
-  const timer = window.setTimeout(() => {
-    void loadCustomers();
-  }, 0);
+    const timer = window.setTimeout(() => {
+      void loadCustomers();
+    }, 0);
 
-  return () => window.clearTimeout(timer);
-}, []);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   async function openCustomer(id: string) {
     try {
@@ -178,7 +179,7 @@ export default function CustomerManagement() {
         description="Administra la información y el historial de tus clientes."
         actions={
           <Button onClick={() => setShowCreate(true)}>
-            <Plus className="mr-2 h-4 w-4" />
+            <Plus aria-hidden="true" className="h-4 w-4" />
             Nuevo cliente
           </Button>
         }
@@ -186,39 +187,42 @@ export default function CustomerManagement() {
 
       <div className="grid gap-4 sm:grid-cols-2">
         <StatCard
-          label="Total clientes"
+          label="Clientes en la lista"
           value={String(customers.length)}
-          description="Clientes registrados"
+          description="Resultado de la consulta actual"
           icon={<Users className="h-5 w-5" />}
         />
 
         <StatCard
           label="Clientes activos"
           value={String(activeCustomers)}
-          description="Actualmente activos"
-          icon={<Users className="h-5 w-5" />}
+          description="Activos en la lista actual"
+          icon={<UserCheck className="h-5 w-5" />}
+          tone="success"
         />
       </div>
 
-      {error && (
-        <Card className="border-red-200 p-4">
-          <p className="font-medium text-red-700">
-            No se pudieron cargar los clientes
-          </p>
+      {
+        error && (
+          <Card className="border-red-200 p-4">
+            <p className="font-medium text-red-700">
+              No se pudieron cargar los clientes
+            </p>
 
-          <p className="mt-1 text-sm text-red-600">
-            {error}
-          </p>
+            <p className="mt-1 text-sm text-red-600">
+              {error}
+            </p>
 
-          <Button
-            className="mt-3"
-            variant="outline"
-            onClick={() => void loadCustomers()}
-          >
-            Reintentar
-          </Button>
-        </Card>
-      )}
+            <Button
+              className="mt-3"
+              variant="outline"
+              onClick={() => void loadCustomers()}
+            >
+              Reintentar
+            </Button>
+          </Card>
+        )
+      }
 
       <CustomerList
         customers={customers}
@@ -227,54 +231,65 @@ export default function CustomerManagement() {
         onView={(id) => void openCustomer(id)}
       />
 
-      {detailLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <Card className="p-6">
-            Cargando cliente...
-          </Card>
-        </div>
-      )}
+      {
+        detailLoading && (
+          <Modal open>
+            <ModalContent dismissible={false} showCloseButton={false} className="items-center py-10 text-center">
+              <LoaderCircle aria-hidden="true" className="size-7 animate-spin text-brand" />
+              <ModalTitle className="text-base">
+                Cargando cliente
+              </ModalTitle>
+              <ModalDescription role="status">
+                Obteniendo los datos y el historial de pedidos…
+              </ModalDescription>
+            </ModalContent>
+          </Modal>
+        )
+      }
 
-      {detailError && !detailLoading && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4">
-          <Card className="w-full max-w-md p-6">
-            <h2 className="font-semibold">
-              No se pudo cargar el cliente
-            </h2>
+      {
+        detailError && !detailLoading && (
+          <Modal open onOpenChange={open => { if (!open) setDetailError(""); }}>
+            <ModalContent>
+              <ModalTitle>
+                No se pudo cargar el cliente
+              </ModalTitle>
+              <ModalDescription>
+                {detailError}
+              </ModalDescription>
+              <div className="flex justify-end">
+                <Button variant="outline" onClick={() => setDetailError("")}>
+                  Cerrar
+                </Button>
+              </div>
+            </ModalContent>
+          </Modal>
+        )
+      }
 
-            <p className="mt-2 text-sm text-muted-foreground">
-              {detailError}
-            </p>
+      {
+        selectedCustomer && (
+          <CustomerDetail
+            data={selectedCustomer}
+            onClose={closeDetail}
+            onEdit={startEditing}
+            onCustomerUpdated={handleDeletedOrDisabled}
+          />
+        )
+      }
 
-            <Button
-              className="mt-4"
-              onClick={() => setDetailError("")}
-            >
-              Cerrar
-            </Button>
-          </Card>
-        </div>
-      )}
-
-      {selectedCustomer && (
-        <CustomerDetail
-          data={selectedCustomer}
-          onClose={closeDetail}
-          onEdit={startEditing}
-          onCustomerUpdated={handleDeletedOrDisabled}
-        />
-      )}
-
-      {(showCreate || editingCustomer) && (
-        <CustomerForm
-          customer={editingCustomer}
-          onClose={() => {
-            setShowCreate(false);
-            setEditingCustomer(null);
-          }}
-          onSaved={handleSaved}
-        />
-      )}
+      {
+        (showCreate || editingCustomer) && (
+          <CustomerForm
+            customer={editingCustomer}
+            onClose={() => {
+              setShowCreate(false);
+              setEditingCustomer(null);
+            }}
+            onSaved={handleSaved}
+          />
+        )
+      }
     </div>
   );
 }

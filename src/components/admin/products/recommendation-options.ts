@@ -1,3 +1,5 @@
+import { primaryProductImage } from "@/lib/product-images";
+
 export type RecommendationChoice = {
   id: string; name: string; price: number;
   is_active: boolean; is_available: boolean; is_sold_out: boolean;
@@ -5,7 +7,7 @@ export type RecommendationChoice = {
 };
 export function recommendationImage(product?: RecommendationChoice) {
   if (!product?.images) return undefined;
-  return [...product.images].sort((a,b) => a.sort_order-b.sort_order)[0]?.public_url ?? null;
+  return primaryProductImage(product.images)?.public_url ?? null;
 }
 export function recommendationStatus(product: RecommendationChoice) {
   if (!product.is_active) return "Inactivo";

@@ -1,11 +1,16 @@
 "use client";
 
 import { DedicationPreview } from "@/components/public/dedication-card";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { primaryProductImage, type ProductImageSource } from "@/lib/product-images";
 import type { Dedication } from "@/lib/public/dedications";
 import Link from "next/link";
 import { OrderReturns } from "./order-returns";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Eye, Search, TriangleAlert, X, Flower2, CalendarDays, Printer } from "lucide-react";
+import { EmptyState } from "@/components/ui/empty-state";
 import { OrderOverview } from "./order-overview";
 import { Badge, type OrderStatus } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -62,6 +67,7 @@ type PersonalizationOption = {
 
 type OrderItem = {
   id: string;
+  product?: OneOrMany<{ images?: ProductImageSource[] | null }>;
   product_name_snapshot: string;
   unit_price_snapshot: number;
   quantity: number;
@@ -186,7 +192,7 @@ export function OrdersPanel({ role, initialStatus, initialSearch, initialPending
       <OrderOverview refreshToken={orders} />
       <section aria-label="Listado de pedidos" className="admin-orders-surface overflow-hidden rounded-2xl border border-border-decorative bg-surface shadow-sm">
       <div className="bg-surface flex flex-col gap-0">
-        <div className="admin-order-tabs flex overflow-x-auto gap-1 border-b border-border-decorative px-4 pt-3">
+        <div className="admin-tabs px-4">
           {STATUS_CHIPS.map((chip) => (
             <Button
               key={chip.value}
@@ -205,6 +211,7 @@ export function OrdersPanel({ role, initialStatus, initialSearch, initialPending
               key={chip.value}
               size="sm"
               variant={typeFilter === chip.value ? "secondary" : "ghost"}
+              aria-pressed={typeFilter === chip.value}
               onClick={() => { setPage(1); setTypeFilter(chip.value); }}
             >
               {chip.label}
@@ -237,13 +244,13 @@ export function OrdersPanel({ role, initialStatus, initialSearch, initialPending
       <p className="border-y border-border-decorative bg-slate-50/50 px-4 py-2 text-xs leading-5 text-text-secondary">Primero revisa los <strong className="text-text">pagos por verificar</strong> en el banco. Reportar un pago no lo confirma. Los pedidos confirmados pueden pasar a preparación, luego a listo y finalmente a entrega o recojo.</p>
 
       {loading ? (
-        <div className="flex flex-col gap-2">
+        <div role="status" aria-label="Cargando pedidos" className="flex flex-col gap-2 p-4">
           {Array.from({ length: 5 }).map((_, index) => (
             <Card key={index} className="h-14 animate-pulse" />
           ))}
         </div>
       ) : error ? (
-        <Card className="items-center gap-2 text-center">
+        <Card role="alert" className="m-4 items-center gap-2 text-center">
           <TriangleAlert aria-hidden="true" className="size-8 stroke-[1.5] text-danger" />
           <p className="text-text-secondary">{error}</p>
           <Button variant="outline" onClick={() => void loadOrders()}>
@@ -251,10 +258,7 @@ export function OrdersPanel({ role, initialStatus, initialSearch, initialPending
           </Button>
         </Card>
       ) : filteredOrders.length === 0 ? (
-        <Card className="items-center gap-1 text-center">
-          <p className="text-text">No hay pedidos con este filtro.</p>
-          <p className="text-text-secondary">Prueba con otro estado o limpia la búsqueda.</p>
-        </Card>
+        <EmptyState icon={<Search />} title="No hay pedidos con este filtro" description="Prueba con otro estado o limpia la búsqueda para ver más resultados." />
       ) : (
         <>
           <div className="hidden overflow-x-auto md:block">
@@ -288,10 +292,10 @@ export function OrdersPanel({ role, initialStatus, initialSearch, initialPending
                       }}
                       onClick={() => setSelectedId(order.id)}
                     >
-                      <TableCell><span className="rounded-lg bg-brand-soft px-2 py-1 text-xs font-bold text-brand">#{order.order_number}</span><p className="mt-2 whitespace-nowrap text-[10px] text-text-secondary">{formatDateTime(order.created_at)}</p></TableCell>
-                      <TableCell><div className="flex items-center gap-3"><span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-[10px] font-bold text-brand">{(customer?.name ?? "Cliente").split(/\s+/).map(part => part[0]).slice(0, 2).join("").toUpperCase()}</span><div><p className="font-semibold">{customer?.name ?? "Cliente anónimo"}</p><p className="mt-1 text-[11px] text-text-secondary">{customer?.phone}</p></div></div></TableCell>
-                      <TableCell><span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-[10px] font-medium text-blue-700">{order.order_type === "online" ? "Online" : "Tienda"}</span></TableCell>
-                      <TableCell><p className="text-xs font-medium">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p></TableCell><TableCell><span className={`inline-flex rounded-full border px-2 py-1 text-[10px] font-medium ${pendingPaymentByOrder.has(order.id) ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border-decorative bg-slate-50 text-text-secondary"}`}>{paymentLabel(order)}</span></TableCell>
+                      <TableCell><span className="rounded-lg bg-brand-soft px-2 py-1 text-xs font-bold text-brand">#{order.order_number}</span><p className="mt-2 whitespace-nowrap text-xs text-text-secondary">{formatDateTime(order.created_at)}</p></TableCell>
+                      <TableCell><div className="flex items-center gap-3"><span aria-hidden className="grid size-8 shrink-0 place-items-center rounded-full bg-brand-soft text-xs font-bold text-brand">{(customer?.name ?? "Cliente").split(/\s+/).map(part => part[0]).slice(0, 2).join("").toUpperCase()}</span><div><p className="font-semibold">{customer?.name ?? "Cliente anónimo"}</p><p className="mt-1 text-xs text-text-secondary">{customer?.phone}</p></div></div></TableCell>
+                      <TableCell><span className="rounded-full border border-blue-100 bg-blue-50 px-2 py-1 text-xs font-medium text-blue-700">{order.order_type === "online" ? "Online" : "Tienda"}</span></TableCell>
+                      <TableCell><p className="text-xs font-medium">{order.order_type === "fisica" ? "Venta en tienda" : orderDelivery(order.customer_message).methodLabel}</p></TableCell><TableCell><span className={`inline-flex rounded-full border px-2 py-1 text-xs font-medium ${pendingPaymentByOrder.has(order.id) ? "border-amber-200 bg-amber-50 text-amber-800" : "border-border-decorative bg-slate-50 text-text-secondary"}`}>{paymentLabel(order)}</span></TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
                           <Badge status={order.status} />
@@ -460,7 +464,7 @@ function OrderDetailModal({
       setPendingAction(null);
       setReason("");
       onChanged();
-      setActionSuccess("Acción registrada por el servidor.");
+      setActionSuccess(url.includes("/confirm") ? "Pago verificado y confirmado. El pedido se actualizó." : url.includes("/reject") ? "Pago rechazado. El motivo quedó registrado." : url.includes("/cancel") ? "Pedido cancelado. El motivo quedó registrado." : url.includes("/status") ? "Estado del pedido actualizado." : "Solicitud registrada correctamente.");
       if (orderId) await refreshDetail().catch(() => setActionError("La acción se registró, pero no se pudo actualizar la vista. Vuelve a abrir el pedido antes de otra acción."));
     } catch (err) {
       setActionError(err instanceof Error ? err.message : "No se pudo completar la acción.");
@@ -490,9 +494,9 @@ function OrderDetailModal({
         </ModalHeader>
 
         {loading ? (
-          <p className="text-text-secondary">Cargando…</p>
+          <p role="status" className="p-6 text-text-secondary">Cargando detalle del pedido…</p>
         ) : error ? (
-          <p className="text-danger">{error}</p>
+          <div className="p-6"><Notice tone="error">{friendlyErrorMessage(error, "No pudimos abrir este pedido. Vuelve a intentarlo.")}</Notice></div>
         ) : order ? (
           <><div className="order-dialog-body">
             <div className="grid min-w-0 gap-4 sm:grid-cols-2"><OrderContact order={order} customer={first(order.customer)} schedule={order} /><OrderPayment order={order} /></div>
@@ -502,7 +506,7 @@ function OrderDetailModal({
               <div className="order-products-heading"><h3>Detalle de productos</h3><span>{order.order_items.length} {order.order_items.length === 1 ? "artículo" : "artículos"}</span></div>
               {order.order_items.map((item) => (
                 <article key={item.id} className="order-product-card">
-                  <div className="order-product-heading"><span className="order-product-icon"><Flower2 aria-hidden /></span>
+                  <div className="order-product-heading"><ProductThumbnail src={primaryProductImage(first(item.product)?.images)?.public_url} alt={item.product_name_snapshot} size="md" preview />
                     <span className="min-w-0 flex-1 break-words text-text">
                       {item.quantity} × {item.product_name_snapshot}
                     </span>
@@ -566,7 +570,7 @@ function OrderDetailModal({
               </div>
             )}
 
-            {order.inventory_review_required && <p role="alert" className="rounded-xl border border-danger/30 bg-danger/5 p-3 text-sm text-danger">Este pedido antiguo tenía una receta incompleta. Revisa Productos → Receta y su reserva original antes de resolverlo con el administrador. Cambiar la receta ahora no reconstruye su consumo histórico; la confirmación está bloqueada para proteger el inventario.</p>}
+            {order.inventory_review_required && <Notice tone="warning" title="Revisión de inventario necesaria">Este pedido antiguo tiene una composición incompleta. Revisa su receta y existencias con un administrador antes de confirmar el pago. Editar la receta actual no corrige los movimientos de este pedido.</Notice>}
             {order.cancellation_reason && (
               <p className="text-sm text-text-secondary">Motivo: {order.cancellation_reason}</p>
             )}
@@ -578,8 +582,8 @@ function OrderDetailModal({
               {order.receipt_token ? <><Button asChild variant="outline"><Link href={`/api/admin/orders/${order.id}/receipt`} target="_blank" rel="noopener noreferrer">Ver / descargar recibo</Link></Button>{whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null) && <Button variant="outline" disabled={busy} onClick={() => { const url = new URL(`/api/orders/receipt/${order.receipt_token}`, window.location.origin).href; const link = whatsappLink(first(order.customer)?.whatsapp || first(order.customer)?.phone || null, `Floristería Anabelle · Recibo del pedido #${order.order_number}: ${url}`); if (link) window.open(link, "_blank", "noopener,noreferrer"); setActionSuccess("Mensaje con recibo preparado para WhatsApp. Debes enviarlo manualmente."); }}>Preparar recibo por WhatsApp</Button>}</> : <p className="text-sm text-text-secondary">El recibo de pago está disponible únicamente después de la confirmación.</p>}
               {order.status === "cancelado" && <Button variant="outline" disabled={busy} onClick={() => setPendingAction("request-deletion")}>Solicitar eliminación</Button>}
             </div></details>
-            {actionSuccess && <p role="status" className="text-sm text-leaf">{actionSuccess}</p>}
-            {actionError && <p role="alert" className="text-sm text-danger">{actionError}</p>}
+            {actionSuccess && <Notice tone="success" onDismiss={() => setActionSuccess("")}>{actionSuccess}</Notice>}
+            {actionError && <Notice tone="error">{friendlyErrorMessage(actionError)}</Notice>}
 
           </div><fieldset disabled={busy} className="order-dialog-actions">{pendingAction === "confirm-payment" && pendingPayment ? (
               <div className="flex flex-col gap-3 rounded-2xl border border-brand/20 bg-brand-soft p-4">

@@ -52,10 +52,10 @@ export function AdminNavList({ sections, onNavigate }: AdminNavListProps) {
   const pathname = usePathname();
 
   return (
-    <nav aria-label="Navegación del panel" className="flex-1 overflow-y-auto px-3 py-2">
+    <nav aria-label="Navegación del panel" className="admin-nav flex-1 overflow-y-auto">
       {sections.map((section) => (
-        <div key={section.id} className="pb-2">
-          <p className="px-3 pt-5 pb-2 text-[11px] leading-[1.4] font-semibold tracking-[0.08em] text-text-secondary uppercase">
+        <div key={section.id} className="admin-nav-group">
+          <p className="admin-nav-label">
             {section.label}
           </p>
           <ul className="flex flex-col gap-0.5">
@@ -70,7 +70,7 @@ export function AdminNavList({ sections, onNavigate }: AdminNavListProps) {
                     onClick={onNavigate}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
+                      "admin-nav-link flex min-h-10 items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-colors duration-150 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand",
                       active
                         ? "bg-brand-soft text-brand"
                         : "text-text hover:bg-brand-soft"

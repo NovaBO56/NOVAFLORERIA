@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Minus, Plus, Search, TriangleAlert, X } from "lucide-react";
+import { Banknote, CheckCircle2, Minus, Plus, QrCode, ReceiptText, Search, ShoppingBag, TriangleAlert, UserRound, Wallet, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { EmptyState } from "@/components/ui/empty-state";
+import { SectionCard } from "@/components/ui/section-card";
 import { Field, Input, Textarea } from "@/components/ui/field";
 import { formatMoney } from "@/lib/format";
 
@@ -17,11 +20,11 @@ type Product = {
   is_sold_out: boolean;
 };
 
-type Customer = { id: string; name: string; phone: string | null };
+type Customer = { id: string; name: string; phone: string | null; };
 
-type CartLine = { product: Product; quantity: number };
+type CartLine = { product: Product; quantity: number; };
 
-type SaleResult = { id: string; order_number: number; subtotal: number; discount_total: number; total: number };
+type SaleResult = { id: string; order_number: number; subtotal: number; discount_total: number; total: number; };
 
 /** Ventas físicas: caja abierta, descuento manual o promoción vigente. */
 export function SalesPanel() {
@@ -55,29 +58,42 @@ export function SalesPanel() {
   }, []);
 
   if (checkingSession) {
-    return <Card className="h-32 animate-pulse" />;
+    return <Card className="h-48 animate-pulse" role="status" aria-label="Verificando sesión de caja" />;
   }
 
   if (sessionError) {
     return (
-      <Card className="items-center gap-2 text-center">
-        <TriangleAlert aria-hidden="true" className="size-8 stroke-[1.5] text-danger" />
-        <p className="text-text-secondary">{sessionError}</p>
+      <Card className="border-red-200 bg-red-50/50">
+        <div className="flex items-start gap-3" role="alert">
+          <TriangleAlert aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-danger" />
+          <div>
+            <p className="font-semibold">
+              No se pudo verificar la caja
+            </p>
+            <p className="mt-1 text-sm text-text-secondary">
+              {sessionError}
+            </p>
+          </div>
+        </div>
       </Card>
     );
   }
 
   if (!sessionOpen) {
     return (
-      <Card className="items-center gap-3 text-center">
-        <TriangleAlert aria-hidden="true" className="size-8 stroke-[1.5] text-[#B98900]" />
-        <div>
-          <p className="text-text">Abre una sesión de caja primero.</p>
-          <p className="text-text-secondary">No puedes registrar ventas físicas sin una caja abierta.</p>
-        </div>
-        <Button asChild>
-          <Link href="/admin/caja">Ir a Caja</Link>
-        </Button>
+      <Card className="gap-0 p-0">
+        <EmptyState
+          icon={<Wallet />}
+          title="Abre la caja para empezar a vender"
+          description="Las ventas presenciales necesitan una sesión de caja abierta. Registra el efectivo inicial de tu turno y vuelve aquí para cobrar."
+          action={
+            <Button asChild>
+              <Link href="/admin/caja">
+                Ir a Caja
+              </Link>
+            </Button>
+          }
+        />
       </Card>
     );
   }
@@ -96,7 +112,7 @@ function SaleForm() {
   const [customerResults, setCustomerResults] = useState<Customer[]>([]);
   const [customer, setCustomer] = useState<Customer | null>(null);
 
-  const [promotions, setPromotions] = useState<{id:string;name:string}[]>([]);
+  const [promotions, setPromotions] = useState<{ id: string; name: string; }[]>([]);
   const [promotionId, setPromotionId] = useState("");
   const [promotionError, setPromotionError] = useState("");
   const submitLock = useRef(false);
@@ -159,12 +175,15 @@ function SaleForm() {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetch("/api/promotions",{signal:controller.signal}).then(async response => {
-      const body=await response.json(); if(!response.ok) throw Error(body.message || "No se pudieron cargar las promociones.");
-      if(!controller.signal.aborted) setPromotions(body.promotions || []);
-    }).catch(cause=>{if(!controller.signal.aborted) setPromotionError(cause instanceof Error ? cause.message : "No se pudieron cargar las promociones.");});
-    return ()=>controller.abort();
-  },[]);
+    fetch("/api/promotions", { signal: controller.signal }).then(async response => {
+      const body = await response.json();
+      if (!response.ok) throw Error(body.message || "No se pudieron cargar las promociones.");
+      if (!controller.signal.aborted) setPromotions(body.promotions || []);
+    }).catch(cause => {
+      if (!controller.signal.aborted) setPromotionError(cause instanceof Error ? cause.message : "No se pudieron cargar las promociones.");
+    });
+    return () => controller.abort();
+  }, []);
   function addProduct(product: Product) {
     if (!product.is_active || !product.is_available || product.is_sold_out) return;
     setCart((current) => {
@@ -239,10 +258,24 @@ function SaleForm() {
 
   if (result) {
     return (
-      <Card className="items-center gap-3 text-center">
-        <p role="status" className="nova-enter text-text">Venta #{result.order_number} registrada.</p>
-        <p className="text-2xl font-semibold tabular-nums text-text">{formatMoney(result.total)}</p>
-        <Button onClick={resetForm}>Nueva venta</Button>
+      <Card className="items-center gap-4 py-10 text-center">
+        <div className="flex size-14 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+          <CheckCircle2 aria-hidden="true" className="size-7" />
+        </div>
+        <div>
+          <p role="status" className="nova-enter text-lg font-semibold text-text">
+            Venta #{result.order_number} registrada.
+          </p>
+          <p className="mt-1 text-sm text-text-secondary">
+            El cobro quedó registrado en la sesión de caja.
+          </p>
+        </div>
+        <p className="text-3xl font-bold tabular-nums text-text">
+          {formatMoney(result.total)}
+        </p>
+        <Button onClick={resetForm}>
+          <Plus aria-hidden="true" />Nueva venta
+        </Button>
       </Card>
     );
   }
@@ -250,140 +283,215 @@ function SaleForm() {
   const canSubmit = cart.length > 0 && (!manualDiscount || (Number(discountAmount) > 0 && discountReason.trim() !== ""));
 
   return (
-    <fieldset disabled={submitting} className="grid min-w-0 gap-4 lg:grid-cols-[minmax(0,1.4fr)_minmax(0,1fr)]">
-      <div className="flex flex-col gap-3">
-        <div className="relative">
-          <Search
-            aria-hidden="true"
-            className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary"
-          />
-          <Input
-            aria-label="Buscar producto"
-            placeholder="Buscar producto"
-            className="pl-9"
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-          />
-        </div>
-
-        {searching ? (
-          <p className="text-text-secondary">Buscando…</p>
-        ) : (
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-            {results.map((product) => {
-              const unavailable = !product.is_active || !product.is_available || product.is_sold_out;
-              return (
-                <Card key={product.id} className="gap-2 p-3">
-                  <p className="text-sm font-medium text-text">{product.name}</p>
-                  <p className="tabular-nums text-text-secondary">{formatMoney(product.price)}</p>
-                  {unavailable ? (
-                    <span className="text-[13px] text-danger">Agotado</span>
-                  ) : (
-                    <Button size="sm" variant="secondary" onClick={() => addProduct(product)}>
-                      Agregar
-                    </Button>
-                  )}
-                </Card>
-              );
-            })}
+    <fieldset
+      disabled={submitting}
+      className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(0,1.25fr)_minmax(22rem,1fr)]"
+    >
+      <SectionCard
+        title="Seleccionar productos"
+        description="Busca en el catálogo y agrega los productos a la venta."
+      >
+        <div className="space-y-4">
+          <div className="relative">
+            <Search
+              aria-hidden="true"
+              className="pointer-events-none absolute top-1/2 left-3 size-4 -translate-y-1/2 text-text-secondary"
+            />
+            <Input
+              aria-label="Buscar producto"
+              placeholder="Buscar por nombre de producto…"
+              className="pl-9"
+              value={search}
+              onChange={(event) => setSearch(event.target.value)}
+            />
           </div>
-        )}
-      </div>
+          {
+            searching ? (
+              <div role="status" className="grid gap-3 sm:grid-cols-2">
+                <span className="sr-only">
+                  Buscando productos…
+                </span>{[0, 1, 2, 3].map(index => <div key={index} className="h-32 animate-pulse rounded-xl bg-slate-100" />)}
+              </div>
+            ) : results.length > 0 ? (
+              <div className="grid gap-3 sm:grid-cols-2 2xl:grid-cols-3">
+                {
+                  results.map((product) => {
+                    const unavailable = !product.is_active || !product.is_available || product.is_sold_out;
+                    return (
+                      <Card key={product.id} className="justify-between gap-3 p-4 shadow-none">
+                        <div>
+                          <p className="break-words text-sm font-semibold text-text">
+                            {product.name}
+                          </p>
+                          <p className="mt-2 text-base font-semibold tabular-nums text-text">
+                            {formatMoney(product.price)}
+                          </p>
+                        </div>
+                        {
+                          unavailable ? <Badge variant="outline" className="border-red-100 bg-red-50 text-red-700">
+                            No disponible
+                          </Badge> : <Button size="sm" variant="secondary" onClick={() => addProduct(product)}>
+                            <Plus aria-hidden="true" />Agregar
+                          </Button>
+                        }
+                      </Card>
+                    );
+                  })
+                }
+              </div>
+            ) : <EmptyState
+              icon={<ShoppingBag />}
+              title={search.trim() ? "No se encontraron productos" : "Encuentra un producto"}
+              description={
+                search.trim() ? "Prueba con otro nombre para buscar en el catálogo." : "Escribe su nombre en el buscador. Los productos disponibles aparecerán aquí."
+              }
+            />
+          }
+        </div>
+      </SectionCard>
 
-      <Card className="gap-4">
-        <CardHeader>
-          <CardTitle className="text-base">Venta actual</CardTitle>
+      <Card className="gap-5 xl:sticky xl:top-24">
+        <CardHeader className="border-b border-border-decorative pb-4">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle className="flex items-center gap-2 text-base">
+              <ReceiptText aria-hidden="true" className="size-5 text-brand" />Venta actual
+            </CardTitle>
+            <Badge variant="outline">
+              {cart.reduce((count, line) => count + line.quantity, 0)} unidades
+            </Badge>
+          </div>
+          <CardDescription>
+            Revisa los productos y el método de cobro.
+          </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col gap-4">
-          {cart.length === 0 ? (
-            <p className="text-text-secondary">Agrega productos para empezar.</p>
-          ) : (
-            <div className="flex flex-col gap-2">
-              {cart.map((line) => (
-                <div key={line.product.id} className="flex items-center justify-between gap-2 text-sm">
-                  <span className="min-w-0 flex-1 truncate text-text">{line.product.name}</span>
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Quitar una unidad"
-                      onClick={() => updateQuantity(line.product.id, line.quantity - 1)}
-                    >
-                      <Minus aria-hidden="true" />
-                    </Button>
-                    <span className="w-6 text-center tabular-nums">{line.quantity}</span>
-                    <Button
-                      variant="ghost"
-                      size="icon-sm"
-                      aria-label="Agregar una unidad"
-                      onClick={() => updateQuantity(line.product.id, line.quantity + 1)}
-                    >
-                      <Plus aria-hidden="true" />
-                    </Button>
-                  </div>
-                  <span className="w-16 text-right tabular-nums text-text-secondary">
-                    {formatMoney(Number(line.product.price) * line.quantity)}
+        <CardContent className="flex flex-col gap-5">
+          {
+            cart.length === 0 ? <div
+              className="rounded-xl border border-dashed border-border-decorative bg-slate-50 p-5 text-center text-sm text-text-secondary"
+            >
+              Agrega productos desde el catálogo para empezar.
+            </div> : (
+              <div className="divide-y divide-border-decorative">
+                {
+                  cart.map((line) => (
+                    <div key={line.product.id} className="flex flex-col gap-2 py-3 first:pt-0 last:pb-0">
+                      <div className="flex items-start justify-between gap-3">
+                        <span className="min-w-0 break-words text-sm font-medium text-text">
+                          {line.product.name}
+                        </span>
+                        <span className="shrink-0 text-sm font-semibold tabular-nums text-text">
+                          {formatMoney(Number(line.product.price) * line.quantity)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-3">
+                        <span className="text-xs text-text-secondary">
+                          {formatMoney(line.product.price)} / unidad
+                        </span>
+                        <div className="flex items-center gap-1 rounded-lg border border-border-decorative bg-slate-50">
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={"Quitar una unidad de " + line.product.name}
+                            onClick={() => updateQuantity(line.product.id, line.quantity - 1)}
+                          >
+                            <Minus aria-hidden="true" />
+                          </Button>
+                          <span className="min-w-6 text-center text-sm font-medium tabular-nums">
+                            {line.quantity}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            aria-label={"Agregar una unidad de " + line.product.name}
+                            onClick={() => updateQuantity(line.product.id, line.quantity + 1)}
+                          >
+                            <Plus aria-hidden="true" />
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  ))
+                }
+              </div>
+            )
+          }
+
+          <div className="space-y-2 border-t border-border-decorative pt-4">
+            {
+              customer ? <div
+                className="flex items-center justify-between gap-3 rounded-xl border border-border-decorative bg-slate-50 p-3"
+              >
+                <div className="flex min-w-0 items-center gap-2">
+                  <UserRound aria-hidden="true" className="size-4 shrink-0 text-text-secondary" />
+                  <span className="break-words text-sm font-medium">
+                    {customer.name}
                   </span>
                 </div>
-              ))}
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2 border-t border-border-decorative pt-3">
-            {customer ? (
-              <div className="flex items-center justify-between gap-2 text-sm">
-                <span className="text-text">Cliente: {customer.name}</span>
                 <Button variant="ghost" size="icon-sm" aria-label="Quitar cliente" onClick={() => setCustomer(null)}>
                   <X aria-hidden="true" />
                 </Button>
+              </div> : (
+                <Field label="Cliente" optional>
+                  <Input
+                    aria-label="Buscar cliente (opcional)"
+                    placeholder="Buscar cliente por nombre o teléfono"
+                    value={customerSearch}
+                    onChange={(event) => setCustomerSearch(event.target.value)}
+                  />
+                </Field>
+              )
+            }
+            {
+              customerResults.length > 0 && !customer && <div className="max-h-48 overflow-y-auto rounded-xl border border-border-decorative p-1">
+                {
+                  customerResults.map(c => <Button
+                    key={c.id}
+                    variant="ghost"
+                    size="sm"
+                    className="h-auto min-h-10 w-full justify-start whitespace-normal text-left"
+                    onClick={() => { setCustomer(c); setCustomerSearch(""); setCustomerResults([]); }}
+                  >
+                    {c.name} {c.phone ? "· " + c.phone : ""}
+                  </Button>)
+                }
               </div>
-            ) : (
-              <div className="flex flex-col gap-1">
-                <Input
-                  aria-label="Buscar cliente (opcional)"
-                  placeholder="Buscar cliente (opcional)"
-                  value={customerSearch}
-                  onChange={(event) => setCustomerSearch(event.target.value)}
-                />
-                {customerResults.length > 0 && (
-                  <div className="flex flex-col gap-1">
-                    {customerResults.map((c) => (
-                      <Button
-                        key={c.id}
-                        variant="ghost"
-                        size="sm"
-                        className="justify-start"
-                        onClick={() => {
-                          setCustomer(c);
-                          setCustomerSearch("");
-                          setCustomerResults([]);
-                        }}
-                      >
-                        {c.name} {c.phone ? `· ${c.phone}` : ""}
-                      </Button>
-                    ))}
-                  </div>
-                )}
-              </div>
-            )}
+            }
           </div>
 
-          <Field label="Promoción" hint="No se acumula con descuento manual. El servidor valida elegibilidad y total definitivo.">
-            <select value={promotionId} onChange={event=>{setPromotionId(event.target.value);setManualDiscount(false);}} className="h-11 w-full min-w-0 rounded-xl border border-border-field bg-surface px-3 focus-visible:outline-2 focus-visible:outline-brand">
-              <option value="">Sin promoción</option>{promotions.map(promotion=><option key={promotion.id} value={promotion.id}>{promotion.name}</option>)}
-            </select>
-          </Field>
-          {promotionError && <p role="alert" className="text-danger">{promotionError}</p>}          <div className="flex flex-col gap-2 border-t border-border-decorative pt-3">
+          <div className="space-y-3 border-t border-border-decorative pt-4">
+            <Field
+              label="Promoción"
+              hint="No se acumula con descuento manual. La promoción y su importe se validan al registrar la venta."
+            >
+              <select
+                value={promotionId}
+                onChange={event => { setPromotionId(event.target.value); setManualDiscount(false); }}
+                className="h-11 w-full min-w-0 rounded-xl border border-border-field bg-surface px-3 text-sm focus-visible:outline-2 focus-visible:outline-brand"
+              >
+                <option value="">
+                  Sin promoción
+                </option>{
+                  promotions.map(promotion => <option key={promotion.id} value={promotion.id}>
+                    {promotion.name}
+                  </option>)
+                }
+              </select>
+            </Field>
+            {
+              promotionError && <p role="alert" className="text-sm text-danger">
+                {promotionError}
+              </p>
+            }
             <Button
               size="sm"
               variant={manualDiscount ? "secondary" : "outline"}
               aria-pressed={manualDiscount}
-              onClick={() => { setManualDiscount((current) => !current); setPromotionId(""); }}
+              onClick={() => { setManualDiscount(current => !current); setPromotionId(""); }}
             >
               Descuento manual
             </Button>
-            {manualDiscount && (
-              <div className="flex flex-col gap-2">
+            {
+              manualDiscount && <div className="space-y-3 rounded-xl border border-border-decorative bg-slate-50 p-3">
                 <Field label="Monto del descuento">
                   <Input
                     type="number"
@@ -397,54 +505,75 @@ function SaleForm() {
                   <Textarea value={discountReason} onChange={(event) => setDiscountReason(event.target.value)} />
                 </Field>
               </div>
-            )}
+            }
           </div>
 
-          <div className="flex flex-col gap-2 border-t border-border-decorative pt-3">
-            <p className="text-[13px] leading-[1.4] font-medium tracking-[0.02em] text-text-secondary uppercase">
+          <div className="space-y-2 border-t border-border-decorative pt-4">
+            <p className="text-sm font-medium">
               Método de pago
             </p>
-            <div className="flex gap-2">
+            <div className="grid grid-cols-2 gap-2">
               <Button
-                size="sm"
-                variant={paymentMethod === "efectivo" ? "default" : "outline"}
+                variant={paymentMethod === "efectivo" ? "secondary" : "outline"}
                 aria-pressed={paymentMethod === "efectivo"}
                 onClick={() => setPaymentMethod("efectivo")}
               >
-                Efectivo
+                <Banknote aria-hidden="true" />Efectivo
               </Button>
               <Button
-                size="sm"
-                variant={paymentMethod === "qr" ? "default" : "outline"}
+                variant={paymentMethod === "qr" ? "secondary" : "outline"}
                 aria-pressed={paymentMethod === "qr"}
                 onClick={() => setPaymentMethod("qr")}
               >
-                QR
+                <QrCode aria-hidden="true" />QR
               </Button>
             </div>
           </div>
 
-          <div className="flex flex-col gap-1 border-t border-border-decorative pt-3 text-sm">
-            <div className="flex justify-between">
-              <span className="text-text-secondary">Subtotal</span>
-              <span className="tabular-nums">{formatMoney(subtotal)}</span>
+          <div className="space-y-2 rounded-xl border border-border-decorative bg-slate-50 p-4 text-sm">
+            <div className="flex justify-between gap-3">
+              <span className="text-text-secondary">
+                Subtotal
+              </span>
+              <span className="tabular-nums">
+                {formatMoney(subtotal)}
+              </span>
             </div>
-            {discount > 0 && (
-              <div className="flex justify-between">
-                <span className="text-text-secondary">Descuento</span>
-                <span className="tabular-nums">-{formatMoney(discount)}</span>
+            {
+              discount > 0 && <div className="flex justify-between gap-3">
+                <span className="text-text-secondary">
+                  Descuento
+                </span>
+                <span className="tabular-nums text-emerald-700">
+                  -{formatMoney(discount)}
+                </span>
               </div>
-            )}
-            <div className="flex justify-between text-base font-semibold text-text">
-              <span>{promotionId ? "Total antes de promoción" : "Total"}</span>
-              <span className="tabular-nums">{formatMoney(total)}</span>
+            }
+            <div
+              className="flex flex-wrap items-center justify-between gap-2 border-t border-border-decorative pt-3"
+            >
+              <span className="font-semibold">
+                {promotionId ? "Total antes de promoción" : "Total a cobrar"}
+              </span>
+              <span className="text-2xl font-bold tabular-nums text-text">
+                {formatMoney(total)}
+              </span>
             </div>
           </div>
-
-          {error && <p role="alert" className="text-sm text-danger">{error}</p>}
-
-          <Button size="lg" loading={submitting} disabled={!canSubmit} onClick={() => void submit()}>
-            Cobrar
+          {
+            error && <p role="alert" className="admin-notice text-sm" data-tone="danger">
+              {error}
+            </p>
+          }
+          <Button
+            size="lg"
+            className="w-full"
+            loading={submitting}
+            loadingText="Registrando venta…"
+            disabled={!canSubmit}
+            onClick={() => void submit()}
+          >
+            <ReceiptText aria-hidden="true" />Cobrar
           </Button>
         </CardContent>
       </Card>

@@ -1,0 +1,20 @@
+{
+  "scope": "Sólo evaluación en memoria de la expresión URL del proxy; no HTTP, no sesión ni modificación de aplicación",
+  "cases": [
+    {
+      "redirect": "//auditoria.example.test",
+      "host": "auditoria.example.test",
+      "crossOrigin": true
+    },
+    {
+      "redirect": "/\\auditoria.example.test",
+      "host": "auditoria.example.test",
+      "crossOrigin": true
+    },
+    {
+      "redirect": "/admin/pedidos",
+      "host": "floreria.example.test",
+      "crossOrigin": false
+    }
+  ]
+}

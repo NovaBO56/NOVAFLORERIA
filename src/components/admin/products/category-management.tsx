@@ -1,6 +1,13 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { SectionCard } from "@/components/ui/section-card";
+import { EmptyState } from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,6 +34,7 @@ const initialForm: CategoryForm = {
 
 export default function CategoryManagement() {
   const [categories, setCategories] = useState<Category[]>([]);
+  const [categoryImages, setCategoryImages] = useState<Record<string, string>>({});
   const [form, setForm] = useState<CategoryForm>(initialForm);
   const [editingCategory, setEditingCategory] =
     useState<Category | null>(null);
@@ -66,11 +74,16 @@ export default function CategoryManagement() {
   }
 
   useEffect(() => {
+    const controller = new AbortController();
+    void fetch("/api/storefront-media", { signal: controller.signal })
+      .then(response => response.json())
+      .then(result => { if (!controller.signal.aborted && result.success) setCategoryImages(result.media?.categories ?? {}); })
+      .catch(() => { /* Category data remains usable without optional covers. */ });
     const timeoutId = setTimeout(() => {
       void loadCategories();
     }, 0);
 
-    return () => clearTimeout(timeoutId);
+    return () => { clearTimeout(timeoutId); controller.abort(); };
   }, []);
 
   function handleInputChange(
@@ -229,11 +242,11 @@ export default function CategoryManagement() {
   }
 
   return (
-    <div className="flex flex-col gap-6">
-      <Card>
+    <div className="grid min-w-0 items-start gap-6 xl:grid-cols-[minmax(18rem,0.8fr)_minmax(0,1.2fr)]">
+      <Card className="min-w-0">
         <CardHeader>
           <CardTitle>{editingCategory ? "Editar categoría" : "Nueva categoría"}</CardTitle>
-          <p className="text-text-secondary">
+          <p className="text-sm leading-6 text-text-secondary">
             {editingCategory
               ? "Modifica los datos de la categoría seleccionada."
               : "Crea una categoría para organizar los productos del catálogo."}
@@ -242,7 +255,15 @@ export default function CategoryManagement() {
 
         <CardContent>
           <form onSubmit={handleSubmit} className="flex flex-col gap-5">
-            <Field label="Nombre">
+            <div className="flex items-center gap-4 rounded-xl border border-border-decorative bg-bg-admin p-3">
+              <ProductThumbnail src={editingCategory ? categoryImages[editingCategory.id] : null} alt={editingCategory?.name || form.name || "Portada de categoría"} kind="category" size="lg" preview />
+              <div className="min-w-0 text-sm">
+                <p className="font-semibold">Portada de la categoría</p>
+                <p className="mt-1 text-text-secondary">{editingCategory && categoryImages[editingCategory.id] ? "Esta fotografía aparece en la tienda." : "Todavía no tiene una portada configurada."}</p>
+                {editingCategory ? <Link className="mt-2 inline-block font-medium text-brand underline underline-offset-4" href="/admin/configuracion#imagenes-de-la-tienda">Gestionar portadas en Configuración</Link> : <p className="mt-2 text-xs text-text-secondary">Guarda la categoría para configurar su portada.</p>}
+              </div>
+            </div>
+            <Field label="Nombre" required>
               <Input
                 value={form.name}
                 onChange={(event) => handleInputChange("name", event.target.value)}
@@ -264,10 +285,10 @@ export default function CategoryManagement() {
               />
             </Field>
 
-            {error && <p className="text-sm text-danger">{error}</p>}
-            {success && <p className="text-sm text-leaf">{success}</p>}
+            {error && <Notice tone="error" title="Revisa la categoría">{friendlyErrorMessage(error, "No pudimos guardar la categoría. Revisa los datos e intenta nuevamente.")}</Notice>}
+            {success && <Notice tone="success">{success}</Notice>}
 
-            <div className="flex gap-3">
+            <div className="admin-form-actions">
               <Button type="submit" loading={saving} loadingText="Guardando…">
                 {editingCategory ? "Guardar cambios" : "Crear categoría"}
               </Button>
@@ -282,50 +303,17 @@ export default function CategoryManagement() {
         </CardContent>
       </Card>
 
-      <Card className="gap-0 p-0">
-        <div className="border-b border-border-decorative p-4">
-          <h2 className="text-xl font-semibold text-text">Categorías</h2>
-          <p className="text-text-secondary">Administra las categorías existentes y su estado.</p>
-        </div>
+      <SectionCard title="Categorías" description="Consulta sus datos y administra su disponibilidad." action={<Badge variant="outline">{categories.length} registradas</Badge>} className="min-w-0">
+        {loading ? <p role="status" className="py-10 text-center text-sm text-text-secondary">Cargando categorías…</p> : categories.length === 0 ? <EmptyState title="No hay categorías registradas" description="Completa el formulario para crear la primera categoría." /> : <Table>
+          <TableHeader><TableRow><TableHead>Categoría</TableHead><TableHead>Estado</TableHead><TableHead className="text-right">Acciones</TableHead></TableRow></TableHeader>
+          <TableBody>{categories.map(category => <TableRow key={category.id}>
+            <TableCell><div className="flex items-start gap-3"><ProductThumbnail src={categoryImages[category.id]} alt={category.name} kind="category" size="md" preview /><div className="min-w-0"><p className="font-semibold">{category.name}</p><p className="mt-1 text-xs text-text-secondary">{categoryImages[category.id] ? "Con portada" : "Sin portada"}</p>{category.description && <p className="mt-1 max-w-sm whitespace-normal text-xs leading-5 text-text-secondary">{category.description}</p>}</div></div></TableCell>
 
-        {loading ? (
-          <p className="p-6 text-center text-text-secondary">Cargando categorías...</p>
-        ) : categories.length === 0 ? (
-          <p className="p-6 text-center text-text-secondary">No hay categorías registradas.</p>
-        ) : (
-          <div className="divide-y divide-border-decorative">
-            {categories.map((category) => (
-              <div
-                key={category.id}
-                className="flex flex-col gap-4 p-4 md:flex-row md:items-center md:justify-between"
-              >
-                <div className="min-w-0">
-                  <div className="flex flex-wrap items-center gap-3">
-                    <h3 className="font-medium text-text">{category.name}</h3>
-                    <Badge variant={category.is_active ? "brand" : "outline"}>
-                      {category.is_active ? "Activa" : "Inactiva"}
-                    </Badge>
-                  </div>
-
-                  {category.description && (
-                    <p className="mt-1 text-text-secondary">{category.description}</p>
-                  )}
-                </div>
-
-                <div className="flex shrink-0 flex-wrap gap-2 md:justify-end">
-                  <Button size="sm" variant="outline" onClick={() => startEditing(category)}>
-                    Editar
-                  </Button>
-
-                  <Button size="sm" variant="outline" onClick={() => void toggleCategory(category)}>
-                    {category.is_active ? "Desactivar" : "Activar"}
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </Card>
+            <TableCell><Badge variant={category.is_active ? "brand" : "outline"}>{category.is_active ? "Activa" : "Inactiva"}</Badge></TableCell>
+            <TableCell><div className="flex flex-wrap justify-end gap-2"><Button size="sm" variant="outline" onClick={() => startEditing(category)}>Editar</Button><Button size="sm" variant="ghost" onClick={() => void toggleCategory(category)}>{category.is_active ? "Desactivar" : "Activar"}</Button></div></TableCell>
+          </TableRow>)}</TableBody>
+        </Table>}
+      </SectionCard>
     </div>
   );
 }

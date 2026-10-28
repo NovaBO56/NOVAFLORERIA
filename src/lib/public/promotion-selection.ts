@@ -10,3 +10,8 @@ const selection = createLocalStore<string | null>({
 export const usePromotionSelection = selection.useValue;
 export const getPromotionSelection = selection.get;
 export function selectPromotion(id: string) { selection.update(() => id); }
+
+/** A retry keeps its submitted choice; a fresh checkout follows the current optional intent. */
+export function checkoutPromotionId(current: string | null, draft: string | undefined, pendingAttempt = false): string {
+  return pendingAttempt ? draft ?? "" : current ?? draft ?? "";
+}

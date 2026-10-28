@@ -18,7 +18,9 @@ import { CheckoutForm } from "./checkout-form";
 import { CustomerShell, CheckoutProgress, WaitingFlower } from "./customer-shell";
 import { OrderNumberActions } from "./order-number-actions";
 import { useOrderUpdates } from "./use-order-updates";
-import { getPromotionSelection, selectPromotion } from "@/lib/public/promotion-selection";
+import { checkoutPromotionId, getPromotionSelection, selectPromotion, usePromotionSelection } from "@/lib/public/promotion-selection";
+import { ShoppingNotice } from "./shopping-notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { beginAnotherPurchase } from "@/lib/public/previous-purchase";
 import { CheckoutPurchaseActions } from "./checkout-purchase-actions";
 
@@ -32,6 +34,7 @@ export default function CheckoutPage() {
   const router = useRouter();
   const cart = useCart();
   const [details, setDetails] = useState<CheckoutDetails>(emptyDetails);
+  const promotionSelection = usePromotionSelection();
   const [meta, setMeta] = useState<{ status: BusinessStatus | null; promotions: PublicPromotion[]; whatsapp: string | null }>({ status: null, promotions: [], whatsapp: null });
   const [qrs, setQrs] = useState<PaymentQr[]>([]);
   const [qrSlot, setQrSlot] = useState<QrSlot | null>(null);
@@ -41,6 +44,9 @@ export default function CheckoutPage() {
   const [busy, setBusy] = useState(false);
   const [ready, setReady] = useState(false);
   const [attemptStarted, setAttemptStarted] = useState(false);
+  // Keep an uncertain submission on its original choice while other tabs may change the cart.
+  const selectedPromotionId = checkoutPromotionId(promotionSelection, details.promotion_id, attemptStarted);
+  const purchaseDetails = { ...details, promotion_id: selectedPromotionId };
 
   const [recovery, setRecovery] = useState<Recovery | null>(null);
   useCartAvailability(ready && !recovery && !busy && !attemptStarted);
@@ -58,9 +64,9 @@ export default function CheckoutPage() {
     void (async () => {
       try {
         const saved = JSON.parse(sessionStorage.getItem(recoveryKey) || "null");
-        if (saved && typeof saved.id === "string" && typeof saved.phone === "string" && active) { setRecovery(saved); setQrSlot(readPaymentQrSelection(sessionStorage, saved.id)); }
-        if (!saved && active) { const draft = readCheckoutDraft(sessionStorage); setDetails({ ...(draft ?? emptyDetails), promotion_id: getPromotionSelection() ?? draft?.promotion_id ?? "" }); }
         attempt.current = JSON.parse(sessionStorage.getItem(attemptKey) || "null");
+        if (saved && typeof saved.id === "string" && typeof saved.phone === "string" && active) { setRecovery(saved); setQrSlot(readPaymentQrSelection(sessionStorage, saved.id)); }
+        if (!saved && active) { const draft = readCheckoutDraft(sessionStorage); setDetails({ ...(draft ?? emptyDetails), promotion_id: checkoutPromotionId(getPromotionSelection(), draft?.promotion_id, Boolean(attempt.current)) }); }
         if (attempt.current && active) setAttemptStarted(true);
       } catch { /* Storage is optional. */ }
       const results = await Promise.allSettled([
@@ -91,10 +97,11 @@ export default function CheckoutPage() {
 
   useEffect(() => {
     if (ready && !recovery) {
-      if (hasCheckoutDraft(details)) saveCheckoutDraft(sessionStorage, details);
+      const draft = { ...details, promotion_id: selectedPromotionId };
+      if (hasCheckoutDraft(draft)) saveCheckoutDraft(sessionStorage, draft);
       else { try { sessionStorage.removeItem(checkoutSessionKeys.draft); } catch { /* Optional storage. */ } }
     }
-  }, [details, ready, recovery]);
+  }, [details, selectedPromotionId, ready, recovery]);
 
   function update(field: keyof CheckoutDetails, value: string) { if (field === "promotion_id") selectPromotion(value); setDetails(current => ({ ...current, [field]: value })); }
   function startAnotherPurchase() {
@@ -119,11 +126,12 @@ export default function CheckoutPage() {
   }
   async function createOrder() {
     await run(async () => {
+      setDetails(current => ({ ...current, promotion_id: purchaseDetails.promotion_id }));
       setAttemptStarted(true);
-      const fingerprint = JSON.stringify(orderPayload(cart.items, details, "preview"));
+      const fingerprint = JSON.stringify(orderPayload(cart.items, purchaseDetails, "preview"));
       if (!attempt.current || attempt.current.fingerprint !== fingerprint) attempt.current = { fingerprint, key: clientId() };
       try { sessionStorage.setItem(attemptKey, JSON.stringify(attempt.current)); } catch { /* In-memory retry remains available. */ }
-      const payload = orderPayload(cart.items, details, attempt.current.key);
+      const payload = orderPayload(cart.items, purchaseDetails, attempt.current.key);
       let result: { order_id: string };
       try {
         result = await publicRequest<{ order_id: string }>("/api/orders", payload);
@@ -169,17 +177,19 @@ export default function CheckoutPage() {
   const whatsapp = whatsappLink(meta.whatsapp, recovery ? `Hola Floristería Anabelle, necesito ayuda con mi pedido ${order ? `#${order.order_number}` : "recién creado"}.` : "Hola Floristería Anabelle, necesito ayuda para completar mi compra.");
   return <CustomerShell>
     {recovery && <><CheckoutProgress step={order && reachedConfirmation(order) ? 3 : 2}/><div className="customer-title"><p className="customer-kicker">Cada detalle cuenta · Floristería Anabelle</p><h1 ref={resultHeading} tabIndex={-1} className="focus:outline-none">{order?.payment_status === "pendiente" ? "Pago reportado" : "Tu pedido, en buenas manos"}</h1><p>{order ? `Pedido #${order.order_number} · ` : ""}Conserva tu número para consultar el estado cuando quieras.</p></div></>}
-    {error && <p role="alert" className="customer-error mb-5">{error}</p>}{updateNotice && <p role="status" className="customer-note mb-5">{updateNotice}</p>}
+    {error && <ShoppingNotice tone="error" title="Revisa tu pedido" className="mb-5">{friendlyErrorMessage(error, "No pudimos actualizar tu pedido. Tu compra se conserva; intenta nuevamente.")}</ShoppingNotice>}{updateNotice && <ShoppingNotice tone="info" title="Novedad de tu pedido" className="mb-5">{updateNotice}</ShoppingNotice>}
     {!ready ? <div className="customer-card" role="status">Preparando tu compra…</div> : recovery ? <div className="customer-stack">
       {order && <CheckoutPurchaseActions number={Number(order.order_number)} confirmed={reachedConfirmation(order)} disabled={busy} onStart={startAnotherPurchase}/>}
       <div className="customer-columns"><div className="customer-stack">
-        {order?.payment_status === "pendiente" && order.status === "pendiente_pago" ? <section className="customer-waiting" role="status"><WaitingFlower/><h2>¡Recibimos tu aviso de pago!</h2><p className="mt-3">Nuestro equipo está revisando tu pago. Te mostraremos aquí cualquier novedad; también puedes pulsar Actualizar pedido.</p><p className="customer-note mt-5">Pedido #{order.order_number} · Esperando confirmación del local</p><PaymentReportInstructions whatsappAvailable={Boolean(meta.whatsapp)}/>{meta.whatsapp && <a className="customer-secondary mt-5" href={whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone, order.reported_qr?.account_label))!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden/>Enviar aviso por WhatsApp</a>}</section> : null}
+        {order && requiresPayment(order) && order.payment_status !== "pendiente" && <ShoppingNotice tone="success" title="Pedido creado">Ya recibimos tu compra. Elige un QR para completar el pago por el importe indicado abajo.</ShoppingNotice>}
+        {order?.status === "confirmado" && Number(order.total) > 0 && <ShoppingNotice tone="success" title="Pedido confirmado">Nuestro equipo confirmó tu pedido. Puedes seguir aquí su preparación.</ShoppingNotice>}
+        {order?.payment_status === "pendiente" && order.status === "pendiente_pago" ? <section className="customer-waiting" role="status"><WaitingFlower/><h2>¡Recibimos tu aviso de pago!</h2><ShoppingNotice tone="info" title="Aviso de pago recibido" className="mt-4">Nuestro equipo está revisando tu pago. Te mostraremos aquí cualquier novedad; también puedes pulsar Actualizar pedido.</ShoppingNotice><p className="customer-note mt-5">Pedido #{order.order_number} · Esperando confirmación del local</p><PaymentReportInstructions whatsappAvailable={Boolean(meta.whatsapp)}/>{meta.whatsapp && <a className="customer-secondary mt-5" href={whatsappLink(meta.whatsapp, paymentNotice(order, recovery.name || "", recovery.phone, order.reported_qr?.account_label))!} target="_blank" rel="noopener noreferrer"><ExternalLink size={18} aria-hidden/>Enviar aviso por WhatsApp</a>}</section> : null}
         {order && Number(order.total) === 0 && ["confirmado", "en_preparacion", "listo", "finalizado"].includes(order.status) && <section className="customer-card customer-confirmed"><CheckCircle2 aria-hidden className="mb-3 text-[#53705b]"/><h2>Tu pedido gratuito está confirmado</h2><p className="mt-3">No necesitas transferir ni reportar un pago. Consulta su preparación en el seguimiento.</p></section>}
         {order && requiresPayment(order) && order.payment_status !== "pendiente" ? <CheckoutPayment total={Number(order.total)} qrs={qrs} selected={qr} whatsappAvailable={Boolean(meta.whatsapp)} error={qrError} busy={busy} reported={false} onSelect={slot => { setQrSlot(slot); savePaymentQrSelection(sessionStorage, recovery.id, slot); }} onReport={() => void reportPayment()}/> : null}
         <div className="customer-actions"><button disabled={busy} onClick={() => void run(refreshOrder)} className="customer-secondary"><RotateCcw size={18} aria-hidden/>Actualizar pedido</button></div>
       </div><aside className="customer-summary customer-stack">{order ? <OrderSummary order={order} checkout/> : <p role="status">Recuperando el pedido…</p>}{order && <OrderNumberActions key={order.id} order={order}/>}</aside></div>
       <div className="customer-actions"><Link href="/" className="customer-secondary">Volver a la tienda</Link></div>
-    </div> : cart.items.length === 0 ? <section className="customer-card text-center"><h1>Un detalle especial te espera</h1><p className="customer-muted my-4">Tu carrito está vacío. Explora nuestras flores para comenzar.</p><Link className={buttonClass} href="/#catalogo">Ver catálogo</Link></section> : <CheckoutForm details={details} update={update} items={cart.items} total={cart.total} unavailable={cart.hasUnavailable} busy={busy} status={meta.status} promotions={meta.promotions} onDedicationChange={updateCartDedications} createOrder={createOrder}/>}
+    </div> : cart.items.length === 0 ? <section className="customer-card text-center"><h1>Un detalle especial te espera</h1><p className="customer-muted my-4">Tu carrito está vacío. Explora nuestras flores para comenzar.</p><Link className={buttonClass} href="/#catalogo">Ver catálogo</Link></section> : <CheckoutForm details={purchaseDetails} update={update} items={cart.items} total={cart.total} unavailable={cart.hasUnavailable} busy={busy} status={meta.status} promotions={meta.promotions} onDedicationChange={updateCartDedications} createOrder={createOrder}/>}
     {ready && <div className="mt-8 text-center">{whatsapp ? <a className="text-sm font-bold text-[#873c58] underline" href={whatsapp} target="_blank" rel="noopener noreferrer">Necesito ayuda por WhatsApp</a> : <p className="customer-muted text-sm">WhatsApp no está disponible. Consulta los datos de contacto de la tienda.</p>}</div>}
   </CustomerShell>;
 }

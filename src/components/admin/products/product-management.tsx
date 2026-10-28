@@ -9,9 +9,15 @@ import {
   ImageIcon,
   PackageCheck,
   Plus,
+  Search,
+  SlidersHorizontal,
 } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/field";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
+import { PageHeader } from "@/components/ui/page-header";
 import {
   Card,
   CardContent,
@@ -95,6 +101,7 @@ export default function ProductManagement({ canManageRecommendations = false }: 
   const [editorDirty, setEditorDirty] = useState<Record<string, boolean>>({});
   const [visited, setVisited] = useState<ProductTab[]>(["info"]);
   const [notice, setNotice] = useState("");
+  const [noticeTone, setNoticeTone] = useState<"success" | "error">("success");
   const [listError, setListError] = useState("");
   const [formVersion, setFormVersion] = useState(0);
   const requestId = useRef(0);
@@ -263,6 +270,7 @@ export default function ProductManagement({ canManageRecommendations = false }: 
     setEditingProduct(product);
     setCreateMode(!wasEditing);
     setEditorDirty(current => ({ ...current, info: false }));
+    setNoticeTone("success");
     setNotice(wasEditing ? "Cambios guardados correctamente." : "Producto creado como borrador. Ahora puedes añadir fotografías y configurar lo que necesita para prepararse.");
     await loadProducts();
   }
@@ -297,8 +305,10 @@ export default function ProductManagement({ canManageRecommendations = false }: 
       }
 
       await loadProducts();
+      setNoticeTone("success");
       setNotice("Producto actualizado.");
     } catch (error) {
+      setNoticeTone("error");
       setNotice(error instanceof Error ? error.message : "No se pudo actualizar el producto. Intenta nuevamente.");
     }
   }
@@ -314,39 +324,55 @@ export default function ProductManagement({ canManageRecommendations = false }: 
 
   return (
     <div className="space-y-6">
-      {canManageRecommendations && <nav aria-label="Áreas de gestión de productos" className="flex flex-wrap gap-2"><Button variant={area === "products" ? "default" : "outline"} onClick={() => { if (globalDirty && !window.confirm("Hay cambios globales sin guardar. ¿Quieres descartarlos?")) return; setGlobalDirty(false); setArea("products"); }}>Productos</Button><Button variant={area === "complements" ? "default" : "outline"} onClick={() => setArea("complements")}><Gift aria-hidden="true" />Complementos</Button></nav>}
+      <PageHeader
+        eyebrow="Catálogo"
+        title="Productos y arreglos"
+        description="Organiza el catálogo, prepara cada receta y controla qué productos pueden venderse."
+        actions={area === "products" ? <Button type="button" onClick={handleCreate}><Plus aria-hidden="true" />Nuevo producto</Button> : undefined}
+      />
+      {canManageRecommendations && (
+        <nav aria-label="Áreas de gestión de productos" className="admin-tabs">
+          <button type="button" aria-pressed={area === "products"} onClick={() => { if (globalDirty && !window.confirm("Hay cambios globales sin guardar. ¿Quieres descartarlos?")) return; setGlobalDirty(false); setArea("products"); }}><Boxes aria-hidden="true" className="size-4" />Productos y arreglos</button>
+          <button type="button" aria-pressed={area === "complements"} onClick={() => setArea("complements")}><Gift aria-hidden="true" className="size-4" />Complementos</button>
+        </nav>
+      )}
       {area === "complements" && canManageRecommendations ? <GlobalProductRecommendations categories={categories} onDirtyChange={setGlobalDirty} /> : <>
-      {notice && <p role="status" className="rounded-xl bg-brand-soft p-3 text-sm">{notice}</p>}
-      {/* ENCABEZADO */}
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <p className="text-sm text-text-secondary">
-            Busca, filtra y administra los productos del catálogo.
-          </p>
-        </div>
+      {notice && <Notice tone={noticeTone}>{noticeTone === "error" ? friendlyErrorMessage(notice, "No pudimos actualizar el producto. Intenta nuevamente.") : notice}</Notice>}
 
-        <Button
-          type="button"
-          onClick={handleCreate}
-          className="min-h-11 shrink-0"
-        >
-          <Plus aria-hidden="true" />
-          Nuevo producto
-        </Button>
-      </div>
+      {/* LISTADO */}
+      <Card className="gap-0 overflow-hidden p-0">
+        <CardHeader className="border-b border-border-decorative px-4 py-4 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle>Catálogo de productos</CardTitle>
 
-      <Card>
-        <CardHeader className="flex flex-wrap items-center justify-between gap-2"><CardTitle>Filtros</CardTitle><span className="text-xs text-text-secondary">{Object.values(filters).filter(Boolean).length} activos</span>{hasFilters && <Button className="min-h-11" variant="ghost" onClick={clearFilters}>Limpiar filtros</Button>}</CardHeader>
-        <CardContent className="space-y-3"><div className="grid gap-3 md:grid-cols-3">
-            <input
+              <p className="mt-1 text-sm text-text-secondary">
+                {loading
+                  ? "Cargando productos..."
+                  : `${total} producto${total === 1 ? "" : "s"} encontrado${total === 1 ? "" : "s"}`}
+              </p>
+            </div>
+
+            {catalogLoading && (
+              <span className="text-xs text-text-secondary">
+                Actualizando filtros...
+              </span>
+            )}
+          </div>
+        </CardHeader>
+
+        <div className="admin-filter-bar block space-y-3 p-4 sm:px-5">
+          <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-text-secondary"><span>{hasFilters ? Object.values(filters).filter(Boolean).length + " filtros activos" : "Busca o filtra el catálogo"}</span>{hasFilters && <Button size="sm" variant="ghost" onClick={clearFilters}>Limpiar filtros</Button>}</div>
+          <div className="grid gap-3 md:grid-cols-3">
+            <div className="relative"><Search aria-hidden="true" className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-text-secondary" /><Input
               aria-label="Buscar productos"
               value={filters.search}
               onChange={(event) =>
                 updateFilter("search", event.target.value)
               }
-              placeholder="Buscar producto..."
-              className="h-11 rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand"
-            />
+              placeholder="Buscar por nombre de producto..."
+              className="pl-9"
+            /></div>
             <select
               aria-label="Filtrar por categoría"
               value={filters.categoryId}
@@ -375,7 +401,7 @@ export default function ProductManagement({ canManageRecommendations = false }: 
               <option value="true">Activos</option>
               <option value="false">Inactivos</option>
             </select>
-        </div><Button className="min-h-11" variant="outline" aria-expanded={filtersOpen} aria-controls="advanced-product-filters" onClick={() => setFiltersOpen(open => !open)}>Filtros avanzados<ChevronDown aria-hidden="true" className={`size-4 ${filtersOpen ? "rotate-180" : ""}`} /></Button>
+        </div><Button className="min-h-11" variant="outline" aria-expanded={filtersOpen} aria-controls="advanced-product-filters" onClick={() => setFiltersOpen(open => !open)}><SlidersHorizontal aria-hidden="true" className="size-4" />Filtros avanzados<ChevronDown aria-hidden="true" className={`size-4 ${filtersOpen ? "rotate-180" : ""}`} /></Button>
         <div id="advanced-product-filters" hidden={!filtersOpen}><div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
             <select
               aria-label="Filtrar por temporada"
@@ -429,34 +455,11 @@ export default function ProductManagement({ canManageRecommendations = false }: 
               <option value="true">Destacados</option>
               <option value="false">No destacados</option>
             </select>
-        </div></div></CardContent>
-      </Card>
-
-      {/* LISTADO */}
-      <Card className="overflow-visible">
-        <CardHeader>
-          <div className="flex items-center justify-between gap-3">
-            <div>
-              <CardTitle>Productos</CardTitle>
-
-              <p className="mt-1 text-sm text-text-secondary">
-                {loading
-                  ? "Cargando productos..."
-                  : `${total} producto${total === 1 ? "" : "s"} encontrado${total === 1 ? "" : "s"}`}
-              </p>
-            </div>
-
-            {catalogLoading && (
-              <span className="text-xs text-text-secondary">
-                Actualizando filtros...
-              </span>
-            )}
-          </div>
-        </CardHeader>
-
+        </div></div>
+        </div>
         <CardContent className="p-0">
           <div>
-            {listError ? <div role="alert" className="space-y-3 p-4"><p>{listError}</p><Button variant="outline" onClick={() => void loadProducts()}>Reintentar</Button></div> : <ProductList
+            {listError ? <div className="space-y-3 p-4"><Notice tone="error">{friendlyErrorMessage(listError, "No pudimos cargar el catálogo. Intenta nuevamente.")}</Notice><Button variant="outline" onClick={() => void loadProducts()}>Reintentar</Button></div> : <ProductList
               products={products}
               categories={categories}
               seasons={seasons}
@@ -484,10 +487,10 @@ export default function ProductManagement({ canManageRecommendations = false }: 
         }}
       >
         <ModalContent
-          className="max-h-[94dvh] gap-3 overflow-hidden p-4 md:max-w-5xl md:p-6 [&_[data-slot=modal-close]]:size-11"
+          className="max-h-[94dvh] gap-0 overflow-hidden p-0 pb-0 md:max-w-5xl md:p-0 [&_[data-slot=modal-close]]:size-11"
           voice="admin"
         >
-          <ModalHeader className="pr-12">
+          <ModalHeader className="shrink-0 border-b border-border-decorative bg-bg-admin/70 px-5 py-5 pr-16 sm:px-6 sm:pr-16">
             <ModalTitle>
               {editingProduct ? "Gestionar producto" : "Nuevo producto"}
             </ModalTitle>
@@ -499,14 +502,14 @@ export default function ProductManagement({ canManageRecommendations = false }: 
             </ModalDescription>
           </ModalHeader>
 
-          <label className="text-sm font-medium md:hidden">Sección del editor<select value={activeTab} className="mt-1 min-h-11 w-full rounded-xl border border-border-field bg-surface px-3" onChange={event => selectTab(event.target.value as ProductTab)}>{([ ["info","1 · Información"], ["images","2 · Fotografías"], ["inventory","3 · Receta y materiales"], ["components","Productos incluidos"], ["recommendations","Complementos opcionales"], ["review","4 · Revisar y publicar"] ] as const).filter(([tab]) => tab !== "recommendations" || canManageRecommendations).map(([tab,label]) => <option key={tab} value={tab} disabled={tab !== "info" && !editingProduct}>{label}</option>)}</select></label>
-          <nav aria-label="Secciones del producto" className="hidden shrink-0 grid-cols-3 gap-2 border-b border-border-decorative pb-2 md:grid xl:grid-cols-6">
+          <label className="px-5 pt-4 text-sm font-medium md:hidden">Sección del editor<select value={activeTab} className="mt-1 min-h-11 w-full rounded-xl border border-border-field bg-surface px-3" onChange={event => selectTab(event.target.value as ProductTab)}>{([ ["info","1 · Información"], ["images","2 · Fotografías"], ["inventory","3 · Receta y materiales"], ["components","Productos incluidos"], ["recommendations","Complementos opcionales"], ["review","4 · Revisar y publicar"] ] as const).filter(([tab]) => tab !== "recommendations" || canManageRecommendations).map(([tab,label]) => <option key={tab} value={tab} disabled={tab !== "info" && !editingProduct}>{label}</option>)}</select></label>
+          <nav aria-label="Secciones del producto" className="hidden shrink-0 grid-cols-3 gap-1 border-b border-border-decorative bg-bg-admin/50 px-4 py-3 md:grid xl:grid-cols-6">
             {([ ["info","Información",CircleCheck], ["images","Fotografías",ImageIcon], ["inventory","Receta y materiales",PackageCheck], ["components","Productos incluidos",Boxes], ["recommendations","Complementos opcionales",Gift], ["review","Revisar y publicar",CircleCheck] ] as const).filter(([tab]) => tab !== "recommendations" || canManageRecommendations).map(([tab,label,Icon]) => <button key={tab} type="button" disabled={tab !== "info" && !editingProduct} aria-current={activeTab === tab ? "page" : undefined} onClick={() => selectTab(tab)} className={`flex min-h-12 min-w-0 flex-col items-center justify-center gap-1 rounded-xl px-2 py-2 text-sm font-medium focus-visible:outline-2 focus-visible:outline-brand disabled:opacity-40 ${activeTab === tab ? "bg-brand-soft text-brand ring-1 ring-brand" : "text-text-secondary hover:bg-bg-admin"}`}><Icon aria-hidden="true" className="size-4" /><span>{label}</span>{tab === "recommendations" && editingProduct && <span className="text-xs">{recommendationCount === null ? "…" : `${recommendationCount} de 4 personalizados`}</span>}</button>)}
           </nav>
 
           {/* CONTENIDO */}
-          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain py-4 pr-1">
-            {notice && <div className="mb-4 space-y-3 rounded-xl bg-brand-soft p-3"><p role="status" className="text-sm">{notice}</p>{createMode && editingProduct && <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => selectTab("images")}>Continuar con fotografías</Button><Button variant="outline" onClick={() => selectTab("inventory")}>Configurar receta</Button><Button variant="ghost" onClick={handleCancelEdit}>Guardar y salir</Button></div>}</div>}
+          <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-5 sm:px-6">
+            {notice && <div className="mb-4 space-y-3"><Notice tone={noticeTone}>{noticeTone === "error" ? friendlyErrorMessage(notice, "No pudimos actualizar el producto.") : notice}</Notice>{createMode && editingProduct && <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => selectTab("images")}>Continuar con fotografías</Button><Button variant="outline" onClick={() => selectTab("inventory")}>Configurar receta</Button><Button variant="ghost" onClick={handleCancelEdit}>Guardar y salir</Button></div>}</div>}
             {canManageRecommendations && editingProduct && <div hidden={activeTab !== "recommendations"}><ProductRecommendations key={editingProduct.id} productId={editingProduct.id} onCountChange={setRecommendationCount} onDirtyChange={dirtyHandlers.recommendations}/></div>}
             <div hidden={activeTab !== "info"}>
               <ProductForm

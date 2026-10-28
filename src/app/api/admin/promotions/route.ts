@@ -11,7 +11,7 @@ const PROMOTION_SELECT =
 
 // El listado incluye los productos de cada promoción (con su cantidad)
 // para mostrarlos en la pantalla sin pedir cada promoción por separado.
-const PROMOTION_LIST_SELECT = `${PROMOTION_SELECT}, items:promotion_products(product_id, quantity, product:products(id, name, price))`;
+const PROMOTION_LIST_SELECT = `${PROMOTION_SELECT}, items:promotion_products(product_id, quantity, product:products(id, name, price, images:product_images(public_url, alt_text, sort_order)))`;
 
 function fail(message: string, status: number) {
   return NextResponse.json({ success: false, message }, { status });

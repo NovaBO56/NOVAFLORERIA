@@ -3,7 +3,7 @@
 import { DedicationEditor } from "../dedication-card";
 import { dedicationsSchema, hasDedication, resizeDedications, type Dedication } from "@/lib/public/dedications";
 import { useEffect, useRef, useState } from "react";
-import { SafeImage as Image } from "@/components/public/safe-image";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
 import { Heart, ShoppingBag } from "lucide-react";
 import {
   formatMoney,
@@ -11,8 +11,11 @@ import {
   promotionBenefit,
 } from "@/lib/public/format";
 import { MAX_QUANTITY } from "@/lib/public/cart-logic";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import type { CustomizationOption, ProductDetail, PublicProduct, PublicPromotion } from "@/lib/public/types";
-import { ProductPlaceholder } from "../product-placeholder";
+import { pickImage } from "@/lib/public/format";
+import { promotionIsCurrent } from "@/lib/public/promotion-shopping";
+import { selectPromotion, usePromotionSelection } from "@/lib/public/promotion-selection";
 import { ComboProgress } from "../combo-progress";
 import { ShoppingNotice } from "../shopping-notice";
 import { useCart } from "./cart";
@@ -54,6 +57,7 @@ export function ProductDetailSection({
   hideFavorite = false,
 }: ProductDetailSectionProps) {
   const cart = useCart();
+  const selectedPromotionId = usePromotionSelection();
   const [detail, setDetail] = useState<DetailState>(null);
   const [selectedOptions, setSelectedOptions] = useState<string[]>([]);
   const [dedications, setDedications] = useState<Dedication[]>([]);
@@ -132,13 +136,9 @@ export function ProductDetailSection({
     finally { setChecking(false); adding.current = false; window.setTimeout(() => setAdded(false), 700); }
   }
 
-  const includes = (full?.components ?? [])
-    .map((entry) =>
-      entry.component_product
-        ? `${Number(entry.quantity)} × ${entry.component_product.name}`
-        : null,
-    )
-    .filter((text): text is string => Boolean(text));
+  const includes = (full?.components ?? []).flatMap(entry => entry.component_product ? [{ id: entry.id, name: entry.component_product.name, quantity: Number(entry.quantity), image: pickImage(entry.component_product) }] : []);
+  const selectedOffer = promotion && (comboGuide || selectedPromotionId === promotion.id) && promotion.products?.some(line => line.product_id === product.id) && promotionIsCurrent(promotion) ? promotion : null;
+  function clearOffer() { comboGuide?.cancel(); selectPromotion(""); }
 
   return (
     <section
@@ -159,15 +159,15 @@ export function ProductDetailSection({
         </div>
 
         {comboGuide && <ComboProgress step={comboGuide.step} total={comboGuide.total} product={product} quantity={requiredQuantity ?? 1} name={promotion?.name} onCancel={comboGuide.cancel}/>}
-        {error && <div className="mb-6"><ShoppingNotice tone="error">{error}</ShoppingNotice></div>}
+        {error && <div className="mb-6"><ShoppingNotice tone="error">{friendlyErrorMessage(error)}</ShoppingNotice></div>}
         <div className="public-product-detail-grid grid min-w-0 gap-6 [overflow-wrap:anywhere] md:grid-cols-[minmax(0,.9fr)_minmax(0,1.1fr)]">
           <div
-            className={`public-product-gallery grid content-start gap-3 ${
-              images.length > 1 ? "grid-cols-[52px_minmax(0,1fr)]" : "grid-cols-1"
+            className={`public-product-gallery grid min-w-0 content-start gap-3 ${
+              images.length > 1 ? "grid-cols-1 md:grid-cols-[52px_minmax(0,1fr)]" : "grid-cols-1"
             }`}
           >
             {images.length > 1 ? (
-              <div className="space-y-3">
+              <div className="order-2 flex gap-3 overflow-x-auto pb-1 md:order-none md:block md:space-y-3 md:overflow-visible md:pb-0">
                 {images.map((image, index) => (
                   <button
                     key={image.id}
@@ -175,38 +175,22 @@ export function ProductDetailSection({
                     onClick={() => setActiveImage(index)}
                     aria-label={`Ver imagen ${index + 1} de ${product.name}`}
                     aria-pressed={index === activeImage}
-                    className={`relative block aspect-square w-full overflow-hidden rounded-xl bg-[#f5eeea] ${
+                    className={`relative block aspect-square w-14 shrink-0 overflow-hidden rounded-xl bg-[#f5eeea] md:w-full ${
                       index === activeImage
                         ? "border-2 border-[#873c58]"
                         : "border border-[#e6d7d8]"
                     }`}
                   >
-                    <Image
-                      src={image.public_url}
-                      alt=""
-                      fill
-                      sizes="52px"
-                      className="object-cover"
-                    />
+                    <ProductThumbnail src={image.public_url} alt={image.alt_text ?? product.name} sizes="56px" className="absolute inset-0 size-full rounded-none border-0" voice="public"/>
                   </button>
                 ))}
               </div>
             ) : null}
 
-            <div className="public-product-image relative aspect-square overflow-hidden rounded-2xl bg-[#f5eeea]">
-              {current ? (
-                <Image
-                  key={current.id}
-                  src={current.public_url}
-                  alt={current.alt_text ?? product.name}
-                  fill
-                  sizes="(min-width: 1024px) 560px, 100vw"
-                  className="nova-fade object-contain"
-                />
-              ) : (
-                <ProductPlaceholder/>
-              )}
+            <div className="public-product-image relative order-1 aspect-square overflow-hidden rounded-2xl bg-[#f5eeea] md:order-none">
+              <ProductThumbnail key={current?.id ?? "empty"} src={current?.public_url} alt={current?.alt_text ?? product.name} fit="contain" sizes="(min-width: 1024px) 560px, 100vw" className="absolute inset-0 size-full rounded-none border-0" preview={Boolean(current)} voice="public"/>
             </div>
+            <p className="order-3 col-span-full text-xs leading-5 text-[#6b5965] md:order-none">{current ? `Imagen ${images.indexOf(current) + 1} de ${images.length}. Toca la fotografía para ampliarla.` : "Este producto todavía no tiene fotografía."}</p>
           </div>
 
           <div className="flex min-w-0 flex-col justify-center">
@@ -237,11 +221,10 @@ export function ProductDetailSection({
               </p>
             ) : null}
 
+            {!loadingDetail && !full && <div className="mt-5"><ShoppingNotice tone="error">No pudimos cargar este detalle. Vuelve a abrir el producto para intentarlo de nuevo.</ShoppingNotice></div>}
+
             {includes.length > 0 ? (
-              <p className="mt-4 max-w-[480px] text-sm leading-6 text-[#6b5965]">
-                <span className="font-black text-[#645460]">Incluye:</span>{" "}
-                {includes.join(", ")}
-              </p>
+              <div className="mt-4 max-w-full text-sm leading-6 text-[#6b5965]"><p className="font-black text-[#645460]">Incluye:</p><ul className="mt-2 flex flex-wrap gap-2">{includes.map(entry => <li key={entry.id} className="flex max-w-full items-center gap-2 rounded-xl border border-[#e6d7d8] bg-[#fff9f4] p-2"><ProductThumbnail src={entry.image?.public_url} alt={entry.image?.alt_text ?? entry.name} size="sm" voice="public"/><span className="min-w-0 break-words">{entry.quantity} × {entry.name}</span></li>)}</ul></div>
             ) : null}
 
             <div className="mt-7 border-y border-[#e9e1eb] py-5">
@@ -283,7 +266,7 @@ export function ProductDetailSection({
             </div>
 
             <div className="mt-5 space-y-3">
-              {promotion && <div className="customer-note" role="status"><strong>{promotion.name}</strong><p>{promotionBenefit(promotion)}. Personaliza tu producto; el carrito aplicará el beneficio cuando cumpla todas las condiciones.</p></div>}
+              {selectedOffer && <ShoppingNotice><div className="flex flex-wrap items-start justify-between gap-3"><div><p className="text-xs font-bold uppercase tracking-wide">Promoción seleccionada</p><strong>{selectedOffer.name}</strong></div><div className="flex flex-wrap gap-3"><button type="button" onClick={clearOffer} className="min-h-11 font-bold underline underline-offset-4">Quitar</button><a href="#catalogo-promociones" onClick={clearOffer} className="inline-flex min-h-11 items-center font-bold underline underline-offset-4">Cambiar</a></div></div><p className="mt-2 font-bold">{promotionBenefit(selectedOffer)}</p>{Number(selectedOffer.minimum_purchase) > 0 && <p>Compra mínima: {formatMoney(selectedOffer.minimum_purchase!)}.</p>}{selectedOffer.promotion_type === "combo" && <p>Elige todos los productos y cantidades del combo. Los extras se cobran aparte.</p>}<p className="mt-2">Esta promoción se aplicará si tu pedido cumple las condiciones. Tu descuento se confirmará antes de finalizar el pedido.</p></ShoppingNotice>}
               {full?.customization_options?.map(option => <label key={option.id} className="nova-option flex items-center gap-3 rounded-lg text-sm"><input type="checkbox" checked={selectedOptions.includes(option.id)} onChange={event => setSelectedOptions(ids => event.target.checked ? [...ids, option.id] : ids.filter(id => id !== option.id))} />{option.name}: {option.value} (+{formatMoney(option.extra_price)})</label>)}
               <DedicationEditor count={quantity * cardQuantity} value={dedications} onChange={setDedications}/>
               {hasDedication(dedications.slice(quantity * cardQuantity)) && <ShoppingNotice>La selección cambió. Las dedicatorias de las tarjetas que ya no están incluidas no se agregarán al pedido.</ShoppingNotice>}
@@ -303,7 +286,7 @@ export function ProductDetailSection({
                     : "No disponible"}
               </button>
 
-              {availabilityError && <p className="customer-error" role="alert">{availabilityError}</p>}
+              {availabilityError && <ShoppingNotice tone="error">{friendlyErrorMessage(availabilityError)}</ShoppingNotice>}
 
               {!hideFavorite && <button
                 type="button"

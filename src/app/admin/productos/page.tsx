@@ -11,14 +11,7 @@ export default async function AdminProductsPage() {
   }
 
   return (
-    <div className="mx-auto flex max-w-6xl flex-col gap-6">
-      <div>
-        <h1>Gestión de productos</h1>
-        <p className="text-text-secondary">
-          Administra los productos disponibles en el catálogo de la florería.
-        </p>
-      </div>
-
+    <div className="admin-page mx-auto flex w-full max-w-[1440px] flex-col gap-6">
       <ProductManagement canManageRecommendations={profile.role === "administrador"} />
     </div>
   );

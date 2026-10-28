@@ -2,14 +2,14 @@
 
 import { useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
+import { SectionCard } from "@/components/ui/section-card";
 import { Field, Input } from "@/components/ui/field";
 
 type UserRole = "administrador" | "empleado";
 
 /** Estilo de un `<select>` nativo equivalente al de Input (Design System Fase 16). */
 const selectClassName =
-  "h-10 w-full rounded-sm border border-border-field bg-surface px-3 text-base text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
+  "h-11 w-full rounded-xl border border-border-field bg-surface px-3 text-sm text-text outline-none transition-colors duration-150 focus-visible:border-brand focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand disabled:cursor-not-allowed disabled:opacity-50";
 
 export default function CreateUserForm({ onCreated }: { onCreated?: () => void }) {
   const lock = useRef(false);
@@ -63,10 +63,10 @@ export default function CreateUserForm({ onCreated }: { onCreated?: () => void }
   }
 
   return (
-    <Card>
-      <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+    <SectionCard title="Crear usuario" description="Añade una cuenta para el equipo y define su rol de acceso.">
+      <form onSubmit={handleSubmit} autoComplete="off" className="flex flex-col gap-4">
         <fieldset disabled={loading} className="flex min-w-0 flex-col gap-4">
-        <Field label="Nombre completo">
+        <Field label="Nombre completo" required>
           <Input
             value={fullName}
             onChange={(event) => setFullName(event.target.value)}
@@ -75,18 +75,18 @@ export default function CreateUserForm({ onCreated }: { onCreated?: () => void }
           />
         </Field>
 
-        <Field label="Correo electrónico">
+        <Field label="Correo electrónico" required>
           <Input
-            type="email"
+            type="email" autoComplete="off"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             required
           />
         </Field>
 
-        <Field label="Contraseña">
+        <Field label="Contraseña" required hint="Al menos 8 caracteres.">
           <Input
-            type="password"
+            type="password" autoComplete="new-password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
             required
@@ -97,7 +97,7 @@ export default function CreateUserForm({ onCreated }: { onCreated?: () => void }
         <div className="flex flex-col gap-1.5">
           <label
             htmlFor="create-user-role"
-            className="text-[13px] leading-[1.4] font-medium tracking-[0.02em] text-text uppercase"
+            className="text-sm font-medium text-text"
           >
             Rol
           </label>
@@ -112,6 +112,7 @@ export default function CreateUserForm({ onCreated }: { onCreated?: () => void }
           </select>
         </div>
 
+        <p className="rounded-lg bg-bg-admin p-3 text-xs leading-5 text-text-secondary">El administrador puede gestionar usuarios y configuración. El empleado conserva las operaciones permitidas por su rol.</p>
         <Button type="submit" loading={loading} loadingText="Creando…" className="self-start">
           Crear usuario
         </Button>
@@ -123,6 +124,6 @@ export default function CreateUserForm({ onCreated }: { onCreated?: () => void }
           </p>
         )}
       </form>
-    </Card>
+    </SectionCard>
   );
 }

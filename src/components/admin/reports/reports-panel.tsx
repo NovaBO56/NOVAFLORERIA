@@ -220,7 +220,7 @@ export function ReportsPanel() {
   return (
     <div className="flex flex-col gap-6">
       {/* Selector de reporte */}
-      <div className="flex flex-wrap gap-2">
+      <div className="admin-tabs" aria-label="Tipo de reporte">
         {TABS.map((tab) => {
           const Icon = tab.icon;
           return (
@@ -228,7 +228,8 @@ export function ReportsPanel() {
               key={tab.key}
               type="button"
               size="sm"
-              variant={activeTab === tab.key ? "default" : "outline"}
+              variant={activeTab === tab.key ? "secondary" : "ghost"}
+              aria-pressed={activeTab === tab.key}
               onClick={() => setActiveTab(tab.key)}
             >
               <Icon />
@@ -239,10 +240,10 @@ export function ReportsPanel() {
       </div>
 
       {/* Filtros + descarga */}
-      <Card>
-        <CardContent className="flex flex-col gap-4 p-0 sm:flex-row sm:items-end sm:justify-between">
+      <Card className="admin-filter-bar">
+        <CardContent className="flex min-w-0 flex-col gap-4 p-0 sm:flex-row sm:flex-wrap sm:items-end sm:justify-between">
           {activeMeta.needsRange ? (
-            <div className="flex flex-col gap-4 sm:flex-row">
+            <div className="grid min-w-0 gap-4 sm:grid-cols-2">
               <Field label="Desde">
                 <Input type="date" value={from} max={to} onChange={(e) => setFrom(e.target.value)} />
               </Field>
@@ -263,13 +264,13 @@ export function ReportsPanel() {
 
       {error ? (
         <Card>
-          <CardContent className="p-0 text-sm text-danger">{error}</CardContent>
+          <CardContent role="alert" className="p-0 text-sm text-danger">{error}</CardContent>
         </Card>
       ) : null}
 
       {loading ? (
         <Card>
-          <CardContent className="p-0 text-sm text-text-secondary">Generando reporte...</CardContent>
+          <CardContent role="status" className="p-0 text-sm text-text-secondary">Generando reporte…</CardContent>
         </Card>
       ) : (
         <>

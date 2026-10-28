@@ -1,7 +1,9 @@
 
 "use client";
 
-import Image from "next/image";
+import { ProductThumbnail } from "@/components/ui/product-thumbnail";
+import { Notice } from "@/components/ui/notice";
+import { friendlyErrorMessage } from "@/lib/notice-presentation";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   ChevronDown,
@@ -44,6 +46,7 @@ export default function ProductImageManagement({
   const [deletingImageId, setDeletingImageId] = useState<string | null>(null);
   const [reordering, setReordering] = useState(false);
   const [message, setMessage] = useState("");
+  const [messageTone, setMessageTone] = useState<"success" | "error">("error");
   const [images, setImages] = useState<UploadedImage[]>([]);
   const [editingAltTextId, setEditingAltTextId] = useState<string | null>(
     null,
@@ -72,6 +75,7 @@ export default function ProductImageManagement({
 
       setImages(data.images ?? []);
     } catch (error) {
+      setMessageTone("error");
       setMessage(
         error instanceof Error
           ? error.message
@@ -127,9 +131,11 @@ export default function ProductImageManagement({
         );
       }
 
+      setMessageTone("success");
       setMessage("Imagen subida correctamente.");
       await loadImages();
     } catch (error) {
+      setMessageTone("error");
       setMessage(
         error instanceof Error
           ? error.message
@@ -196,8 +202,10 @@ export default function ProductImageManagement({
       }
 
       setImages(data.images ?? reordered);
+      setMessageTone("success");
       setMessage("Orden de imágenes actualizado.");
     } catch (error) {
+      setMessageTone("error");
       setMessage(
         error instanceof Error
           ? error.message
@@ -258,9 +266,11 @@ export default function ProductImageManagement({
         ),
       );
 
+      setMessageTone("success");
       setMessage("Texto alternativo actualizado.");
       cancelEditingAltText();
     } catch (error) {
+      setMessageTone("error");
       setMessage(
         error instanceof Error
           ? error.message
@@ -301,9 +311,11 @@ export default function ProductImageManagement({
         );
       }
 
+      setMessageTone("success");
       setMessage("Imagen eliminada correctamente.");
       await loadImages();
     } catch (error) {
+      setMessageTone("error");
       setMessage(
         error instanceof Error
           ? error.message
@@ -319,12 +331,12 @@ export default function ProductImageManagement({
   }
 
   return (
-    <div className="mt-2 flex flex-col gap-3 border-t border-border-decorative pt-4 [&_button]:min-h-11 [&_button]:min-w-11">
+    <div className="flex flex-col gap-5 [&_button]:min-h-11 [&_button]:min-w-11">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
-          <h4 className="font-medium text-text">Imágenes del producto</h4>
+          <h3 className="text-base font-semibold text-text">Imágenes del producto</h3>
           <p className="text-text-secondary">
-            La primera imagen es la principal. Máximo 10 imágenes. Usa JPG, PNG o WebP de hasta 5 MB por imagen.
+            La primera imagen es la principal. Máximo 10 imágenes. Usa JPG, PNG o WebP de hasta 5 MB por imagen. Puedes ampliar cada fotografía para revisarla.
           </p>
         </div>
 
@@ -350,14 +362,16 @@ export default function ProductImageManagement({
         className="hidden"
       />
 
-      {message && <p role="status" className="text-sm text-text">{message}</p>}
+      {message && <Notice tone={messageTone}>{messageTone === "error" ? friendlyErrorMessage(message, "No pudimos actualizar las fotografías. Intenta nuevamente.") : message}</Notice>}
 
       {loadingImages ? (
         <p className="text-text-secondary">Cargando imágenes...</p>
       ) : images.length === 0 ? (
-        <p className="text-text-secondary">
-          Este producto todavía no tiene imágenes.
-        </p>
+        <div className="flex flex-col items-center gap-3 rounded-xl border border-dashed border-border-decorative bg-bg-admin p-6 text-center">
+          <ProductThumbnail alt={productName} size="lg" />
+          <p className="font-medium">Este producto todavía no tiene fotografías.</p>
+          <p className="max-w-sm text-sm text-text-secondary">Añade una fotografía para que el cliente reconozca el arreglo. El archivo se sube al seleccionarlo.</p>
+        </div>
       ) : (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {images.map((image, index) => {
@@ -367,19 +381,14 @@ export default function ProductImageManagement({
             return (
               <Card key={image.id} className="gap-3 p-3">
                 <div className="relative">
-                  {image.public_url ? (
-                    <Image
-                      src={image.public_url}
-                      alt={image.alt_text || productName}
-                      width={320}
-                      height={320}
-                      className="aspect-square w-full rounded-sm object-cover"
-                    />
-                  ) : (
-                    <div className="flex aspect-square items-center justify-center rounded-sm bg-background-secondary text-sm text-text-secondary">
-                      Imagen no disponible
-                    </div>
-                  )}
+                  <ProductThumbnail
+                    src={image.public_url}
+                    alt={image.alt_text || productName}
+                    preview
+                    fit="contain"
+                    className="aspect-square h-auto w-full"
+                    sizes="(max-width: 640px) 80vw, (max-width: 1024px) 40vw, 300px"
+                  />
 
                   {isPrimary && (
                     <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-background px-2 py-1 text-xs font-medium text-text shadow-sm">

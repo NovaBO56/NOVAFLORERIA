@@ -34,6 +34,7 @@ export type ProductComponent = {
     price: number;
     is_available: boolean;
     is_sold_out: boolean;
+    images?: PublicImage[];
   } | null;
 };
 
@@ -88,5 +89,5 @@ export type PublicOrder = {
   receipt_token?: string | null;
   id: string; order_number: number; status: string; subtotal: number; discount_total: number; total: number;
   customer_message: string | null; created_at: string; reserved_until: string | null; payment_status: string | null;
-  items: { dedications?: import("./dedications").Dedication[]; product_name: string; quantity: number; unit_price: number; line_total: number; message: string | null; note: string | null; personalization: CustomizationOption[] | null }[];
+  items: { image_url?: string | null; dedications?: import("./dedications").Dedication[]; product_name: string; quantity: number; unit_price: number; line_total: number; message: string | null; note: string | null; personalization: CustomizationOption[] | null }[];
 };

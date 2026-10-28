@@ -1,0 +1,2561 @@
+[
+  {
+    "path": "/api/admin-check",
+    "method": "GET",
+    "file": "src/app/api/admin-check/route.ts",
+    "line": 5,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/audit-log",
+    "method": "GET",
+    "file": "src/app/api/admin/audit-log/route.ts",
+    "line": 6,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "auditTrailQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "audit_trail",
+      "profiles",
+      "payments",
+      "inventory_movements",
+      "inventory_items",
+      "orders"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/business-hours",
+    "method": "GET",
+    "file": "src/app/api/admin/business-hours/route.ts",
+    "line": 5,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "business_hours"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/business-hours/[dayOfWeek]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/business-hours/[dayOfWeek]/route.ts",
+    "line": 8,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updateBusinessHoursSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "business_hours"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-registers",
+    "method": "GET",
+    "file": "src/app/api/admin/cash-registers/route.ts",
+    "line": 5,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "cash_registers"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-sessions",
+    "method": "GET",
+    "file": "src/app/api/admin/cash-sessions/route.ts",
+    "line": 13,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "cash_sessions"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-sessions",
+    "method": "POST",
+    "file": "src/app/api/admin/cash-sessions/route.ts",
+    "line": 41,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "openCashSessionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "open_cash_session"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-sessions/[id]/close",
+    "method": "POST",
+    "file": "src/app/api/admin/cash-sessions/[id]/close/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "closeCashSessionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "close_cash_session"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-sessions/[id]/movements",
+    "method": "GET",
+    "file": "src/app/api/admin/cash-sessions/[id]/movements/route.ts",
+    "line": 11,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "cash_movements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/cash-sessions/[id]/movements",
+    "method": "POST",
+    "file": "src/app/api/admin/cash-sessions/[id]/movements/route.ts",
+    "line": 35,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "recordCashMovementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "record_cash_movement"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/categories",
+    "method": "GET",
+    "file": "src/app/api/admin/categories/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "categories"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/categories",
+    "method": "POST",
+    "file": "src/app/api/admin/categories/route.ts",
+    "line": 33,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createCategorySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "categories"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/categories/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/categories/[id]/route.ts",
+    "line": 10,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateCategorySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "categories"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/customers",
+    "method": "GET",
+    "file": "src/app/api/admin/customers/route.ts",
+    "line": 9,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customers"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/customers",
+    "method": "POST",
+    "file": "src/app/api/admin/customers/route.ts",
+    "line": 65,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createCustomerSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customers"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/customers/[id]",
+    "method": "GET",
+    "file": "src/app/api/admin/customers/[id]/route.ts",
+    "line": 12,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customers",
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/customers/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/customers/[id]/route.ts",
+    "line": 51,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "updateCustomerSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customers"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/dashboard",
+    "method": "GET",
+    "file": "src/app/api/admin/dashboard/route.ts",
+    "line": 9,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "salesReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders",
+      "inventory_items",
+      "payments",
+      "order_items"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/deletion-requests",
+    "method": "GET",
+    "file": "src/app/api/admin/deletion-requests/route.ts",
+    "line": 5,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "order_deletion_requests"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/deletion-requests/[id]/review",
+    "method": "POST",
+    "file": "src/app/api/admin/deletion-requests/[id]/review/route.ts",
+    "line": 8,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "reviewDeletionRequestSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "review_order_deletion_request"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/adjustments",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/adjustments/route.ts",
+    "line": 7,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_adjustments"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/adjustments",
+    "method": "POST",
+    "file": "src/app/api/admin/inventory/adjustments/route.ts",
+    "line": 38,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createInventoryAdjustmentSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_adjustments"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/entries",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/entries/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_entries"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/entries",
+    "method": "POST",
+    "file": "src/app/api/admin/inventory/entries/route.ts",
+    "line": 39,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createInventoryEntrySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_entries"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/items",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/items/route.ts",
+    "line": 20,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_items",
+      "product_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/items",
+    "method": "POST",
+    "file": "src/app/api/admin/inventory/items/route.ts",
+    "line": 61,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createInventoryItemSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_items"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/items/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/inventory/items/[id]/route.ts",
+    "line": 12,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "updateInventoryItemSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_items"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/lots",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/lots/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "listLotsQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_lots"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/movements",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/movements/route.ts",
+    "line": 9,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "listMovementsQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_movements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/waste",
+    "method": "GET",
+    "file": "src/app/api/admin/inventory/waste/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_waste"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/inventory/waste",
+    "method": "POST",
+    "file": "src/app/api/admin/inventory/waste/route.ts",
+    "line": 36,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createInventoryWasteSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_waste"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/notifications",
+    "method": "GET",
+    "file": "src/app/api/admin/notifications/route.ts",
+    "line": 5,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "notifications"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/notifications/[id]/read",
+    "method": "POST",
+    "file": "src/app/api/admin/notifications/[id]/read/route.ts",
+    "line": 7,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "notifications"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders",
+    "method": "GET",
+    "file": "src/app/api/admin/orders/route.ts",
+    "line": 17,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "listOrdersQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]",
+    "method": "GET",
+    "file": "src/app/api/admin/orders/[id]/route.ts",
+    "line": 19,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/cancel",
+    "method": "POST",
+    "file": "src/app/api/admin/orders/[id]/cancel/route.ts",
+    "line": 9,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "cancelOrderSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "cancel_order"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/deletion-request",
+    "method": "POST",
+    "file": "src/app/api/admin/orders/[id]/deletion-request/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "requestOrderDeletionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "request_order_deletion"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/history",
+    "method": "GET",
+    "file": "src/app/api/admin/orders/[id]/history/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders",
+      "audit_logs",
+      "profiles"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/receipt",
+    "method": "GET",
+    "file": "src/app/api/admin/orders/[id]/receipt/route.tsx",
+    "line": 29,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/returns",
+    "method": "GET",
+    "file": "src/app/api/admin/orders/[id]/returns/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "sale_returns"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/returns",
+    "method": "POST",
+    "file": "src/app/api/admin/orders/[id]/returns/route.ts",
+    "line": 32,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "createSaleReturnSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "create_sale_return"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/schedule",
+    "method": "POST",
+    "file": "src/app/api/admin/orders/[id]/schedule/route.ts",
+    "line": 7,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "orderScheduleSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "set_order_schedule"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/orders/[id]/status",
+    "method": "POST",
+    "file": "src/app/api/admin/orders/[id]/status/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "advanceOrderStatusSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "advance_order_status"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/payment-qr",
+    "method": "POST",
+    "file": "src/app/api/admin/payment-qr/route.ts",
+    "line": 12,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updatePaymentQrSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "set_payment_qr_slot"
+    ],
+    "tables": [
+      "payment-qr"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": true
+  },
+  {
+    "path": "/api/admin/payment-qr",
+    "method": "GET",
+    "file": "src/app/api/admin/payment-qr/route.ts",
+    "line": 91,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "payment_qr_config"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/payment-qr",
+    "method": "PATCH",
+    "file": "src/app/api/admin/payment-qr/route.ts",
+    "line": 101,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "patchPaymentQrSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "set_payment_qr_slot"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/payments",
+    "method": "GET",
+    "file": "src/app/api/admin/payments/route.ts",
+    "line": 11,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "payments"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/payments/[id]/confirm",
+    "method": "POST",
+    "file": "src/app/api/admin/payments/[id]/confirm/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "confirm_payment"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/payments/[id]/reject",
+    "method": "POST",
+    "file": "src/app/api/admin/payments/[id]/reject/route.ts",
+    "line": 9,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "rejectPaymentSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "reject_payment"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/product-recommendations",
+    "method": "GET",
+    "file": "src/app/api/admin/product-recommendations/route.ts",
+    "line": 7,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_recommendation_settings"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/product-recommendations",
+    "method": "PUT",
+    "file": "src/app/api/admin/product-recommendations/route.ts",
+    "line": 16,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "globalRecommendationsSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "save_global_product_recommendations"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/product-recommendations/preview",
+    "method": "GET",
+    "file": "src/app/api/admin/product-recommendations/preview/route.ts",
+    "line": 5,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products",
+    "method": "GET",
+    "file": "src/app/api/admin/products/route.ts",
+    "line": 10,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "listProductsQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products",
+    "method": "POST",
+    "file": "src/app/api/admin/products/route.ts",
+    "line": 91,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createProductSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/route.ts",
+    "line": 35,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "uuidSchema",
+      "updateProductSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/components",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/components/route.ts",
+    "line": 19,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_components"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/components",
+    "method": "POST",
+    "file": "src/app/api/admin/products/[id]/components/route.ts",
+    "line": 46,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "addComponentSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products",
+      "product_components"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/components/[componentId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/components/[componentId]/route.ts",
+    "line": 24,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateComponentSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_components"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/components/[componentId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/components/[componentId]/route.ts",
+    "line": 66,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_components"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/customization-options/route.ts",
+    "line": 10,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options",
+    "method": "POST",
+    "file": "src/app/api/admin/products/[id]/customization-options/route.ts",
+    "line": 37,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createCustomizationOptionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products",
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/route.ts",
+    "line": 10,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateCustomizationOptionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/route.ts",
+    "line": 54,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/route.ts",
+    "line": 76,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_option_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements",
+    "method": "POST",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/route.ts",
+    "line": 150,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "addOptionRequirementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_items"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/route.ts",
+    "line": 304,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateOptionRequirementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/route.ts",
+    "line": 465,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/[requirementId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/[requirementId]/route.ts",
+    "line": 14,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateOptionRequirementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/[requirementId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/customization-options/[optionId]/inventory-requirements/[requirementId]/route.ts",
+    "line": 146,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "customization_options"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/images",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/images/route.ts",
+    "line": 29,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products",
+      "product_images"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/images",
+    "method": "POST",
+    "file": "src/app/api/admin/products/[id]/images/route.ts",
+    "line": 128,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products",
+      "product_images"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": true
+  },
+  {
+    "path": "/api/admin/products/[id]/images/[imageId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/images/[imageId]/route.ts",
+    "line": 15,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateImageSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_images"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/images/[imageId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/images/[imageId]/route.ts",
+    "line": 57,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_images",
+      "product-images"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/images/reorder",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/images/reorder/route.ts",
+    "line": 14,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "reorderImagesSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_images"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/inventory-requirements",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/inventory-requirements/route.ts",
+    "line": 13,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/inventory-requirements",
+    "method": "POST",
+    "file": "src/app/api/admin/products/[id]/inventory-requirements/route.ts",
+    "line": 41,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "addRequirementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products",
+      "inventory_items",
+      "product_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/inventory-requirements/[requirementId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/inventory-requirements/[requirementId]/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateRequirementSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/inventory-requirements/[requirementId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/products/[id]/inventory-requirements/[requirementId]/route.ts",
+    "line": 48,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_inventory_requirements"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/publication",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/publication/route.ts",
+    "line": 5,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [
+      "get_product_publication_diagnostics"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/recommendations",
+    "method": "GET",
+    "file": "src/app/api/admin/products/[id]/recommendations/route.ts",
+    "line": 13,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "product_recommendations"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/recommendations",
+    "method": "PUT",
+    "file": "src/app/api/admin/products/[id]/recommendations/route.ts",
+    "line": 40,
+    "guards": [
+      "requireAdmin"
+    ],
+    "guardDelegated": "update(request, context, modeOnly)",
+    "schemas": [
+      "customRecommendationsSchema",
+      "recommendationModeSchema",
+      "z.string().uuid()"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "save_product_recommendation_preferences"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/products/[id]/recommendations",
+    "method": "PATCH",
+    "file": "src/app/api/admin/products/[id]/recommendations/route.ts",
+    "line": 41,
+    "guards": [
+      "requireAdmin"
+    ],
+    "guardDelegated": "update(request, context, modeOnly)",
+    "schemas": [
+      "customRecommendationsSchema",
+      "recommendationModeSchema",
+      "z.string().uuid()"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "save_product_recommendation_preferences"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/profile/avatar",
+    "method": "GET",
+    "file": "src/app/api/admin/profile/avatar/route.ts",
+    "line": 18,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false,
+    "guardDelegated": "actor()"
+  },
+  {
+    "path": "/api/admin/profile/avatar",
+    "method": "PUT",
+    "file": "src/app/api/admin/profile/avatar/route.ts",
+    "line": 35,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false,
+    "guardDelegated": "actor()"
+  },
+  {
+    "path": "/api/admin/profile/avatar",
+    "method": "DELETE",
+    "file": "src/app/api/admin/profile/avatar/route.ts",
+    "line": 49,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false,
+    "guardDelegated": "actor()"
+  },
+  {
+    "path": "/api/admin/promotions",
+    "method": "GET",
+    "file": "src/app/api/admin/promotions/route.ts",
+    "line": 20,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotions"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions",
+    "method": "POST",
+    "file": "src/app/api/admin/promotions/route.ts",
+    "line": 53,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "createPromotionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotions"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/promotions/[id]/route.ts",
+    "line": 22,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updatePromotionSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotions",
+      "promotion_products"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions/[id]/products",
+    "method": "GET",
+    "file": "src/app/api/admin/promotions/[id]/products/route.ts",
+    "line": 13,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotion_products"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions/[id]/products",
+    "method": "POST",
+    "file": "src/app/api/admin/promotions/[id]/products/route.ts",
+    "line": 36,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "addPromotionProductSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotions",
+      "products",
+      "promotion_products"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions/[id]/products/[productId]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/promotions/[id]/products/[productId]/route.ts",
+    "line": 8,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updatePromotionProductSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotion_products"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/promotions/[id]/products/[productId]",
+    "method": "DELETE",
+    "file": "src/app/api/admin/promotions/[id]/products/[productId]/route.ts",
+    "line": 47,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotion_products"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/cancellations",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/cancellations/route.tsx",
+    "line": 12,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "productsSoldReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/cash",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/cash/route.tsx",
+    "line": 12,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "productsSoldReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "cash_sessions"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/customers",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/customers/route.tsx",
+    "line": 23,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "customersReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "orders"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/inventory",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/inventory/route.tsx",
+    "line": 22,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "inventoryReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_items"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/products-sold",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/products-sold/route.tsx",
+    "line": 17,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "productsSoldReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "order_items"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/sales",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/sales/route.tsx",
+    "line": 19,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "salesReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/reports/waste",
+    "method": "GET",
+    "file": "src/app/api/admin/reports/waste/route.tsx",
+    "line": 19,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "productsSoldReportQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "inventory_waste"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/sales",
+    "method": "POST",
+    "file": "src/app/api/admin/sales/route.ts",
+    "line": 6,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createPhysicalSaleSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "create_physical_sale"
+    ],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/seasons",
+    "method": "GET",
+    "file": "src/app/api/admin/seasons/route.ts",
+    "line": 8,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "seasons"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/seasons",
+    "method": "POST",
+    "file": "src/app/api/admin/seasons/route.ts",
+    "line": 33,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "createSeasonSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "seasons"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/seasons/[id]",
+    "method": "PATCH",
+    "file": "src/app/api/admin/seasons/[id]/route.ts",
+    "line": 10,
+    "guards": [
+      "requireEmployeeOrAdmin"
+    ],
+    "schemas": [
+      "updateSeasonSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "seasons"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/store-location",
+    "method": "GET",
+    "file": "src/app/api/admin/store-location/route.ts",
+    "line": 6,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/store-location",
+    "method": "PATCH",
+    "file": "src/app/api/admin/store-location/route.ts",
+    "line": 12,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "storeLocationSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/storefront-media",
+    "method": "POST",
+    "file": "src/app/api/admin/storefront-media/route.ts",
+    "line": 8,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "set_storefront_media"
+    ],
+    "tables": [
+      "categories",
+      "product-images"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": true
+  },
+  {
+    "path": "/api/admin/system-settings",
+    "method": "GET",
+    "file": "src/app/api/admin/system-settings/route.ts",
+    "line": 8,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/system-settings",
+    "method": "PATCH",
+    "file": "src/app/api/admin/system-settings/route.ts",
+    "line": 49,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updateSystemSettingSchema",
+      "storeLocationSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/system-settings/accept-orders-outside-hours",
+    "method": "PATCH",
+    "file": "src/app/api/admin/system-settings/accept-orders-outside-hours/route.ts",
+    "line": 6,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updateAcceptOrdersOutsideHoursSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/users",
+    "method": "GET",
+    "file": "src/app/api/admin/users/route.ts",
+    "line": 5,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "profiles"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/users/[id]/role",
+    "method": "PATCH",
+    "file": "src/app/api/admin/users/[id]/role/route.ts",
+    "line": 16,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "roleSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "update_staff_profile"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/users/[id]/status",
+    "method": "PATCH",
+    "file": "src/app/api/admin/users/[id]/status/route.ts",
+    "line": 16,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "statusSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "update_staff_profile"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/users/create",
+    "method": "POST",
+    "file": "src/app/api/admin/users/create/route.ts",
+    "line": 13,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "createUserSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "update_staff_profile"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/whatsapp-config",
+    "method": "POST",
+    "file": "src/app/api/admin/whatsapp-config/route.ts",
+    "line": 6,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [
+      "updateWhatsappConfigSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [
+      "set_checkout_configuration"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/whatsapp-config",
+    "method": "GET",
+    "file": "src/app/api/admin/whatsapp-config/route.ts",
+    "line": 40,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "whatsapp_config"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/admin/whatsapp-config",
+    "method": "PATCH",
+    "file": "src/app/api/admin/whatsapp-config/route.ts",
+    "line": 49,
+    "guards": [
+      "requireAdmin"
+    ],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [
+      "set_checkout_configuration"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/business-hours",
+    "method": "GET",
+    "file": "src/app/api/business-hours/route.ts",
+    "line": 6,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [
+      "getBusinessHours"
+    ],
+    "rpcs": [
+      "get_business_status"
+    ],
+    "tables": [
+      "business_hours",
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/categories",
+    "method": "GET",
+    "file": "src/app/api/categories/route.ts",
+    "line": 4,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "categories"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/orders",
+    "method": "POST",
+    "file": "src/app/api/orders/route.ts",
+    "line": 12,
+    "guards": [],
+    "schemas": [
+      "createOrderSchema"
+    ],
+    "rateLimits": [
+      "createOrder"
+    ],
+    "rpcs": [
+      "create_order"
+    ],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/orders/[id]/payment",
+    "method": "POST",
+    "file": "src/app/api/orders/[id]/payment/route.ts",
+    "line": 10,
+    "guards": [],
+    "schemas": [
+      "trackOrderSchema",
+      "reportQrSelectionSchema"
+    ],
+    "rateLimits": [
+      "reportPayment"
+    ],
+    "rpcs": [
+      "report_payment_qr"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/orders/receipt/[token]",
+    "method": "GET",
+    "file": "src/app/api/orders/receipt/[token]/route.tsx",
+    "line": 8,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [
+      "orderReceipt"
+    ],
+    "rpcs": [
+      "get_public_order_receipt"
+    ],
+    "tables": [],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/orders/track",
+    "method": "POST",
+    "file": "src/app/api/orders/track/route.ts",
+    "line": 8,
+    "guards": [],
+    "schemas": [
+      "trackOrderSchema"
+    ],
+    "rateLimits": [
+      "trackOrder"
+    ],
+    "rpcs": [
+      "track_order_details"
+    ],
+    "tables": [
+      "orders",
+      "order_items"
+    ],
+    "adminClient": true,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/payment-qr",
+    "method": "GET",
+    "file": "src/app/api/payment-qr/route.ts",
+    "line": 6,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [
+      "getPaymentQr"
+    ],
+    "rpcs": [],
+    "tables": [
+      "payment_qr_config"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/products",
+    "method": "GET",
+    "file": "src/app/api/products/route.ts",
+    "line": 11,
+    "guards": [],
+    "schemas": [
+      "listPublicProductsQuerySchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/products/[id]",
+    "method": "GET",
+    "file": "src/app/api/products/[id]/route.ts",
+    "line": 25,
+    "guards": [],
+    "schemas": [
+      "uuidSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "products"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/products/[id]/recommendations",
+    "method": "GET",
+    "file": "src/app/api/products/[id]/recommendations/route.ts",
+    "line": 4,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/products/availability",
+    "method": "POST",
+    "file": "src/app/api/products/availability/route.ts",
+    "line": 11,
+    "guards": [],
+    "schemas": [
+      "schema"
+    ],
+    "rateLimits": [
+      "cartAvailability"
+    ],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": true,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/promotions",
+    "method": "GET",
+    "file": "src/app/api/promotions/route.ts",
+    "line": 19,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "promotions",
+      "promotion_products"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/seasons",
+    "method": "GET",
+    "file": "src/app/api/seasons/route.ts",
+    "line": 4,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "seasons"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/store-location",
+    "method": "GET",
+    "file": "src/app/api/store-location/route.ts",
+    "line": 5,
+    "guards": [],
+    "schemas": [
+      "storeLocationSchema"
+    ],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/storefront-media",
+    "method": "GET",
+    "file": "src/app/api/storefront-media/route.ts",
+    "line": 4,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "system_settings"
+    ],
+    "adminClient": true,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/visual-preview",
+    "method": "GET",
+    "file": "src/app/api/visual-preview/route.ts",
+    "line": 10,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  },
+  {
+    "path": "/api/whatsapp-config",
+    "method": "GET",
+    "file": "src/app/api/whatsapp-config/route.ts",
+    "line": 5,
+    "guards": [],
+    "schemas": [],
+    "rateLimits": [],
+    "rpcs": [],
+    "tables": [
+      "whatsapp_config"
+    ],
+    "adminClient": false,
+    "hasJson": false,
+    "fileUpload": false
+  }
+]

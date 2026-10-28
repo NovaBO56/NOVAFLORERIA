@@ -15,6 +15,7 @@ export function EmptyState({
 }: EmptyStateProps) {
   return (
     <div
+      data-slot="empty-state"
       className={[
         "flex min-h-[220px]",
         "flex-col items-center justify-center",
